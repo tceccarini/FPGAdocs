@@ -17,12 +17,28 @@
 \graphicspath{{img/}}          % \includegraphics{filename} looks inside img/
 \usepackage{adjustbox}         % lets text auto-scale to fit a given width (e.g. thesis title)
 
+\usepackage{booktabs}          % \toprule/\midrule/\bottomrule for clean tables
+\usepackage{tabularx}          % X columns auto-wrap long content (e.g. file paths)
+\usepackage{seqsplit}          % breaks long unbroken strings (paths, tokens) that don't wrap on their own
+
 \usepackage{xcolor}
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
 \newcommand{\term}[1]{\textsf{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
+\newcommand{\sysname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
 
 \usepackage[normalem]{ulem}
 \newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review
+
+\usepackage[most]{tcolorbox}
+\newtcolorbox{warningbox}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    boxrule=0.6pt,
+    arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+}
+% Usage: \begin{warningbox} ... \end{warningbox}
+
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -76,6 +92,67 @@
 %   \end{lstlisting}
 
 % ------------------------------------------------------------
+% Shell/terminal command blocks, same GitHub-inspired colors
+% ------------------------------------------------------------
+\lstdefinestyle{githubbash}{
+    language=bash,
+    backgroundcolor=\color{githubbg},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{githubkeyword}\bfseries,
+    commentstyle=\color{githubcomment}\itshape,
+    stringstyle=\color{githubstring},
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{githubrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=none,
+}
+\lstnewenvironment{shellcode}{\lstset{style=githubbash}}{}
+
+% For lines dominated by one long path/token with no useful spaces
+% (e.g. export PATH="..."), where breaking only at whitespace causes overflow:
+\lstdefinestyle{githubbashpath}{
+    language=bash,
+    backgroundcolor=\color{githubbg},
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{githubkeyword}\bfseries,
+    commentstyle=\color{githubcomment}\itshape,
+    stringstyle=\color{githubstring},
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{githubrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=none,
+}
+\lstnewenvironment{shellcodepath}{\lstset{style=githubbashpath}}{}
+
+% Usage in chapters:
+%   \begin{shellcode}            <- normal commands / word lists (safe wrapping)
+%   ssh wheel@<board-ip>
+%   \end{shellcode}
+%   \begin{shellcodepath}        <- lines with one long unbroken path/token
+%   export PATH="$HOME/very/long/path/bin:$PATH"
+%   \end{shellcodepath}
+
+% ------------------------------------------------------------
 % Inline code in running text: write |code| between two pipes
 % ------------------------------------------------------------
 \lstdefinestyle{githubcppinline}{
@@ -85,7 +162,8 @@
     keywordstyle=\color{githubkeyword}\bfseries,
     stringstyle=\color{githubstring},
     showstringspaces=false,
-    breaklines=false,
+    breaklines=true,
+    breakatwhitespace=false,
 }
 \lstMakeShortInline[style=githubcppinline]|
 

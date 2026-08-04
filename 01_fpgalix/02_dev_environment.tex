@@ -1,0 +1,140 @@
+\chapter{Prepare Your Dev Environment}
+\label{chap:fpgalix-devenv}
+
+\section{Introduction}
+
+The board boots a full \term{Linux} OS and is reachable over \term{Ethernet}, so no \term{JTAG}-based source debugger is needed on the host to debug software: |gdbserver|, installed on the board, can be attached remotely from the host with |gdb|, over the network so no in-circuit debugging is involved.
+
+\term{JTAG} is still needed for one thing this can't replace: debugging the \term{FPGA} fabric itself, with \term{SignalTap}'s in-system logic analyzer, from \term{Quartus}. For that, a physical PC is necessary, not a Virtual Machine. Forwarding the \term{USB-Blaster} from host to guest through an hypervisor's own USB redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures on timing-sensitive \term{JTAG} traffic: corrupted transfers, chains that fail to enumerate. Everything else in this chapter, writing \term{VHDL}, compiling the \term{Quartus} project, building \term{U-Boot}, the kernel, and \term{Buildroot}, works fine in a VM; only the \term{SignalTap} session needs the \term{USB-Blaster} to be truly local.
+
+This chapter covers the required |apt| packages, where each piece of software lives on disk, the environment variables needed to reach them, \term{USB-Blaster} and serial console access, and the editor used to write \term{VHDL} and application code.
+
+\section{Host requirements}
+
+\sysname{FPGAlix} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with \term{Quartus Prime} (including \term{Platform Designer}) and an \term{ARM GNU} toolchain installed and working.
+
+\section{Required software}
+
+\subsection{apt packages}
+\label{subsec:fpgalix-apt-packages}
+
+\begin{shellcode}
+sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-tools cpio unzip rsync bc patch git git-lfs curl wget openssh-server iperf3 picocom pkg-config libopencv-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad python3 python3-numpy python3-opencv ffmpeg default-jdk
+\end{shellcode}
+
+\begin{itemize}
+    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|: building |repos/u-boot-socfpga| and the Linux kernel, and compiling |sw/boot.script| with |mkimage|.
+    \item |cpio|, |unzip|, |rsync|, |bc|, |patch|: mandatory host packages for \term{Buildroot} itself, not covered by the group above; cross-checked against |repos/buildroot/docs/manual/prerequisite.adoc| and |repos/buildroot/support/dependencies/dependencies.sh| rather than assumed, since most of \term{Buildroot}'s other mandatory tools (|tar|, |sed|, |find|, |perl|, |gzip|, ...) already ship with a stock \term{Ubuntu} install.
+    \item |git|, |git-lfs|: cloning this repository and its submodules. No file in the repository is currently tracked with LFS, but the tooling is installed for forward compatibility.
+    \item |curl|, |wget|: fetching installers and, on the board itself, general network testing.
+    \item |openssh-server|, |iperf3|: verifying \term{SSH} access and bandwidth to the board once it is on the network.
+    \item |picocom|: terminal emulator for the board's serial console.
+    \item |pkg-config|, |libopencv-dev|, |libgstreamer1.0-dev|, |libgstreamer-plugins-base1.0-dev|, |libgstrtspserver-1.0-dev|: needed to build |sw/vision_core| natively on the host (|make intel|), which lets its capture/filter/streaming pipeline be exercised without the board, before cross-compiling it (|make arm|); see |sw/vision_core/README.md|.
+    \item |gstreamer1.0-plugins-base|, |gstreamer1.0-plugins-good|, |gstreamer1.0-plugins-bad|: the dev packages above only provide headers for linking; actually running an intel-built |vision_core| needs the matching runtime plugins loaded at pipeline-construction time: |appsrc|/|videoconvert| (base), |rtpjpegpay|/|rtpvrawpay|/|rtph264pay| via |rtpmanager| (good), |openh264enc| (bad), matching the sub-plugin table in |sw/vision_core/README.md|.
+    \item |python3|, |python3-numpy|, |python3-opencv|: required by |sw/camera_driver_2/utils/debug/view.py|, the raw-frame viewer used to debug the \term{V4L2} driver.
+    \item |default-jdk|: |repos/sopc2dts| is a plain \term{Java} tool, built with |javac|/|jar| via its own Makefile.
+    \item |ffmpeg|: provides |ffplay|, used on the host to view |vision_core|'s \term{RTSP} output with minimal latency:
+
+\begin{shellcode}
+ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
+\end{shellcode}
+
+\term{VLC} was tried first and dropped; |ffplay| with these flags is what actually got used going forward.
+\end{itemize}
+
+\subsection{Install the software, and where it lives}
+\label{subsec:fpgalix-install-paths}
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X X @{}}
+\toprule
+\textbf{Software} & \textbf{Version} & \textbf{Install path} \\
+\midrule
+\term{Quartus Prime} & 22.1 & \texttt{\seqsplit{\textasciitilde{}/Programs/Altera/22.1/}} \\
+\term{ARM GNU} toolchain & \texttt{\seqsplit{arm-gnu-toolchain-12.3.rel1-x86\_64-arm-none-linux-gnueabihf}} & \texttt{\seqsplit{\textasciitilde{}/Programs/Arm/toolchain/arm-gnu-toolchain-12.3.rel1-x86\_64-arm-none-linux-gnueabihf/}} \\
+\bottomrule
+\end{tabularx}
+\caption{Required software and installation paths.}
+\label{tab:fpgalix-dev-software}
+\end{table}
+
+The user's home folder is sufficient for both; a system-wide installation is not required. See Chapter~\ref{chap:fpgalix-download} for where to download each of these.
+
+\subsection{Environment variables}
+
+Add to |~/.bashrc|, matching the install paths from Section~\ref{subsec:fpgalix-install-paths}:
+
+\begin{shellcodepath}
+export QUARTUS_ROOTDIR="$HOME/Programs/Altera/22.1/quartus/"
+export QSYS_ROOTDIR="${QUARTUS_ROOTDIR}/sopc_builder/bin"
+export PATH="${QUARTUS_ROOTDIR}/bin:$PATH"
+export PATH="$HOME/Programs/Altera/22.1/quartus/sopc_builder/bin/:$PATH"
+export PATH="$HOME/Programs/Arm/toolchain/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-linux-gnueabihf/bin:$PATH"
+export PATH="${QSYS_ROOTDIR}:$PATH"
+\end{shellcodepath}
+
+Reload with |source ~/.bashrc| (or open a new shell) after editing.
+
+Each line prepends to \term{PATH} rather than appending, so these installs are always found first, ahead of anything already on \term{PATH}, whether or not a same-named tool exists elsewhere on the system.
+
+Not on \term{PATH}, and not meant to be: two other \term{ARM} toolchains exist in this project and are always invoked by their full path from a Makefile, never exported globally.
+
+\begin{itemize}
+    \item \term{Buildroot} builds its own internal toolchain (|arm-buildroot-linux-gnueabihf-...|) as part of |repos/buildroot/output/host/bin/|. It is what |sw/vision_core|'s |make arm| target uses, and it must stay separate from the toolchain above: mixing the two (e.g. linking an object built with one against a library built with the other) produces \term{glibc} \term{ABI} mismatches.
+    \item The host's own native |gcc|/|g++| is used for |sw/vision_core|'s |make intel| target,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} which is a completely separate, \term{x86\_64} build of the same program.
+\end{itemize}
+
+\subsection{USB-Blaster and serial console access}
+
+Beyond the packages installed in Section~\ref{subsec:fpgalix-apt-packages}, the board requires access to two \term{USB} devices: the \term{USB-Blaster}, used for \term{JTAG} access (\term{SignalTap}), and the \term{UART-to-USB} serial console. By default, \term{udev} restricts both device nodes to root.
+
+Create a \term{udev} rule granting the invoking user's group access to the \term{USB-Blaster}:
+
+\begin{shellcode}
+sudo tee /etc/udev/rules.d/51-usbblaster.rules << 'EOF'
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6001", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6002", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6003", MODE="0666", GROUP="plugdev"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+sudo usermod -aG plugdev "$USER"
+\end{shellcode}
+
+Without this rule, \term{Quartus} reports ``No JTAG hardware'' even with the \term{USB-Blaster} plugged in. Verify it worked with:
+
+\begin{shellcode}
+jtagconfig
+\end{shellcode}
+
+which should print something like |1) USB-Blaster [...]|.
+
+The serial console needs no equivalent custom rule: the board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. The user still needs to be added to it:
+
+\begin{shellcode}
+sudo usermod -aG dialout "$USER"
+\end{shellcode}
+
+Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group changes to take effect.
+
+\subsection{Editor}
+
+Both the \term{VHDL} sources under |hw/| and the \term{C/C++} and \term{Python} sources under |sw/| are written in \term{VS Code}, with the following extensions:
+
+{\footnotesize
+\begin{itemize}
+    \item \term{VHDL} linting, snippets, project awareness --- \path{teros-technology.teroshdl} (\term{TerosHDL}).
+    \item \term{VHDL} syntax highlighting and language support --- \path{rjyoung.vscode-modern-vhdl-support}.
+    \item \term{C/C++} \term{IntelliSense} for \texttt{camera\_driver\_2}, \texttt{hexip\_daemon}, and \texttt{vision\_core} --- \path{ms-vscode.cpptools} (+ \path{ms-vscode.cpptools-extension-pack}).
+    \item Makefile awareness (every \texttt{sw/} project builds via \texttt{make}) --- \path{ms-vscode.makefile-tools}.
+    \item editing/debugging \path{sw/camera_driver_2/utils/debug/view.py} --- \path{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
+    \item viewing the datasheet/manual PDFs under \texttt{docs/} without leaving the editor --- \path{tomoki1207.pdf}.
+\end{itemize}
+}
+
+\term{VS Code} is suggested, not required: it is only a text editor here, no build or debug integration is used from it, so any editor works equally well.
+
+\section{Getting the installers}
+
+See Chapter~\ref{chap:fpgalix-download}\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} for where to get \term{Quartus Prime}, the \term{ARM GNU} toolchain, and the \term{Ubuntu 22.04 LTS} image.
