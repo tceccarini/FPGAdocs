@@ -1,0 +1,93 @@
+% ============================================================
+% Preamble: packages, layout and shared styles for the thesis
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[italian,english]{babel}   % English is the main document language;
+                                       % Italian is only used for the cover page
+\usepackage[a4paper,margin=2.5cm]{geometry}
+
+\usepackage{indentfirst}   % also indent the first paragraph after a heading
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.6em}
+
+\usepackage{graphicx}
+\graphicspath{{img/}}          % \includegraphics{filename} looks inside img/
+\usepackage{adjustbox}         % lets text auto-scale to fit a given width (e.g. thesis title)
+
+\usepackage{xcolor}
+\newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
+\newcommand{\term}[1]{\textsf{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
+
+\usepackage[normalem]{ulem}
+\newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue,
+    bookmarksnumbered=true,
+}
+
+% ------------------------------------------------------------
+% C++ code blocks, colors inspired by GitHub's syntax theme
+% ------------------------------------------------------------
+\usepackage{listings}
+
+\definecolor{githubbg}{HTML}{F6F8FA}
+\definecolor{githubkeyword}{HTML}{CF222E}
+\definecolor{githubstring}{HTML}{0A3069}
+\definecolor{githubcomment}{HTML}{6E7781}
+\definecolor{githubnumber}{HTML}{0550AE}
+\definecolor{githubrule}{HTML}{D0D7DE}
+
+\lstdefinestyle{githubcpp}{
+    language=C++,
+    backgroundcolor=\color{githubbg},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{githubkeyword}\bfseries,
+    commentstyle=\color{githubcomment}\itshape,
+    stringstyle=\color{githubstring},
+    numberstyle=\tiny\color{gray},
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{githubrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=left,
+    numbersep=8pt,
+}
+\lstset{style=githubcpp}
+
+% Usage in chapters:
+%   \begin{lstlisting}[caption={Description}, label={lst:example}]
+%   int main() { return 0; }
+%   \end{lstlisting}
+
+% ------------------------------------------------------------
+% Inline code in running text: write |code| between two pipes
+% ------------------------------------------------------------
+\lstdefinestyle{githubcppinline}{
+    language=C++,
+    basicstyle=\ttfamily\small\color{black},
+    backgroundcolor=\color{githubbg},
+    keywordstyle=\color{githubkeyword}\bfseries,
+    stringstyle=\color{githubstring},
+    showstringspaces=false,
+    breaklines=false,
+}
+\lstMakeShortInline[style=githubcppinline]|
+
+% Usage in running text:
+%   The function |int compute(int x)| returns...

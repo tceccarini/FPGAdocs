@@ -1,0 +1,6 @@
+{
+    "[latex]": {
+        "editor.wordWrap": "on"
+    },
+    "latex-workshop.latex.outDir": "%DIR%/build"
+}
