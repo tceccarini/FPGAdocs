@@ -1,0 +1,140 @@
+% ============================================================
+% Bibliography for the FPGAdocs thesis.
+% Every external document and project artefact cited anywhere in
+% this documentation is listed here once, with a short key. The
+% References section of each chapter cites the key together with
+% the specific locator (chapter, table, page) that applies there,
+% instead of repeating the full reference.
+% ============================================================
+
+% ------------------------------------------------------------
+% Project repositories
+% ------------------------------------------------------------
+
+@misc{FPGALIX-REPO,
+  author       = {Ceccarini, Tommaso},
+  title        = {FPGAlix --- embedded-Linux camera pipeline for the Terasic DE1-SoC},
+  howpublished = {\url{https://github.com/tceccarini/FPGAlix}},
+  note         = {Git repository}
+}
+
+@misc{FPGASTEEL-REPO,
+  author       = {Ceccarini, Tommaso},
+  title        = {FPGAsteel --- bare-metal camera-to-VGA pipeline for the Terasic DE1-SoC},
+  howpublished = {\url{https://github.com/tceccarini/FPGAsteel}},
+  note         = {Git repository}
+}
+
+% ------------------------------------------------------------
+% External documents
+% ------------------------------------------------------------
+
+@manual{OV7670-DS,
+  author       = {OmniVision},
+  title        = {OV7670/OV7171 CMOS VGA CameraChip Sensor},
+  note         = {Datasheet. \url{https://github.com/tceccarini/FPGAlix/blob/main/docs/OV7670_CameraModule/OV7670_2006.pdf}}
+}
+
+@manual{OV7670-IG,
+  author       = {OmniVision},
+  title        = {OV7670 Implementation Guide},
+  edition      = {v1.0},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/OV7670_CameraModule/OV7670\%20Implementation\%20Guide\%20(V1.0).pdf}}
+}
+
+@misc{OV7670-SCH,
+  key          = {OV7670-SCH},
+  title        = {OV7670 camera module schematic},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/OV7670_CameraModule/CameraModuleSchematic.jpg}}
+}
+
+@manual{CV-TRM,
+  author       = {{Intel/Altera}},
+  title        = {Cyclone V Hard Processor System Technical Reference Manual},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Altera/HPSManual.pdf}}
+}
+
+@manual{EP-IPUG,
+  author       = {{Intel/Altera}},
+  title        = {Embedded Peripherals IP User Guide},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Altera/EmbeddedPeripheralsIpGuide.pdf}}
+}
+
+@manual{AVALON-SPEC,
+  author       = {{Intel/Altera}},
+  title        = {Avalon Interface Specifications},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Altera/AvaloBusSpecs.pdf}}
+}
+
+@misc{DE1-SCH,
+  author       = {Terasic},
+  title        = {DE1-SoC board schematic},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Terasic_DE1-SoC/Schematic.pdf}}
+}
+
+@misc{MACNICA-BOOT,
+  author       = {Macnica},
+  title        = {Bootloader generation flow for SoC EDS v19.1 Std / v19.3 Pro and later},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Misc/Macnica\%20-\%20Bootloader\%20generation\%20flow.pdf}}
+}
+
+@manual{UPM-DE1,
+  author       = {Ruiz, M. and Carpe{\~n}o, A.},
+  title        = {Using Quartus and Buildroot for building Embedded Linux Systems (DE1-SoC)},
+  edition      = {V1.9},
+  organization = {Universidad Polit\'ecnica de Madrid},
+  year         = {2017},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/docs/Misc/DE1-SoC_Embedded_Linux_Systems_1_9.pdf}}
+}
+
+@misc{GHRD,
+  author       = {{Intel/Altera}},
+  title        = {Golden Hardware Reference Design for Cyclone V SoC},
+  note         = {Tracked as the \texttt{ghrd-socfpga} git submodule under \texttt{repos/ghrd-socfpga} in the FPGAlix repository}
+}
+
+% ------------------------------------------------------------
+% Project artefacts
+% ------------------------------------------------------------
+
+@misc{ADAPTER-HW,
+  key          = {ADAPTER-HW},
+  title        = {Camera adapter board: schematics, bill of materials and photograph of the assembled system},
+  note         = {Reproduced in Appendix~A -- Camera Adapter Board; sources under \texttt{hw/camera\_adapter/}}
+}
+
+@misc{ADAPTER-PCB,
+  key          = {ADAPTER-PCB},
+  title        = {Camera adapter PCB layouts},
+  note         = {Present in both repositories; not reproduced in this document. Transmitter: \url{https://github.com/tceccarini/FPGAlix/blob/main/hw/camera_adapter/brd_transmitter.pdf} --- Receiver: \url{https://github.com/tceccarini/FPGAlix/blob/main/hw/camera_adapter/brd_receiver.pdf}}
+}
+
+@misc{ADAPTER-WARN,
+  key          = {ADAPTER-WARN},
+  title        = {Camera RESET/POWER-DOWN hardware bug: full analysis and the two permanent fixes},
+  note         = {Present in both repositories. Summarised in Appendix~A. \url{https://github.com/tceccarini/FPGAlix/blob/main/hw/camera_adapter/WARNING.md}}
+}
+
+@misc{SUB-UBOOT,
+  key          = {SUB-UBOOT},
+  title        = {\texttt{repos/u-boot-socfpga}, local submodule},
+  note         = {Bootloader and boot script sources}
+}
+
+@misc{SUB-LINUX,
+  key          = {SUB-LINUX},
+  title        = {\texttt{repos/linux-socfpga}, local submodule},
+  note         = {Kernel source (FPGAlix only)}
+}
+
+@misc{SUB-BUILDROOT,
+  key          = {SUB-BUILDROOT},
+  title        = {\texttt{repos/buildroot}, local submodule},
+  note         = {Root filesystem source (FPGAlix only)}
+}
+
+@misc{DRV2-README,
+  key          = {DRV2-README},
+  title        = {The \texttt{camera\_driver\_2} documentation (FPGAlix only)},
+  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/sw/camera_driver_2/README.md}}
+}

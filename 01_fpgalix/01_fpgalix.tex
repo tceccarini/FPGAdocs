@@ -4,13 +4,14 @@
 \sysname{FPGAlix} interfaces an \term{OV7670} camera module with a \term{Terasic DE1-SoC} developer board through custom \term{FPGA} hardware using \term{DMA} (\term{mSGDMA}), so that transferring the video stream into memory requires no \term{CPU} involvement in the handling of individual bytes. Unlike its bare-metal successor, \sysname{FPGAsteel}, \sysname{FPGAlix} runs a full embedded \term{Linux} system (\term{Buildroot}) on the \term{HPS}: a \term{V4L2} kernel driver exposes the camera as a standard |/dev/video0| device, and a user space pipeline, |vision_core|, filters the stream and serves it out over \term{RTSP}. It also documents, step by step, the full toolchain and development environment needed to build and run it.
 
 \section{Quick Start}
+\label{sec:fpgalix-quick-start}
 
 The prebuilt SD card image already contains the bootloader, kernel, root filesystem and \term{FPGA} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
-\footnotetext{See Appendix A -- Camera Adapter Board: full analysis of the camera \term{RESET}/\term{POWER-DOWN} hardware bug and the two permanent fixes [ADAPTER-WARN].}
+\footnotetext{See Appendix~\ref{app:camera-adapter-board} -- Camera Adapter Board: full analysis of the camera \term{RESET}/\term{POWER-DOWN} hardware bug and the two permanent fixes [ADAPTER-WARN].}
 
 \subsection{Hardware needed}
 

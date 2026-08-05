@@ -1,0 +1,51 @@
+\chapter{hexip\_daemon}
+\label{chap:fpgalix-hexip-daemon}
+
+\section{Introduction}
+
+|sw/hexip_daemon| is a small daemon that displays the board's \term{IPv4} address on the \term{DE1-SoC}'s \term{7-segment} hex displays, through the |hex_display_controller| \term{Platform Designer} component, reached over the \term{LW} \term{HPS}-to-\term{FPGA} bridge.
+
+Every 3 seconds, the \term{IPv4} address of a given network interface (|eth0| by default, overridable as the first command-line argument) is re-read with |getifaddrs()|. Once an address is found, its four octets are displayed in sequence, one second each, separated by a brief blank and followed by a trailing dash, and the cycle repeats. Until an address is found (interface down, no \term{DHCP} lease yet), the display blinks a single dash instead, once a second, so that the daemon's own state remains visible even without an address to show.
+
+The display's control register is written to directly, via |mmap()| on |/dev/mem|:
+
+\begin{itemize}
+    \item bit 31 enables the display
+    \item bits [19:0] hold the decimal value shown
+    \item any value above 999999 forces a dash
+\end{itemize}
+
+\term{SIGTERM}/\term{SIGINT} are handled by turning the display off and releasing the mapping before the process exits.
+
+\section{Building}
+\label{sec:fpgalix-hexip-building}
+
+\begin{shellcode}
+cd sw/hexip_daemon
+export CROSS_COMPILE=arm-none-linux-gnueabihf-
+make
+\end{shellcode}
+
+This produces |bin/hexip_daemon|.
+
+\section{Deploying as a daemon}
+\label{sec:fpgalix-hexip-deploying}
+
+|sdcard/rootfs_overlay/| already contains what is needed, as two symlinks pointing at this component's own files:
+
+\begin{itemize}
+    \item |opt/FPGAlix/bin/hexip_daemon| $\rightarrow$ |sw/hexip_daemon/bin/hexip_daemon|, the binary built in Section~\ref{sec:fpgalix-hexip-building}
+    \item |etc/init.d/S60hexip_daemon| $\rightarrow$ |sw/hexip_daemon/init.d/S60hexip_daemon|, a \term{BusyBox}-style init script (|S60| denoting priority 60 at startup), which starts the daemon on |eth0|
+\end{itemize}
+
+Since these are symlinks, building the daemon is enough for |rootfs_overlay/| to hold its current binary; no separate install step exists. Deploying it means copying both files onto the \term{SD} card's root filesystem partition (the second partition, \term{ext4}) and rebooting the board:
+
+\begin{shellcode}
+sudo mount /dev/sdX2 /mnt
+sudo mkdir -p /mnt/opt/FPGAlix/bin
+sudo cp -L sdcard/rootfs_overlay/opt/FPGAlix/bin/hexip_daemon /mnt/opt/FPGAlix/bin/
+sudo cp -L sdcard/rootfs_overlay/etc/init.d/S60hexip_daemon /mnt/etc/init.d/
+sudo umount /mnt
+\end{shellcode}
+
+Replace |/dev/sdX2| with the \term{SD} card's actual root filesystem partition. On the next boot, the |S60| script starts the daemon automatically.

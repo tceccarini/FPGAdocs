@@ -8,6 +8,7 @@
 \usepackage[italian,english]{babel}   % English is the main document language;
                                        % Italian is only used for the cover page
 \usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{pdflscape}   % landscape pages for full-page figures (e.g. the Qsys block diagram)
 
 \usepackage{indentfirst}   % also indent the first paragraph after a heading
 \setlength{\parindent}{1em}
@@ -16,6 +17,20 @@
 \usepackage{graphicx}
 \graphicspath{{img/}}          % \includegraphics{filename} looks inside img/
 \usepackage{adjustbox}         % lets text auto-scale to fit a given width (e.g. thesis title)
+
+% SVG figures: \includesvg{name} converts img/name.svg to PDF (and PDF_TEX) at
+% compile time via inkscape, so editing an SVG only needs a recompile. The
+% generated files land in the build directory (see .latexmkrc).
+\usepackage{svg}
+\svgsetup{
+    inkscapeexe=inkscape,
+    inkscapearea=drawing,
+    inkscapeversion=1,
+    inkscapelatex=false,   % render SVG text with inkscape's own fonts, so
+                           % underscores etc. in the SVG need no LaTeX escaping
+    inkscapepath=build/svg-inkscape/,   % generated PDFs land in the build directory
+}
+\svgpath{img/}
 
 \usepackage{booktabs}          % \toprule/\midrule/\bottomrule for clean tables
 \usepackage{tabularx}          % X columns auto-wrap long content (e.g. file paths)
