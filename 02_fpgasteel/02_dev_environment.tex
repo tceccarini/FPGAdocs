@@ -72,7 +72,7 @@ export PATH="$HOME/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86_64:$PATH"
 
 Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: |openocd| and |arm-none-eabi-gcc| both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at |quartus/bin/openocd|. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including |/usr/bin|, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of |${QUARTUS_ROOTDIR}/bin|.
 
-\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (|altera-usb-blaster2.cfg|, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-debug-config}) reads it to locate |blaster\_6810.hex|, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
+\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (|altera-usb-blaster2.cfg|, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate |blaster\_6810.hex|, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
 
 Reload with |source ~/.bashrc| (or open a new shell) after editing.
 
@@ -112,8 +112,8 @@ Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group chan
     \item \term{VHDL}/\term{Verilog} linting, snippets, project awareness --- \path{teros-technology.teroshdl} (\term{TerosHDL}).
     \item \term{VHDL} syntax highlighting and language support --- \path{rjyoung.vscode-modern-vhdl-support}.
     \item \term{C/C++} \term{IntelliSense}, navigation --- \path{ms-vscode.cpptools} (+ \path{ms-vscode.cpptools-extension-pack}).
-    \item Makefile awareness (every |sw/| project builds via |make|, Section~\ref{sec:fpgasteel-makefile}) --- \path{ms-vscode.makefile-tools}.
-    \item Editing the \term{Python} debug tools shipped with some examples (e.g. |debugTools/view_frame.py|, Section~\ref{sec:fpgasteel-view-frame}) --- \path{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
+    \item Makefile awareness (every |sw/| project builds via |make|, Section~\ref{sec:fpgasteel-hello-building}) --- \path{ms-vscode.makefile-tools}.
+    \item Editing the \term{Python} debug tools shipped with some examples (e.g. |debugTools/view_frame.py|, Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}) --- \path{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
     \item Viewing the datasheet/manual \term{PDF}s referenced throughout |docs/| without leaving the editor --- \path{tomoki1207.pdf}.
 \end{itemize}
 }
@@ -121,4 +121,4 @@ Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group chan
 \section{Getting the installers}
 \label{sec:fpgasteel-getting-installers}
 
-See Chapter~\ref{chap:fpgasteel-download} for where to get \term{Quartus Prime}, the \term{ARM} toolchain, \term{OpenOCD}, \term{Eclipse}, and the \term{Ubuntu 22.04 LTS} image.
+See Chapter~\ref{chap:fpgasteel-downloads} for where to get \term{Quartus Prime}, the \term{ARM} toolchain, \term{OpenOCD}, \term{Eclipse}, and the \term{Ubuntu 22.04 LTS} image.

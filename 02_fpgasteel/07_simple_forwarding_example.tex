@@ -192,7 +192,7 @@ Each of the |count| active slots moves through the same cycle of four states, on
 \begin{figure}[p]
     \centering
     \includesvg[width=\textwidth,height=\textheight,keepaspectratio]{FPGAsteelFramepoolStates}
-    \caption{borrow()/push() are always called by the producer, pop()/giveBack() by the consumer; which side is the \term{ISR} and which is the main loop depends on the caller, and Section 7.6 shows both arrangements in use.}
+    \caption{borrow()/push() are always called by the producer, pop()/giveBack() by the consumer; which side is the \term{ISR} and which is the main loop depends on the caller, and Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works} shows both arrangements in use.}
     \label{fig:fpgasteel-framepool-states}
 \end{figure}
 \end{landscape}
@@ -213,7 +213,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
     \item |push(frame)| (producer): marks a |Busy| slot |Ready|, enqueueing it for the consumer.
     \item |pop()| (consumer): dequeues the oldest |Ready| slot and marks it |Processing|. Throws |ExceptionFramePool(QueueEmpty)| if nothing is queued.
     \item |giveBack(frame)| (consumer): marks a |Processing| slot |Free| again, closing the cycle.
-    \item |findByBuffer(bufferAddr)|: returns the |Frame| whose buffer starts at |bufferAddr|, or |nullptr| if none matches. Used by the \term{DMA} completion \term{ISR}s (Paragraphs 7.5.6, 7.5.7) to identify which slot a just-finished transfer wrote into.
+    \item |findByBuffer(bufferAddr)|: returns the |Frame| whose buffer starts at |bufferAddr|, or |nullptr| if none matches. Used by the \term{DMA} completion \term{ISR}s (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) to identify which slot a just-finished transfer wrote into.
     \item |available()|: returns the number of frames currently queued (|Ready|) for the consumer.
     \item |capacity()|: returns the pool's total number of slots.
 \end{itemize}
@@ -223,7 +223,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-prefetcher-extended-descriptor}
 
-|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{Intel/Altera, Embedded Peripherals \term{IP} User Guide [EP-IPUG] --- see Appendix B -- Bibliography.}
+|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{Intel/Altera, Embedded Peripherals \term{IP} User Guide [EP-IPUG] --- see Appendix~\ref{app:references}.}
 
 \begin{table}[htbp]
     \centering
@@ -251,7 +251,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
     \label{tab:fpgasteel-descriptor-layout}
 \end{table}
 
-The size and field order of |Descriptor|, together with the |alignas(64)| on |PrefetcherExtendedDescriptor| itself, must match this table exactly: any deviation would cause the prefetcher hardware to misinterpret the bytes it reads. Paragraph 7.5.4 covers how this layout is mapped onto the actual on-chip descriptor memory.
+The size and field order of |Descriptor|, together with the |alignas(64)| on |PrefetcherExtendedDescriptor| itself, must match this table exactly: any deviation would cause the prefetcher hardware to misinterpret the bytes it reads. Paragraph~\ref{subsec:fpgasteel-msgdma-prefetcher-memory} covers how this layout is mapped onto the actual on-chip descriptor memory.
 
 |PrefetcherExtendedDescriptor| has no explicit constructor: a default-constructed instance holds indeterminate values until |clear()| is called. Every setter throws |ExceptionMsgdma(DescriptorBusy)| if the descriptor is still owned by hardware (|OWNED_BY_HW|); the commit methods must be called last, once every other field has been set. Source: |src/PrefetcherExtendedDescriptor.{h,cpp}|.
 
@@ -306,13 +306,13 @@ Drives an |altera_msgdma| core with its prefetcher enabled: the dispatcher \term
     \item |stop()|: clears the prefetcher's \term{RUN} bit and stops the dispatcher.
     \item |deInit()|: stops both prefetcher and dispatcher (teardown).
     \item |isBusy|: returns whether the dispatcher's read/write masters are currently executing a transfer on the bus. This reflects the dispatcher only, not the prefetcher pipeline: it can read |false| between two back-to-back descriptors even while the prefetcher still has more queued. To check whether a specific descriptor's transfer has completed, poll that descriptor's |isComplete()| instead\footnote{TODO [nota 124]: footnote text was lost when the source was copy-pasted -- please supply it.}.
-    \item |registerInterrupt(callback, context)|: enables the transfer-complete \term{IRQ} in the \term{GIC} and registers |callback| to run from \term{ISR} context for any descriptor committed with the transfer-complete \term{IRQ} bit set. |callback| must not throw: exceptions inside an \term{ISR} are undefined behavior, which is why |Camera::onTransferComplete()| and |Vga::onTransferComplete()| (Paragraphs 7.5.6, 7.5.7) both wrap their body in a local try/catch instead of letting anything escape.
+    \item |registerInterrupt(callback, context)|: enables the transfer-complete \term{IRQ} in the \term{GIC} and registers |callback| to run from \term{ISR} context for any descriptor committed with the transfer-complete \term{IRQ} bit set. |callback| must not throw: exceptions inside an \term{ISR} are undefined behavior, which is why |Camera::onTransferComplete()| and |Vga::onTransferComplete()| (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) both wrap their body in a local try/catch instead of letting anything escape.
 \end{itemize}
 
 \subsection{Camera class}
 \label{subsec:fpgasteel-camera-class}
 
-|Camera| is a singleton that owns three collaborators, all by composition, not inheritance: |AvalonSCCB|, for talking to the sensor's control registers over \term{SCCB}/\term{I\textsuperscript{2}C}; |PrefetchedMSGDMA|, driving the |ov7670_video_msgdma| core\footnote{TODO [nota 125]: footnote text was lost when the source was copy-pasted -- please supply it.}; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|ov7670_prefercher_descriptor_mem|). It does not touch the \term{OV7670}'s |ov7670_pclk| reset line: releasing the sensor from reset is explicitly left to the caller (|PclkResetController|, used directly by |main()|, Section 7.6). |desc0|/|desc1|\footnote{TODO [nota 126]: footnote text was lost when the source was copy-pasted -- please supply it.} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address.
+|Camera| is a singleton that owns three collaborators, all by composition, not inheritance: |AvalonSCCB|, for talking to the sensor's control registers over \term{SCCB}/\term{I\textsuperscript{2}C}; |PrefetchedMSGDMA|, driving the |ov7670_video_msgdma| core\footnote{TODO [nota 125]: footnote text was lost when the source was copy-pasted -- please supply it.}; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|ov7670_prefercher_descriptor_mem|). It does not touch the \term{OV7670}'s |ov7670_pclk| reset line: releasing the sensor from reset is explicitly left to the caller (|PclkResetController|, used directly by |main()|, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). |desc0|/|desc1|\footnote{TODO [nota 126]: footnote text was lost when the source was copy-pasted -- please supply it.} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: |src/Camera.{h,cpp}|.
 
@@ -327,7 +327,7 @@ Source: |src/Camera.{h,cpp}|.
     \item |hasIsrFault()|: returns whether the \term{ISR} (below) caught an exception.
     \item |getIsrFaultType()|: returns the type of the exception the \term{ISR} caught; only meaningful if |hasIsrFault()| is true.
     \item |clearIsrFault()|: clears the fault flag.
-    \item |onTransferComplete()| (private, the \term{ISR}, |noexcept|): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal |m_dummyBuffer|), checks for \term{DMA} errors/early-termination/short transfer and either |push()|es the frame to the pool (good) or |giveBack()|s it (bad are discarded; Paragraph 7.3.1 covers the early-termination case). Then tries to |borrow()| a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at |m_dummyBuffer| instead, so the \term{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any exception (|ExceptionMsgdma| or otherwise) sets the fault flag above instead of propagating.
+    \item |onTransferComplete()| (private, the \term{ISR}, |noexcept|): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal |m_dummyBuffer|), checks for \term{DMA} errors/early-termination/short transfer and either |push()|es the frame to the pool (good) or |giveBack()|s it (bad are discarded; Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture} covers the early-termination case). Then tries to |borrow()| a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at |m_dummyBuffer| instead, so the \term{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any exception (|ExceptionMsgdma| or otherwise) sets the fault flag above instead of propagating.
 \end{itemize}
 
 \subsection{Vga class}
@@ -422,9 +422,9 @@ Every exception the code in this snippet can throw (|ExceptionSystem|, |Exceptio
 \label{sec:fpgasteel-simple-forwarding-references}
 
 \begin{itemize}
-    \item \textbf{[AVALON-SPEC]} Defines the \term{Avalon-ST} and \term{Avalon-MM} conventions used throughout Section 7.3 (ready/valid handshaking, \term{SOP}/\term{EOP} packet framing, byte enables).
-    \item \textbf{[EP-IPUG]} Chapter on the \term{mSGDMA} core: extended descriptor format (Table 305, ``Extended Descriptor Format when Prefetcher is Enabled'', p.\ 379; reproduced in Paragraph 7.5.3) and prefetcher operation, followed by |PrefetcherExtendedDescriptor| and |PrefetchedMSGDMA|.
-    \item \textbf{[OV7670-DS]} Register tables behind |Camera::configureSensor()| (used in Paragraph 7.5.6) and the pixel formats behind |SimpleFilters| (used in Paragraph 7.5.8).
+    \item \textbf{[AVALON-SPEC]} Defines the \term{Avalon-ST} and \term{Avalon-MM} conventions used throughout Section~\ref{sec:fpgasteel-simple-forwarding-hardware} (ready/valid handshaking, \term{SOP}/\term{EOP} packet framing, byte enables).
+    \item \textbf{[EP-IPUG]} Chapter on the \term{mSGDMA} core: extended descriptor format (Table 305, ``Extended Descriptor Format when Prefetcher is Enabled'', p.\ 379; reproduced in Paragraph~\ref{subsec:fpgasteel-prefetcher-extended-descriptor}) and prefetcher operation, followed by |PrefetcherExtendedDescriptor| and |PrefetchedMSGDMA|.
+    \item \textbf{[OV7670-DS]} Register tables behind |Camera::configureSensor()| (used in Paragraph~\ref{subsec:fpgasteel-camera-class}) and the pixel formats behind |SimpleFilters| (used in Paragraph~\ref{subsec:fpgasteel-simple-filters}).
 \end{itemize}
 
 

@@ -167,6 +167,7 @@ The clock domain crossing is performed at this point, immediately following the 
 A single-clock, 128-bit buffer \term{FIFO}, 8192 entries deep, is placed entirely within the \term{sys\_clk} domain between the width converter and \term{mSGDMA}. It accommodates timing variation between the arrival of data from the pipeline and the availability of \term{mSGDMA} to issue a burst, for example while \term{mSGDMA} is between bursts or the \term{HPS} memory bus is occupied by other traffic.
 
 \subsection{Why a dedicated \term{SDRAM} port: bypassing the \term{L3} interconnect}
+\label{sec:fpgalix-sdram-port}
 
 The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\term{MPFE}) with ten independent command ports arbitrating for a single-port memory controller: up to six of these ports are exposed directly to the \term{FPGA} fabric as the \term{FPGA}-to-\term{HPS} \term{SDRAM} interface, two are wired to the \term{L3} interconnect, and two to the \term{MPU}, the \term{ARM} cores\footnote{TODO: reference 32 was present in the source text but is missing here -- please supply it.}. Each port has its own buffering into the \term{MPFE}; a programmable arbiter then selects, by the set priority configuration, which port's pending transaction is forwarded to the memory controller.
 

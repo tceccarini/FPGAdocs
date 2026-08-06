@@ -237,7 +237,7 @@ initCore();
 // SCU + L2 + shared MMU table + CPU0's own
 Core1 & core1 = Core1::getInstance();
 core1.start();
-// bring-up sequence, Section 4.1
+// bring-up sequence, Section 10.4.1
 while (core1.getStatus() != Core1::Status::Ready
     && core1.getStatus() != Core1::Status::Error) {}
 if (core1.getStatus() == Core1::Status::Error) {
@@ -264,7 +264,7 @@ while (true) {
         CacheAwareFrame * vgaFrame = static_cast<CacheAwareFrame *>(vgaPool.borrow());
         uint64_t t0 = sys->millis();
         converter.convert(*camFrame, *vgaFrame);
-        // split across both cores, Sections 4.3-4.4
+        // split across both cores, Sections 10.4.3-10.4.4
         uint64_t t1 = sys->millis();
         camPool.giveBack(camFrame);
         vgaPool.push(vgaFrame, true);
