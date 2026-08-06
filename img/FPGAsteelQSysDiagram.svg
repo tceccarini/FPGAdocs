@@ -1,0 +1,2017 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 2200 1170"
+   font-family="Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg376"
+   sodipodi:docname="01_qsys_block_diagram.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview378"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="0.99841344"
+     inkscape:cx="1392.7096"
+     inkscape:cy="383.60862"
+     inkscape:window-width="2560"
+     inkscape:window-height="1403"
+     inkscape:window-x="2560"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g322" />
+  <defs
+     id="defs14">
+    <marker
+       id="arrow"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M0,0 L10,5 L0,10 z"
+         fill="#212529"
+         id="path2" />
+    </marker>
+    <marker
+       id="arrowGray"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="6"
+       markerHeight="6"
+       orient="auto-start-reverse">
+      <path
+         d="M0,0 L10,5 L0,10 z"
+         fill="#868e96"
+         id="path5" />
+    </marker>
+    <marker
+       id="arrowST"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M0,0 L10,5 L0,10 z"
+         fill="#7048e8"
+         id="path8" />
+    </marker>
+    <marker
+       id="arrowHps"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M0,0 L10,5 L0,10 z"
+         fill="#c2255c"
+         id="path11" />
+    </marker>
+    <marker
+       id="arrowGreen"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M0,0 L10,5 L0,10 z"
+         fill="#2f9e44"
+         id="path12" />
+    </marker>
+  </defs>
+  <g
+     id="layer-background"
+     inkscape:groupmode="layer"
+     inkscape:label="Background"
+     sodipodi:insensitive="true">
+    <rect
+       x="0"
+       y="0"
+       width="2200"
+       height="1170"
+       fill="#ffffff"
+       id="rect16" />
+  </g>
+  <g
+     id="layer-hps-peripherals"
+     inkscape:groupmode="layer"
+     inkscape:label="HPS Peripherals">
+    <!-- ================= HPS dedicated peripherals (direct pin-out, not via Avalon fabric) ================= -->
+    <!-- Arrow direction follows the actual signal directions declared in FPGAlix.vhd: -->
+    <!-- both ends = bidirectional (mix of in/out lines, or a shared inout pin); one end = pure in or pure out. -->
+    <!-- 1 Ethernet PHY — bidirectional (RX_*/MDIO in, TX_*/MDC out, INT_N inout) -->
+    <rect
+       x="40"
+       y="130"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect18" />
+    <text
+       x="150"
+       y="147"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text20">Ethernet PHY (RGMII)</text>
+    <text
+       x="150"
+       y="162"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text22">EMAC1 · HPS_ENET_*</text>
+    <line
+       x1="260"
+       y1="150"
+       x2="300"
+       y2="150"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line24" />
+    <!-- 2 USB OTG — bidirectional (CLKOUT/DIR/NXT in, STP out, DATA/CONV_USB_N inout) -->
+    <rect
+       x="40"
+       y="176"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect26" />
+    <text
+       x="150"
+       y="193"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text28">USB OTG (ULPI)</text>
+    <text
+       x="150"
+       y="208"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text30">USB1 · HPS_USB_*, HPS_CONV_USB_N</text>
+    <line
+       x1="260"
+       y1="196"
+       x2="300"
+       y2="196"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line32" />
+    <!-- 3 microSD — bidirectional (CLK out, CMD/DATA inout) -->
+    <rect
+       x="40"
+       y="222"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect34" />
+    <text
+       x="150"
+       y="239"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text36">microSD Card</text>
+    <text
+       x="150"
+       y="254"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text38">SD/MMC · HPS_SD_*</text>
+    <line
+       x1="260"
+       y1="242"
+       x2="300"
+       y2="242"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line40" />
+    <!-- 4 QSPI Flash — bidirectional (DCLK/NCSO out, DATA inout) -->
+    <rect
+       x="40"
+       y="268"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect42" />
+    <text
+       x="150"
+       y="285"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text44">QSPI Flash</text>
+    <text
+       x="150"
+       y="300"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text46">HPS_FLASH_*</text>
+    <line
+       x1="260"
+       y1="288"
+       x2="300"
+       y2="288"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line48" />
+    <!-- 5 UART0 — bidirectional (RX in, TX out) -->
+    <rect
+       x="40"
+       y="314"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect50" />
+    <text
+       x="150"
+       y="331"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text52">UART0 — Serial Console</text>
+    <text
+       x="150"
+       y="346"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text54">HPS_UART_RX/TX</text>
+    <line
+       x1="260"
+       y1="334"
+       x2="300"
+       y2="334"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line56" />
+    <!-- 6 SPI1 — bidirectional (CLK/MOSI out, MISO in, SS inout) -->
+    <rect
+       x="40"
+       y="360"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect58" />
+    <text
+       x="150"
+       y="377"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text60">SPI1 (header)</text>
+    <text
+       x="150"
+       y="392"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text62">HPS_SPIM_*</text>
+    <line
+       x1="260"
+       y1="380"
+       x2="300"
+       y2="380"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line64" />
+    <!-- 7 I2C0 G-Sensor — bidirectional (SCL/SDA/INT all inout) -->
+    <rect
+       x="40"
+       y="406"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect66" />
+    <text
+       x="150"
+       y="423"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text68">I2C0 — G-Sensor</text>
+    <text
+       x="150"
+       y="438"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text70">HPS_I2C1_SCLK/SDAT, HPS_GSENSOR_INT</text>
+    <line
+       x1="260"
+       y1="426"
+       x2="300"
+       y2="426"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line72" />
+    <!-- 8 I2C1 header — bidirectional (all inout) -->
+    <rect
+       x="40"
+       y="452"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect74" />
+    <text
+       x="150"
+       y="469"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text76">I2C1 — GPIO header</text>
+    <text
+       x="150"
+       y="484"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text78">HPS_I2C2_SCLK/SDAT, HPS_I2C_CONTROL</text>
+    <line
+       x1="260"
+       y1="472"
+       x2="300"
+       y2="472"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line80" />
+    <!-- 9 HPS Key — input only (button, into the HPS) -->
+    <rect
+       x="40"
+       y="498"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect82" />
+    <text
+       x="150"
+       y="515"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text84">HPS Key</text>
+    <text
+       x="150"
+       y="530"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text86">HPS_KEY_N (button, in)</text>
+    <line
+       x1="260"
+       y1="518"
+       x2="300"
+       y2="518"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-end="url(#arrowHps)"
+       id="line88" />
+    <!-- 10 HPS LED — output only (driven by the HPS) -->
+    <rect
+       x="40"
+       y="544"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect90" />
+    <text
+       x="150"
+       y="561"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text92">HPS LED</text>
+    <text
+       x="150"
+       y="576"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text94">HPS_LED (out)</text>
+    <line
+       x1="260"
+       y1="564"
+       x2="300"
+       y2="564"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       id="line96" />
+    <!-- 11 GPIO header — bidirectional (generic inout) -->
+    <rect
+       x="40"
+       y="590"
+       width="220"
+       height="40"
+       rx="6"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       stroke-width="1.5"
+       id="rect98" />
+    <text
+       x="150"
+       y="607"
+       font-size="12"
+       font-weight="bold"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text100">GPIO (header)</text>
+    <text
+       x="150"
+       y="622"
+       font-size="9.5"
+       fill="#862e52"
+       text-anchor="middle"
+       id="text102">HPS_LTC_GPIO</text>
+    <line
+       x1="260"
+       y1="610"
+       x2="300"
+       y2="610"
+       stroke="#c2255c"
+       stroke-width="2"
+       marker-start="url(#arrowHps)"
+       marker-end="url(#arrowHps)"
+       id="line104" />
+  </g>
+  <g
+     transform="translate(263.44565,-18.756008)"
+     id="g322"
+     inkscape:groupmode="layer"
+     inkscape:label="Diagram">
+    <!-- ================= HPS container ================= -->
+    <rect
+       x="40"
+       y="130"
+       width="470"
+       height="520"
+       rx="10"
+       fill="#f8f9fa"
+       stroke="#495057"
+       stroke-width="2"
+       id="rect106"
+       sodipodi:insensitive="true" />
+    <text
+       x="62"
+       y="168"
+       font-size="26px"
+       font-weight="bold"
+       fill="#495057"
+       opacity="0.55"
+       id="text108">HPS</text>
+    <!-- On-chip memory -->
+    <rect
+       x="629.22852"
+       y="286.24597"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect110" />
+    <text
+       x="744.22852"
+       y="306.24597"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text112">On-Chip Memory</text>
+    <text
+       x="744.22852"
+       y="322.24597"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text114">onchip_memory2_0 · 64 KiB</text>
+    <!-- H2F port tab -->
+    <rect
+       x="466.37305"
+       y="228.38194"
+       width="90"
+       height="24"
+       rx="4"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect120" />
+    <text
+       x="511.37305"
+       y="244.38194"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text122">H2F</text>
+    <!-- H2F bus: one line out of the port, one drop per on-chip memory it reaches; stops at the last drop, no further -->
+    <line
+       x1="556.37305"
+       y1="240.38194"
+       x2="1324.7489"
+       y2="240.38194"
+       stroke="#212529"
+       stroke-width="2.5"
+       id="line116" />
+    <text
+       x="570"
+       y="234"
+       font-size="11px"
+       fill="#495057"
+       id="text118">32</text>
+    <line
+       x1="744.22852"
+       y1="240.38194"
+       x2="744.22852"
+       y2="286.24597"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="line119" />
+    <line
+       x1="1013.59"
+       y1="240.38194"
+       x2="1013.59"
+       y2="291.72693"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="line120-2" />
+    <line
+       x1="1324.7489"
+       y1="240.38194"
+       x2="1324.7489"
+       y2="295.82755"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="line121" />
+    <!-- SDRAM Controller Subsystem — hugs the HPS right inner edge, F2H ports straddle it -->
+    <rect
+       x="195"
+       y="420"
+       width="295"
+       height="195"
+       rx="8"
+       fill="#eef1f8"
+       stroke="#495057"
+       stroke-width="1.5"
+       id="rect124"
+       sodipodi:insensitive="true" />
+    <text
+       x="342"
+       y="440"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#343a40"
+       text-anchor="middle"
+       id="text126">SDRAM Controller Subsystem</text>
+    <rect
+       x="215"
+       y="460"
+       width="140"
+       height="55"
+       rx="5"
+       fill="#d0ebff"
+       stroke="#1971c2"
+       stroke-width="1.5"
+       id="rect128" />
+    <text
+       x="285"
+       y="492"
+       font-size="13px"
+       font-weight="bold"
+       fill="#0b4a8f"
+       text-anchor="middle"
+       id="text130">DDR PHY</text>
+    <line
+       x1="285"
+       y1="515"
+       x2="285"
+       y2="660"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="line132" />
+    <rect
+       x="230"
+       y="660"
+       width="110"
+       height="45"
+       rx="5"
+       fill="#d0ebff"
+       stroke="#1971c2"
+       stroke-width="1.5"
+       id="rect134" />
+    <text
+       x="285"
+       y="688"
+       font-size="13px"
+       font-weight="bold"
+       fill="#0b4a8f"
+       text-anchor="middle"
+       id="text136">DDR3</text>
+    <!-- F2H ports (both 128-bit) — straddle the SDRAM subsystem's right edge AND the HPS boundary -->
+    <rect
+       x="465"
+       y="440"
+       width="90"
+       height="26"
+       rx="4"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       stroke-width="1.5"
+       id="rect138" />
+    <text
+       x="510"
+       y="457"
+       font-size="12px"
+       font-weight="bold"
+       fill="#495057"
+       text-anchor="middle"
+       id="text140">F2H</text>
+    <rect
+       x="465"
+       y="515.06049"
+       width="90"
+       height="26"
+       rx="4"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect142" />
+    <text
+       x="510"
+       y="532.06049"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text144">F2H</text>
+    <!-- connector stubs from the subsystem box to the F2H tabs -->
+    <line
+       x1="490"
+       y1="453"
+       x2="465"
+       y2="453"
+       stroke="#495057"
+       stroke-width="1.5"
+       id="line146" />
+    <line
+       x1="490"
+       y1="528.06049"
+       x2="465"
+       y2="528.06049"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="line148" />
+    <!-- H2F-LW port tab -->
+    <rect
+       x="-184.8445"
+       y="274.17633"
+       width="100"
+       height="26"
+       rx="4"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect150"
+       transform="rotate(-89.881553)" />
+    <text
+       x="-134.84448"
+       y="291.17633"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text152"
+       transform="rotate(-89.881553)">H2F-LW</text>
+    <text
+       x="300"
+       y="49"
+       font-size="11px"
+       fill="#495057"
+       id="text154">32</text>
+    <!-- ================= System Console (JTAG debug master) ================= -->
+    <rect
+       x="650"
+       y="425"
+       width="190"
+       height="56"
+       rx="6"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       stroke-width="1.5"
+       id="rect156" />
+    <text
+       x="745"
+       y="448"
+       font-size="13px"
+       font-weight="bold"
+       fill="#495057"
+       text-anchor="middle"
+       id="text158">JTAG System Console</text>
+    <text
+       x="745"
+       y="465"
+       font-size="11px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text160">f2sdram_only_master (JTAG)</text>
+    <line
+       x1="555"
+       y1="453"
+       x2="648"
+       y2="453"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-start="url(#arrow)"
+       marker-end="url(#arrow)"
+       id="line162" />
+    <text
+       x="570"
+       y="446"
+       font-size="11px"
+       fill="#495057"
+       id="text164">128</text>
+    <!-- ================= mSGDMA ================= -->
+    <rect
+       x="1209.7489"
+       y="601.88226"
+       width="230"
+       height="110"
+       rx="8"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.8"
+       id="rect166" />
+    <text
+       x="1324.7489"
+       y="629.88226"
+       font-size="14px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text168">mSGDMA</text>
+    <text
+       x="1324.7489"
+       y="646.88226"
+       font-size="11px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text170">ov7670_video_msgdma</text>
+    <text
+       x="1324.7489"
+       y="663.88226"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text172">Avalon-ST → Memory-Mapped DMA</text>
+    <text
+       x="1324.7489"
+       y="679.88226"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text174">burst ≤ 512, 64-bit · prefetcher enabled</text>
+    <!-- H2F-LW bus line -->
+    <path
+       d="M 287.17633,84.845 V 55 H 1853.7233"
+       fill="none"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="5, 3"
+       id="line176" />
+    <!-- branch down to mSGDMA descriptor/response port, routed via the right edge to clear ov7670_prefercher_descriptor_mem, now centered above it -->
+    <path
+       d="M 1460,55 V 656.88226 H 1439.7489"
+       fill="none"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="5, 3"
+       marker-end="url(#arrowGray)"
+       id="line178" />
+    <!-- H2F-LW also reaches vga_msgdma's prefetcher_csr/response/csr: clean L into the right edge, mirroring ov7670's side (its left edge is taken by the F2H data-read arrow) -->
+    <path
+       d="M 1150,55 V 654.99695 H 1128.59"
+       fill="none"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="5, 3"
+       marker-end="url(#arrowGray)"
+       id="line179" />
+    <text
+       x="1156"
+       y="550"
+       font-size="11px"
+       fill="#495057"
+       id="text181">prefetcher_csr / response / csr</text>
+    <text
+       x="1454"
+       y="470"
+       font-size="11px"
+       fill="#495057"
+       text-anchor="end"
+       id="text180">prefetcher_csr / response / csr</text>
+    <!-- mSGDMA -> F2H(64): mSGDMA is the write master, pushing frame data out to HPS SDRAM (Avalon-MM) -->
+    <path
+       d="M 1209.7489,656.88226 H 1195 V 528.06049 H 555"
+       fill="none"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="path182" />
+    <text
+       x="700"
+       y="520"
+       font-size="11px"
+       fill="#495057"
+       id="text184"
+       inkscape:transform-center-x="2.1344856"
+       inkscape:transform-center-y="21.555253">data (64, write)</text>
+    <!-- ================= Video capture pipeline (Avalon-ST, pclk domain crossing to sys_clk) ================= -->
+    <!-- data flows bottom-to-top: camera -> dc_fifo -> st_adapter -> mSGDMA st_sink -->
+    <!-- no sc_fifo_0 here: the prefetcher-enabled mSGDMA re-arms itself, so the software-turnaround -->
+    <!-- buffer FPGAlix needed between the width adapter and the mSGDMA has no counterpart -->
+    <!-- st_adapter_0 -> mSGDMA, direct (sc_fifo_0 removed) -->
+    <line
+       x1="1331.6307"
+       y1="780.35095"
+       x2="1331.6307"
+       y2="709.19922"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line194" />
+    <text
+       x="1339.6307"
+       y="710.35095"
+       font-size="11px"
+       fill="#5f3dc4"
+       id="text188">64</text>
+    <rect
+       x="1216.6307"
+       y="780.35095"
+       width="230"
+       height="42"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect196" />
+    <text
+       x="1331.6307"
+       y="806.35095"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text198">ov7670_st_adapter — 8 → 64 bit</text>
+    <!-- dc_fifo_0 -> st_adapter_0 -->
+    <line
+       x1="1331.6307"
+       y1="872.35095"
+       x2="1331.6307"
+       y2="822.35095"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line200" />
+    <!-- dc_fifo: clock-domain crossing, split fill -->
+    <rect
+       x="1216.6307"
+       y="872.35095"
+       width="115"
+       height="46"
+       rx="6"
+       fill="#fff3e0"
+       stroke="#e8590c"
+       stroke-width="1.5"
+       id="rect202" />
+    <rect
+       x="1331.6307"
+       y="872.35095"
+       width="115"
+       height="46"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect204" />
+    <text
+       x="1331.6307"
+       y="891.35095"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#343a40"
+       text-anchor="middle"
+       id="text208">ov_7670_video_dc_fifo</text>
+    <text
+       x="1276.6307"
+       y="910.35095"
+       font-size="10px"
+       fill="#8a3800"
+       text-anchor="middle"
+       id="text210">pclk in</text>
+    <text
+       x="1388.6307"
+       y="910.35095"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text212">sys_clk out</text>
+    <!-- ov7670_data_interface_0 -> dc_fifo_0 -->
+    <line
+       x1="1331.6307"
+       y1="968.35095"
+       x2="1331.6307"
+       y2="918.35095"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line214" />
+    <text
+       x="1339.6307"
+       y="946.35089"
+       font-size="10px"
+       fill="#5f3dc4"
+       id="text216">8</text>
+    <text
+       x="1336.9484"
+       y="848.73456"
+       font-size="10px"
+       fill="#5f3dc4"
+       id="text216-6">8</text>
+    <rect
+       x="1216.6307"
+       y="968.35095"
+       width="230"
+       height="34"
+       rx="6"
+       fill="#fff3e0"
+       stroke="#e8590c"
+       stroke-width="1.5"
+       id="rect218" />
+    <text
+       x="1331.6307"
+       y="990.35095"
+       font-size="12px"
+       font-weight="bold"
+       fill="#8a3800"
+       text-anchor="middle"
+       id="text220">★ ov7670_video_interface</text>
+    <!-- ================= MM Bridge (fans out to LW-bridge peripherals) — moved right for clearance ================= -->
+    <line
+       x1="1853.7233"
+       y1="55"
+       x2="1853.7233"
+       y2="169.56592"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="5, 3"
+       marker-end="url(#arrowGray)"
+       id="line222" />
+    <rect
+       x="1818.7233"
+       y="169.56592"
+       width="70"
+       height="530"
+       rx="8"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.8"
+       id="rect224" />
+    <text
+       x="-431.4465"
+       y="1860.6852"
+       font-size="14px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       transform="rotate(-90)"
+       id="text226">MM Bridge (mm_bridge_0)</text>
+    <!-- Peripheral rows -->
+    <!-- 1 SysID -->
+    <line
+       x1="1818.7233"
+       y1="192.18147"
+       x2="1724.5204"
+       y2="192.18147"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line228" />
+    <rect
+       x="1494.5204"
+       y="167.18147"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       stroke-width="1.5"
+       id="rect230" />
+    <text
+       x="1609.5203"
+       y="188.18147"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#495057"
+       text-anchor="middle"
+       id="text232">System ID</text>
+    <text
+       x="1609.5203"
+       y="205.18147"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text234">sysid_qsys_0</text>
+    <!-- 2 JTAG UART -->
+    <line
+       x1="1818.7233"
+       y1="252.18147"
+       x2="1724.5204"
+       y2="252.18147"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line236" />
+    <rect
+       x="1494.5204"
+       y="227.18147"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       stroke-width="1.5"
+       id="rect238" />
+    <text
+       x="1609.5203"
+       y="248.18147"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#495057"
+       text-anchor="middle"
+       id="text240">JTAG UART</text>
+    <text
+       x="1609.5203"
+       y="265.18152"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text242">jtag_uart</text>
+    <!-- 3 Button PIO -->
+    <line
+       x1="1818.7233"
+       y1="312.18152"
+       x2="1724.5204"
+       y2="312.18152"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line244" />
+    <rect
+       x="1494.5204"
+       y="287.18152"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e6fcf5"
+       stroke="#0ca678"
+       stroke-width="1.5"
+       id="rect246" />
+    <text
+       x="1609.5203"
+       y="308.18152"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text248">Button PIO — KEY_N[3:0]</text>
+    <text
+       x="1609.5203"
+       y="325.18152"
+       font-size="10.5px"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text250">fpga_button_pio</text>
+    <!-- 4 Switches PIO -->
+    <line
+       x1="1818.7233"
+       y1="372.18149"
+       x2="1724.5204"
+       y2="372.18149"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line252" />
+    <rect
+       x="1494.5204"
+       y="347.18149"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e6fcf5"
+       stroke="#0ca678"
+       stroke-width="1.5"
+       id="rect254" />
+    <text
+       x="1609.5203"
+       y="368.18149"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text256">Switches PIO — SW[9:0]</text>
+    <text
+       x="1609.5203"
+       y="385.18149"
+       font-size="10.5px"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text258">fpga_dipsw_pio</text>
+    <!-- 5 LED PIO -->
+    <line
+       x1="1818.7233"
+       y1="432.18149"
+       x2="1724.5204"
+       y2="432.18149"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line260" />
+    <rect
+       x="1494.5204"
+       y="407.18149"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e6fcf5"
+       stroke="#0ca678"
+       stroke-width="1.5"
+       id="rect262" />
+    <text
+       x="1609.5203"
+       y="428.18149"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text264">LED PIO — LEDR[9:0]</text>
+    <text
+       x="1609.5203"
+       y="445.18149"
+       font-size="10.5px"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text266">fpga_led_pio</text>
+    <!-- 6 Hex Display Controller (custom) -->
+    <line
+       x1="1818.7233"
+       y1="492.18149"
+       x2="1724.5204"
+       y2="492.18149"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line268" />
+    <rect
+       x="1494.5204"
+       y="467.18149"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e6fcf5"
+       stroke="#0ca678"
+       stroke-width="1.5"
+       id="rect270" />
+    <text
+       x="1609.5203"
+       y="488.18149"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text272">★ Hex Display Ctrl — HEX0..5_N</text>
+    <text
+       x="1609.5203"
+       y="505.18146"
+       font-size="10.5px"
+       fill="#08543d"
+       text-anchor="middle"
+       id="text274">hex_display_controller_0</text>
+    <!-- 7 Avalon I2C for OV7670 -->
+    <line
+       x1="1818.7233"
+       y1="552.18146"
+       x2="1724.5204"
+       y2="552.18146"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line276" />
+    <rect
+       x="1494.5204"
+       y="527.18146"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect278" />
+    <text
+       x="1609.5203"
+       y="548.18146"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text280">Avalon I2C (SCCB)</text>
+    <text
+       x="1609.5203"
+       y="565.18146"
+       font-size="10.5px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text282">ov7670_ctrl_interface</text>
+    <!-- 8 Interrupt Latency Counter -->
+    <line
+       x1="1818.7233"
+       y1="612.18146"
+       x2="1724.5204"
+       y2="612.18146"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line284" />
+    <rect
+       x="1494.5204"
+       y="587.18146"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       stroke-width="1.5"
+       id="rect286" />
+    <text
+       x="1609.5203"
+       y="608.18146"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#495057"
+       text-anchor="middle"
+       id="text288">Interrupt Latency Counter</text>
+    <text
+       x="1609.5203"
+       y="625.18146"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text290">ILC — debug aid</text>
+    <!-- 9 PCLK Reset Controller (custom, direct on MM bridge) -->
+    <line
+       x1="1818.7233"
+       y1="672.18146"
+       x2="1724.5204"
+       y2="672.18146"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line292" />
+    <rect
+       x="1494.5204"
+       y="647.18146"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect294" />
+    <text
+       x="1609.5203"
+       y="668.18146"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text296">★ PCLK Reset Controller</text>
+    <text
+       x="1609.5203"
+       y="685.18146"
+       font-size="10.5px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text298">ov7670_PCLK_reset_controller · sys_mm</text>
+    <!-- MM-Crossing Bridge — clock-domain crossing element (split fill, like dc_fifo_0), aligned with ov7670_data_interface_0's row -->
+    <!-- clean L from the MM Bridge bar's bottom edge into MM-Crossing Bridge's right edge, centered on both -->
+    <path
+       d="M 1853.7233,699.56592 V 985.35089 H 1676.6307"
+       fill="none"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="path300" />
+    <rect
+       x="1496.6307"
+       y="948.35089"
+       width="90"
+       height="74"
+       rx="6"
+       fill="#fff3e0"
+       stroke="#e8590c"
+       stroke-width="1.5"
+       id="rect302" />
+    <rect
+       x="1586.6307"
+       y="948.35089"
+       width="90"
+       height="74"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect304" />
+    <text
+       x="1586.6307"
+       y="970.35095"
+       font-size="12px"
+       font-weight="bold"
+       fill="#343a40"
+       text-anchor="middle"
+       id="text308">MM-Crossing Bridge</text>
+    <text
+       x="1586.6307"
+       y="987.35095"
+       font-size="8.3px"
+       fill="#343a40"
+       text-anchor="middle"
+       id="text310">ov7670_AvalonMM_clock_bridge</text>
+    <text
+       x="1541.6307"
+       y="1008.351"
+       font-size="10px"
+       fill="#8a3800"
+       text-anchor="middle"
+       id="text312">pclk</text>
+    <text
+       x="1631.6307"
+       y="1008.351"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text314">sys_clk</text>
+    <!-- Cross Bridge -> ov7670_data_interface_0 (same physical block as bottom of pipeline), both on the same row -->
+    <line
+       x1="1496.6307"
+       y1="985.35095"
+       x2="1448.6307"
+       y2="985.35095"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line316" />
+    <text
+       x="1472.6307"
+       y="940.35101"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text318">ctrl / stat_dropped_cnt</text>
+    <text
+       x="1920"
+       y="1140"
+       font-size="10px"
+       fill="#adb5bd"
+       text-anchor="end"
+       id="text320">FPGAsteel — soc_system.qsys (forked from FPGAlix)</text>
+    <!-- ================= On-chip descriptor RAM for the capture mSGDMA's prefetcher (new) ================= -->
+    <rect
+       x="1209.7489"
+       y="295.82755"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect400" />
+    <text
+       x="1324.7489"
+       y="315.82755"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text402">On-Chip Memory</text>
+    <text
+       x="1324.7489"
+       y="331.82755"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text404">ov7670_prefercher_descriptor_mem</text>
+    <line
+       x1="1324.7489"
+       y1="345.82755"
+       x2="1324.7489"
+       y2="601.88226"
+       stroke="#2f9e44"
+       stroke-width="2.5"
+       marker-end="url(#arrowGreen)"
+       id="line406" />
+    <!-- ================= VGA output pipeline (new, no counterpart in FPGAlix) ================= -->
+    <!-- data flows top-to-bottom: mSGDMA (reads DDR3) -> dc_fifo -> repacker -> vga_controller -->
+    <!-- On-chip descriptor RAM for the VGA mSGDMA's prefetcher -->
+    <rect
+       x="898.58997"
+       y="291.72693"
+       width="230"
+       height="50"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect410" />
+    <text
+       x="1013.59"
+       y="311.72696"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text412">On-Chip Memory</text>
+    <text
+       x="1013.59"
+       y="327.72693"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text414">vga_prefercher_descriptor_mem</text>
+    <line
+       x1="1013.59"
+       y1="341.72693"
+       x2="1013.59"
+       y2="599.99695"
+       stroke="#2f9e44"
+       stroke-width="2.5"
+       marker-end="url(#arrowGreen)"
+       id="line416" />
+    <!-- dedicated F2H port for the VGA read path (third dedicated SDRAM port, alongside f2h_sdram1 used by ov7670_video_msgdma) -->
+    <text
+       x="509.79733"
+       y="602"
+       font-size="9px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text424">f2h_sdram2_data (new)</text>
+    <!-- vga_msgdma -->
+    <rect
+       x="898.58997"
+       y="599.99695"
+       width="230"
+       height="110"
+       rx="8"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.8"
+       id="rect430" />
+    <text
+       x="1013.59"
+       y="627.99695"
+       font-size="14px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text432">mSGDMA</text>
+    <text
+       x="1013.59"
+       y="644.99695"
+       font-size="11px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text434">vga_msgdma</text>
+    <text
+       x="1013.59"
+       y="661.99695"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text436">Memory-Mapped → Avalon-ST DMA</text>
+    <text
+       x="1013.59"
+       y="677.99695"
+       font-size="10.5px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text438">burst ≤ 512, 64-bit · prefetcher enabled</text>
+    <!-- vga_msgdma -> vga_dc_fifo -->
+    <line
+       x1="1013.59"
+       y1="709.99695"
+       x2="1013.59"
+       y2="759.99695"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line440" />
+    <text
+       x="1021.59"
+       y="737.99695"
+       font-size="11px"
+       fill="#5f3dc4"
+       id="text442">64</text>
+    <!-- vga_dc_fifo: clock-domain crossing, split fill (sys_clk in, vga_clk out) -->
+    <rect
+       x="898.58997"
+       y="759.99695"
+       width="115"
+       height="46"
+       rx="6"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect444" />
+    <rect
+       x="1013.59"
+       y="759.99695"
+       width="115"
+       height="46"
+       rx="6"
+       fill="#f8f0fc"
+       stroke="#9c36b5"
+       stroke-width="1.5"
+       id="rect446" />
+    <rect
+       x="898.58997"
+       y="759.99695"
+       width="230"
+       height="46"
+       rx="6"
+       fill="none"
+       stroke="#343a40"
+       stroke-width="1.2"
+       stroke-dasharray="2, 2"
+       id="rect448"
+       sodipodi:insensitive="true" />
+    <text
+       x="1013.59"
+       y="778.99695"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#343a40"
+       text-anchor="middle"
+       id="text450">vga_dc_fifo</text>
+    <text
+       x="955.58997"
+       y="797.99695"
+       font-size="10px"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text452">sys_clk in</text>
+    <text
+       x="1070.59"
+       y="797.99695"
+       font-size="10px"
+       fill="#6a1b7a"
+       text-anchor="middle"
+       id="text454">vga_clk out</text>
+    <!-- vga_dc_fifo -> vga_64_to_24_repacker -->
+    <line
+       x1="1013.59"
+       y1="805.99695"
+       x2="1013.59"
+       y2="851.99695"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line456" />
+    <text
+       x="1021.59"
+       y="831.99695"
+       font-size="11px"
+       fill="#5f3dc4"
+       id="text458">64</text>
+    <!-- vga_64_to_24_repacker (new custom IP, runs entirely in the vga_clk domain) -->
+    <rect
+       x="898.58997"
+       y="851.99695"
+       width="230"
+       height="42"
+       rx="6"
+       fill="#f8f0fc"
+       stroke="#9c36b5"
+       stroke-width="1.5"
+       id="rect460" />
+    <text
+       x="1013.59"
+       y="877.99695"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#6a1b7a"
+       text-anchor="middle"
+       id="text462">★ vga_64_to_24_repacker — 64 → 24 bit</text>
+    <!-- vga_64_to_24_repacker -> vga_controller -->
+    <line
+       x1="1013.59"
+       y1="893.99695"
+       x2="1013.59"
+       y2="943.99695"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line464" />
+    <text
+       x="1021.59"
+       y="921.99695"
+       font-size="11px"
+       fill="#5f3dc4"
+       id="text466">24</text>
+    <!-- vga_controller: standard Altera University Program IP, drives the VGA connector directly -->
+    <rect
+       x="898.58997"
+       y="943.99695"
+       width="230"
+       height="56"
+       rx="6"
+       fill="#f8f0fc"
+       stroke="#9c36b5"
+       stroke-width="1.5"
+       id="rect468" />
+    <text
+       x="1013.59"
+       y="963.99695"
+       font-size="12.5px"
+       font-weight="bold"
+       fill="#6a1b7a"
+       text-anchor="middle"
+       id="text470">vga_controller</text>
+    <text
+       x="1013.59"
+       y="979.99695"
+       font-size="9.5px"
+       fill="#6a1b7a"
+       text-anchor="middle"
+       id="text472">drives VGA_R/G/B, HS/VS,</text>
+    <text
+       x="1013.59"
+       y="992.99695"
+       font-size="9.5px"
+       fill="#6a1b7a"
+       text-anchor="middle"
+       id="text474">CLK, BLANK_N, SYNC_N (DB15)</text>
+    <!-- VGA clock generation: vga_pll + vga_reset_syncronizer, both new, no counterpart in FPGAlix -->
+    <!-- vga_pll / vga_reset_syncronizer intentionally not drawn here: this figure is about the datapath,
+         not clock generation. See Section 4 (text) for both, and the vga_clk legend entry below. -->
+    <rect
+       x="464.79733"
+       y="560"
+       width="90"
+       height="26"
+       rx="4"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="rect142-3" />
+    <text
+       x="509.79733"
+       y="577"
+       font-size="12px"
+       font-weight="bold"
+       fill="#1c2e6b"
+       text-anchor="middle"
+       id="text144-6">F2H</text>
+    <line
+       x1="489.79733"
+       y1="573"
+       x2="464.79733"
+       y2="573"
+       stroke="#3b5bdb"
+       stroke-width="1.5"
+       id="line148-7" />
+    <!-- F2H (f2h_sdram2_data) -> vga_msgdma: vga_msgdma is the read master, pulling frame data from HPS SDRAM -->
+    <path
+       d="M 554.79733,573 H 850 V 655 H 898.58997"
+       fill="none"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="path429" />
+    <text
+       x="700"
+       y="566"
+       font-size="11px"
+       fill="#495057"
+       text-anchor="middle"
+       id="text429-2">data (64, read)</text>
+  </g>
+  <!-- ================= Legend — bottom-left of the canvas, with margin below the HPS peripheral column ================= -->
+  <g
+     transform="translate(36.881618,793.76699)"
+     id="g374"
+     inkscape:groupmode="layer"
+     inkscape:label="Legend">
+    <rect
+       x="0"
+       y="0"
+       width="430"
+       height="356"
+       rx="8"
+       fill="#ffffff"
+       stroke="#dee2e6"
+       stroke-width="1.2"
+       id="rect324"
+       sodipodi:insensitive="true" />
+    <text
+       x="16"
+       y="24"
+       font-size="13px"
+       font-weight="bold"
+       fill="#212529"
+       id="text326">Legend</text>
+    <rect
+       x="16"
+       y="38"
+       width="18"
+       height="14"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       id="rect328" />
+    <text
+       x="42"
+       y="49"
+       font-size="11.5px"
+       fill="#212529"
+       id="text330">sys_clk domain (clk_0, 50 MHz)</text>
+    <rect
+       x="16"
+       y="60"
+       width="18"
+       height="14"
+       fill="#fff3e0"
+       stroke="#e8590c"
+       id="rect332" />
+    <text
+       x="42"
+       y="71"
+       font-size="11.5px"
+       fill="#212529"
+       id="text334">pclk domain (camera pixel clock)</text>
+    <rect
+       x="16"
+       y="82"
+       width="18"
+       height="14"
+       fill="#f8f0fc"
+       stroke="#9c36b5"
+       id="rect337" />
+    <text
+       x="42"
+       y="93"
+       font-size="11.5px"
+       fill="#212529"
+       id="text335">vga_clk domain (vga_pll, 25 MHz — new in FPGAsteel)</text>
+    <rect
+       x="16"
+       y="104"
+       width="18"
+       height="14"
+       fill="#e6fcf5"
+       stroke="#0ca678"
+       id="rect336" />
+    <text
+       x="42"
+       y="115"
+       font-size="11.5px"
+       fill="#212529"
+       id="text338">Board I/O (DE1-SoC LEDs / switches / keys / HEX)</text>
+    <rect
+       x="16"
+       y="126"
+       width="18"
+       height="14"
+       fill="#f1f3f5"
+       stroke="#868e96"
+       id="rect340" />
+    <text
+       x="42"
+       y="137"
+       font-size="11.5px"
+       fill="#212529"
+       id="text342">System / debug (sysid, JTAG UART, ILC, JTAG System Console)</text>
+    <rect
+       x="16"
+       y="148"
+       width="18"
+       height="14"
+       fill="#d0ebff"
+       stroke="#1971c2"
+       id="rect344" />
+    <text
+       x="42"
+       y="159"
+       font-size="11.5px"
+       fill="#212529"
+       id="text346">Off-chip memory (HPS DDR3)</text>
+    <rect
+       x="16"
+       y="170"
+       width="18"
+       height="14"
+       fill="#fff0f6"
+       stroke="#c2255c"
+       id="rect348" />
+    <text
+       x="42"
+       y="181"
+       font-size="11.5px"
+       fill="#212529"
+       id="text350">HPS dedicated peripheral (direct pin-out, not via Avalon fabric)</text>
+    <text
+       x="16"
+       y="204"
+       font-size="14px"
+       fill="#212529"
+       id="text352">★</text>
+    <text
+       x="42"
+       y="204"
+       font-size="11.5px"
+       fill="#212529"
+       id="text354">Custom Avalon IP (this project) — see qsys_components/README.md</text>
+    <line
+       x1="16"
+       y1="226"
+       x2="46"
+       y2="226"
+       stroke="#212529"
+       stroke-width="2.5"
+       marker-end="url(#arrow)"
+       id="line356" />
+    <text
+       x="54"
+       y="230"
+       font-size="11.5px"
+       fill="#212529"
+       id="text358">Avalon-MM data path (width in bits labelled)</text>
+    <line
+       x1="16"
+       y1="248"
+       x2="46"
+       y2="248"
+       stroke="#7048e8"
+       stroke-width="2.5"
+       marker-end="url(#arrowST)"
+       id="line360" />
+    <text
+       x="54"
+       y="252"
+       font-size="11.5px"
+       fill="#212529"
+       id="text362">Avalon-ST data path (video pixel stream)</text>
+    <line
+       x1="16"
+       y1="270"
+       x2="46"
+       y2="270"
+       stroke="#868e96"
+       stroke-width="1.5"
+       stroke-dasharray="4, 3"
+       marker-end="url(#arrowGray)"
+       id="line364" />
+    <text
+       x="54"
+       y="274"
+       font-size="11.5px"
+       fill="#212529"
+       id="text366">Control path (registers, descriptors)</text>
+    <rect
+       x="16"
+       y="288"
+       width="22"
+       height="14"
+       fill="#fff3e0"
+       stroke="#e8590c"
+       id="rect368" />
+    <rect
+       x="38"
+       y="288"
+       width="22"
+       height="14"
+       fill="#e7ecfb"
+       stroke="#3b5bdb"
+       id="rect370" />
+    <text
+       x="68"
+       y="299"
+       font-size="11.5px"
+       fill="#212529"
+       id="text372">Clock-domain crossing element</text>
+    <line
+       x1="16"
+       y1="320"
+       x2="46"
+       y2="320"
+       stroke="#2f9e44"
+       stroke-width="2.5"
+       marker-end="url(#arrowGreen)"
+       id="line373" />
+    <text
+       x="54"
+       y="324"
+       font-size="11.5px"
+       fill="#212529"
+       id="text373-2">Prefetcher descriptor read (on-chip RAM → mSGDMA)</text>
+  </g>
+</svg>

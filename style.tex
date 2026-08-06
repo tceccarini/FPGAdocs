@@ -35,11 +35,17 @@
 \usepackage{booktabs}          % \toprule/\midrule/\bottomrule for clean tables
 \usepackage{tabularx}          % X columns auto-wrap long content (e.g. file paths)
 \usepackage{seqsplit}          % breaks long unbroken strings (paths, tokens) that don't wrap on their own
+\usepackage{float}             % [H] placement: keep floats exactly where they are defined
 
 \usepackage{xcolor}
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
 \newcommand{\term}[1]{\textsf{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
 \newcommand{\sysname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
+
+% Glossary (Appendix C): the key (term) and the body (definition) of each entry
+% are styled centrally here, so a global look change needs editing only this file.
+\newcommand{\glossaryKey}[1]{\textsf{\textbf{#1}}}   % glossary entry key (the term)
+\newcommand{\glossaryDescription}[1]{\normalfont #1} % glossary entry body (the definition)
 
 \usepackage[normalem]{ulem}
 \newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review

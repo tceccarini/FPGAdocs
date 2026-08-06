@@ -1,0 +1,124 @@
+\chapter{Prepare Your Dev Environment}
+\label{chap:fpgasteel-devenv}
+
+\section{Host requirements}
+
+\sysname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
+
+Developing inside a virtual machine is discouraged. Forwarding the \term{USB-Blaster II} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
+
+The one setup known to avoid this reliably is \term{PCI(e)} passthrough (\term{VT-d}/\term{AMD-Vi} with \term{IOMMU}): assigning the entire \term{USB} controller, not just the \term{USB-Blaster} device, directly to the guest, bypassing the host's \term{USB} stack entirely. It is not a simple option, though: it needs \term{IOMMU} support enabled in the host's firmware and kernel, not every \term{USB} controller's \term{IOMMU} grouping supports it, and it depends on the host \term{OS}. On \term{Linux}, it is supported directly: the kernel's \term{VFIO} framework, together with \term{QEMU}, can assign the \term{USB} controller straight to a \term{QEMU}/\term{KVM} guest. On \term{Windows}, this is \term{Hyper-V}'s \term{Discrete Device Assignment} (\term{DDA}), documented for \term{Windows Server} editions, not for \term{Windows 11}'s client \term{Hyper-V}. \term{macOS} has no path to this at all: \term{Quartus} is only distributed for \term{Windows} and \term{Linux}, and \term{Apple Silicon} Macs are \term{ARM}, not \term{x86\_64}, so even a \term{Linux} \term{VM} on one would need to emulate the target architecture, moot anyway since \term{Quartus} does not run on that architecture either way.
+
+Given all this, developing directly on physical \term{Ubuntu 22.04} hardware, not inside a \term{VM}, is what is documented and known to work.
+
+This chapter covers where each piece of software lives on disk, its |apt| package requirements, and the editor used to write \term{VHDL} and application code.
+
+\section{Required software}
+
+\subsection{apt packages}
+\label{subsec:fpgasteel-apt-packages}
+
+\begin{shellcode}
+sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-tools git wget curl openjdk-17-jre python3 python3-numpy python3-matplotlib dosfstools picocom pkg-config libopencv-dev
+\end{shellcode}
+
+\begin{itemize}
+    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, |git|: building |repos/u-boot-socfpga|\footnote{TODO [nota 67]: footnote text was lost when the source was copy-pasted -- please supply it.} and its boot scripts.
+    \item |wget|, |curl|: downloading the \term{Eclipse} tarball.
+    \item |dosfstools|: |mkfs.vfat|, for preparing the \term{SD card}.\footnote{TODO [nota 68]: footnote text was lost when the source was copy-pasted -- please supply it.}
+    \item |picocom|: terminal emulator for the board's serial console.\footnote{TODO [nota 69]: footnote text was lost when the source was copy-pasted -- please supply it.}
+    \item |openjdk-17-jre|: \term{Eclipse} needs \term{Java} 17; a \term{JRE} suffices since it is only used here for debugging, never to compile.\footnote{TODO [nota 70]: footnote text was lost when the source was copy-pasted -- please supply it.}
+    \item |python3|, |python3-numpy|, |python3-matplotlib|: used by |cv_bsp_generator.py|\footnote{TODO [nota 71]: footnote text was lost when the source was copy-pasted -- please supply it.} and |debugTools/view_frame.py|.\footnote{TODO [nota 72]: footnote text was lost when the source was copy-pasted -- please supply it.}
+    \item |pkg-config|, |libopencv-dev|: needed to build |debugTools/linux_dualcore_emulator|\footnote{TODO [nota 73]: footnote text was lost when the source was copy-pasted -- please supply it.}, found only in its Makefile, not mentioned in any chapter's prose.
+\end{itemize}
+
+The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
+
+\subsection{Install the software, and where it lives}
+\label{subsec:fpgasteel-install-paths}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{} X l X @{}}
+\toprule
+\textbf{Software} & \textbf{Version} & \textbf{Install path} \\
+\midrule
+\term{Quartus Prime} & 22.1 & \texttt{\seqsplit{\textasciitilde{}/Programs/Altera/22.1/}} \\
+\term{ARM} toolchain (\term{xPack GNU Arm Embedded GCC}) & \texttt{\seqsplit{15.2.1-1.1}} & \texttt{\seqsplit{\textasciitilde{}/Programs/Arm/toolchain/xpack-arm-none-eabi-gcc-15.2.1-1.1/}} \\
+\term{OpenOCD} (\term{xPack} build) & \texttt{\seqsplit{0.12.0-7}} & \texttt{\seqsplit{\textasciitilde{}/Programs/openocd/xpack-openocd-0.12.0-7/}} \\
+\term{Eclipse IDE for Embedded C/C++} & \texttt{\seqsplit{2026-03 R}} & \texttt{\seqsplit{\textasciitilde{}/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86\_64/}} \\
+\bottomrule
+\end{tabularx}
+\caption{Required software and installation paths.}
+\label{tab:fpgasteel-dev-software}
+\end{table}
+
+The user's home folder is sufficient for all four; a system-wide installation is not required. See Section~\ref{sec:fpgasteel-getting-installers} for where to download each of these.
+
+\subsection{Environment variables}
+\label{subsec:fpgasteel-env-vars}
+
+Add to |~/.bashrc|, matching the install paths from Paragraph~\ref{subsec:fpgasteel-install-paths}:
+
+\begin{shellcodepath}
+export QUARTUS_ROOTDIR="$HOME/Programs/Altera/22.1/quartus/"
+export QSYS_ROOTDIR="${QUARTUS_ROOTDIR}/sopc_builder/bin"
+export PATH="${QSYS_ROOTDIR}:$PATH"
+export PATH="${QUARTUS_ROOTDIR}/bin:$PATH"
+export PATH="$HOME/Programs/Arm/toolchain/xpack-arm-none-eabi-gcc-15.2.1-1.1/bin:$PATH"
+export PATH="$HOME/Programs/openocd/xpack-openocd-0.12.0-7/bin:$PATH"
+export PATH="$HOME/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86_64:$PATH"
+\end{shellcodepath}
+
+Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: |openocd| and |arm-none-eabi-gcc| both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at |quartus/bin/openocd|. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including |/usr/bin|, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of |${QUARTUS_ROOTDIR}/bin|.
+
+\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (|altera-usb-blaster2.cfg|, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-debug-config}) reads it to locate |blaster\_6810.hex|, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
+
+Reload with |source ~/.bashrc| (or open a new shell) after editing.
+
+\subsection{USB-Blaster II and serial console access}
+\label{subsec:fpgasteel-usb-blaster}
+
+Beyond the packages installed in Paragraph~\ref{subsec:fpgasteel-apt-packages}, the board itself requires access to two \term{USB} devices: the \term{USB-Blaster II}, used for \term{JTAG} programming and debugging, and the \term{UART-to-USB} serial console. By default, \term{udev} restricts both device nodes to root, which would force every \term{OpenOCD} invocation and every serial connection to run as root. The following \term{udev} rule grants the invoking user's group access to the \term{USB-Blaster II} instead:
+
+\begin{shellcode}
+sudo tee /etc/udev/rules.d/51-usbblaster.rules << 'EOF'
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6001", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6002", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6003", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6810", MODE="0666", GROUP="plugdev"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+sudo usermod -aG plugdev "$USER"
+\end{shellcode}
+
+The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1,\footnote{TODO [nota 74]: footnote text was lost when the source was copy-pasted -- please supply it.} and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. The user still needs to be added to that group:
+
+\begin{shellcode}
+sudo usermod -aG dialout "$USER"
+\end{shellcode}
+
+Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group changes to take effect.
+
+\subsection{Editor and debugger roles}
+\label{subsec:fpgasteel-editor-roles}
+
+\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}:\footnote{TODO [nota 75]: footnote text was lost when the source was copy-pasted -- please supply it.} it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under |hw/| and the \term{C/C++} sources under |sw/| are written in \term{Visual Studio Code}, with the following extensions:
+
+{\footnotesize
+\begin{itemize}
+    \item \term{VHDL}/\term{Verilog} linting, snippets, project awareness --- \path{teros-technology.teroshdl} (\term{TerosHDL}).
+    \item \term{VHDL} syntax highlighting and language support --- \path{rjyoung.vscode-modern-vhdl-support}.
+    \item \term{C/C++} \term{IntelliSense}, navigation --- \path{ms-vscode.cpptools} (+ \path{ms-vscode.cpptools-extension-pack}).
+    \item Makefile awareness (every |sw/| project builds via |make|, Section~\ref{sec:fpgasteel-makefile}) --- \path{ms-vscode.makefile-tools}.
+    \item Editing the \term{Python} debug tools shipped with some examples (e.g. |debugTools/view_frame.py|, Section~\ref{sec:fpgasteel-view-frame}) --- \path{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
+    \item Viewing the datasheet/manual \term{PDF}s referenced throughout |docs/| without leaving the editor --- \path{tomoki1207.pdf}.
+\end{itemize}
+}
+
+\section{Getting the installers}
+\label{sec:fpgasteel-getting-installers}
+
+See Chapter~\ref{chap:fpgasteel-download} for where to get \term{Quartus Prime}, the \term{ARM} toolchain, \term{OpenOCD}, \term{Eclipse}, and the \term{Ubuntu 22.04 LTS} image.

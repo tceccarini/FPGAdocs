@@ -1,0 +1,192 @@
+\chapter{Hello World}
+\label{chap:fpgasteel-hello-world}
+
+\section{Prerequisites}
+\label{sec:fpgasteel-hello-prerequisites}
+
+The toolchain must already be set up as described in Board Bring-up,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} and the \term{SD card} prepared accordingly:
+
+\begin{itemize}
+    \item the bootloader (\term{SPL} + \term{U-Boot}) written to the raw \term{A2} partition;\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+    \item the \term{FPGA} bitstream |soc_system.rbf| copied to the boot partition,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} with \term{MSEL[4:0]} on \term{SW10} set to 00000 so the \term{FPGA} is configured by the \term{HPS} via the \term{FPGA Manager};\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+    \item |boot.script.jtag_debug| compiled to |u-boot.scr| and copied to the boot partition,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} not |multiboot.script|.
+\end{itemize}
+
+If the \term{SD card} was already used with a different boot script (e.g.\ |multiboot.script|), don't just swap the file: wipe the card and redo the whole \term{SD card} preparation from scratch (Board Bring-up,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} Section~\ref{sec:fpgasteel-preparing-sd-card}), this time compiling |boot.script.jtag_debug| in Section~\ref{sec:fpgasteel-hello-jtag-debug}. This guarantees the board ends up at the ``Ready for JTAG'' prompt this project needs.
+
+Two tools are needed on top of the ones from Board Bring-up,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} to debug over \term{JTAG} from an \term{IDE}:
+
+\begin{itemize}
+    \item \term{Eclipse IDE for Embedded C/C++}
+    \item \term{OpenOCD} (\term{xPack})
+\end{itemize}
+
+See Paragraph~\ref{subsec:fpgasteel-install-paths} for versions and install paths.
+
+\section{About this project}
+\label{sec:fpgasteel-hello-about}
+
+|hello_word| (under |sw/hello_word|) is the first application in \sysname{FPGAsteel}. It:
+
+\begin{itemize}
+    \item brings up the interrupt controller;
+    \item brings up \term{UART0};
+    \item prints ``Hello, World!'' followed by ``GoodBye'';
+    \item spins forever.
+\end{itemize}
+
+The purpose of this program is to check that the whole chain works end to end: |make| producing an |.elf| with the \term{ARM} toolchain, \term{OpenOCD} loading it over \term{JTAG}, and the \term{HPS} running it with interrupts enabled and talking over the serial console. Everything built afterwards assumes this chain works.
+
+\section{Code structure}
+\label{sec:fpgasteel-hello-code-structure}
+
+The project defines two main classes, |System| and |Serial|, tasked respectively with managing the interrupt controller and \term{UART0}. Since each one is tied to a single, specific piece of hardware (there is exactly one interrupt controller and one \term{UART0}), both are implemented as singletons: the caller obtains the instance with |getInstance()|, then calls |init()|, which performs the actual hardware initialization. If |init()| fails, both throw a matching exception (|ExceptionSystem| for |System|, |ExceptionSerial| for |Serial|), carrying the name of the failing \term{hwlib} call and its \term{ALT\_STATUS\_CODE}.
+
+\subsection{System}
+\label{subsec:fpgasteel-hello-system}
+
+|System| (|src/System.{h,cpp}|) manages the interrupt controller (\term{GIC}):
+
+\begin{itemize}
+    \item |getInstance()|: returns the singleton instance.
+    \item |init()|: initializes and enables the interrupt controller, in order: |alt_int_global_init()|, |alt_int_cpu_init()|, |alt_int_cpu_enable()|, |alt_int_global_enable()|.
+    \item |deInit()|: disables and uninitializes it, in the reverse order.
+\end{itemize}
+
+Both |init()| and |deInit()| throw |ExceptionSystem| if any of the underlying calls fails.
+
+\subsection{Serial}
+\label{subsec:fpgasteel-hello-serial}
+
+|Serial| (|src/Serial.{h,cpp}|) manages \term{UART0} in interrupt mode, 8-N-1 at 115200 baud (constants in |Config.h|):
+
+\begin{itemize}
+    \item |getInstance()|: returns the singleton instance.
+    \item |init()|: configures \term{UART0} (data bits, parity, stop bits, baud rate), enables its \term{FIFO}s, registers the \term{UART0} interrupt handler and enables the \term{RX} and line interrupts.
+    \item |deInit()|: disables \term{UART0}, unregisters the interrupt handler and discards any buffered data.
+    \item |write(data, size)|: queues bytes for transmission and enables the \term{TX} interrupt.
+    \item |flush()|: blocks until the \term{TX} buffer has drained and the \term{UART} has finished shifting out the last byte.
+    \item |printf(format, ...)|: formats into a fixed-size stack buffer, then calls |write()|.
+    \item |read(data, size)|: copies up to |size| received bytes without blocking.
+    \item |available()|: number of received bytes waiting to be read.
+    \item |isTxFull()| / |isReady()|: status queries.
+\end{itemize}
+
+|init()|, |deInit()|, |flush()| and |write()| throw |ExceptionSerial| if the underlying \term{hwlib} call fails.
+
+Internally, |Serial| uses two instances of |StaticRingBuffer<char, N>| (|src/StaticRingBuffer.{h,cpp}|), one for \term{TX} and one for \term{RX}: a fixed-capacity, single-producer/single-consumer circular buffer with no dynamic allocation. |push()| throws |ExceptionRingBuffer| if the buffer is full, |pop()| throws it if the buffer is empty. This is what lets the \term{UART} interrupt handler (producer for \term{RX}, consumer for \term{TX}) and the main loop (producer for \term{TX}, consumer for \term{RX}) exchange bytes safely without a lock.
+
+\subsection{hwlib}
+\label{subsec:fpgasteel-hello-hwlib}
+
+|System| and |Serial| sit on top of \term{hwlib}, \term{Altera}/\term{Intel}'s low-level driver library for the \term{HPS} peripherals (interrupt controller, \term{UART}, timers, \term{DMA}, etc.), pulled in as the |repos/intel-socfpga-hwlib| \term{git} submodule. Rather than depending on a prebuilt/system-wide copy, |Makefile.hwlib| compiles only what this project needs directly from the submodule's |soc_cv_av| (\term{Cyclone V}) sources into a small static library artifact, |libhwlib_socfpga.a|.
+
+\section{How it works}
+\label{sec:fpgasteel-hello-how-it-works}
+
+The |hello_word| project introduces the pattern followed by every \sysname{FPGAsteel} example introduced later on: classes in charge of talking to hardware are singletons, whose instance must be initialized with |init()| before use and torn down with |deInit()| afterwards.
+
+The following snippet is taken from |main.cpp|:
+
+\begin{lstlisting}
+System::getInstance().init();   // interrupt controller
+Serial::getInstance().init();   // UART0
+Serial::getInstance().write("Hello, World!\r\n", ...);
+Serial::getInstance().flush();
+printf("GoodBye\n");
+\end{lstlisting}
+
+|ExceptionSystem|, |ExceptionSerial| and |ExceptionRingBuffer|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} are caught around this block and reported back over |Serial|.
+
+\section{Building}
+\label{sec:fpgasteel-hello-building}
+
+The project is built with a |Makefile|, from the command line. \term{Visual Studio Code} is used only as a plain text editor, not as an \term{IDE}. \term{Eclipse}, in turn, is used only for debugging:\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} it is never used to compile the project, nor for any other \term{IDE}-specific feature.
+
+\begin{shellcode}
+cd sw/hello_word
+make clean   # removes build/ and bin/
+make
+# -> bin/hello_word.elf, bin/hello_word.bin
+\end{shellcode}
+
+\section{Connecting the board}
+\label{sec:fpgasteel-hello-connecting}
+
+Before starting a debug session, connect the board to the host \term{PC} with two \term{USB} cables:
+
+\begin{itemize}
+    \item a \term{USB Type-B} cable, for the \term{USB Blaster II} (\term{JTAG});
+    \item a \term{micro-USB} cable, for the \term{UART} terminal exposed by the \term{HPS} at 115200 baud, 8-N-1, no flow control.
+\end{itemize}
+
+On \term{Linux}, |picocom| is a lightweight terminal emulator for the latter: find the device with \texttt{dmesg \textbar{} grep tty} (typically |/dev/ttyUSB0|), then connect with:
+
+\begin{shellcode}
+picocom -b 115200 /dev/ttyUSB0
+\end{shellcode}
+
+\section{Debugging with Eclipse}
+\label{sec:fpgasteel-hello-jtag-debug}
+
+With the board wired up\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} and sitting at ``Ready for JTAG'',\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} the rest happens inside \term{Eclipse}: import the project, tell it how to reach the board over \term{JTAG}, then start the session.
+
+\subsection{Import the project}
+\label{subsec:fpgasteel-hello-import}
+
+\begin{enumerate}
+    \item |File > Import... > General > Existing Projects into Workspace|.
+    \item Select root directory and pick the |sw/hello_word| folder and set up for the \term{Arm Cross GCC} toolchain.
+    \item |Finish|.
+\end{enumerate}
+
+The imported project is not built from \term{Eclipse}; building stays |make|'s job.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+
+\subsection{Create the Debug Configuration}
+\label{subsec:fpgasteel-hello-debug-config}
+
+\term{Eclipse} still doesn't know how to reach the board: a \term{Debug Configuration} tells it which \term{OpenOCD} config files to use and how to attach without disturbing the state the \term{SD card}'s boot script already set up.
+
+|Run > Debug Configurations... > GDB OpenOCD Debugging > New Configuration|.
+
+On the \term{Main} tab, set \term{Project} to |hello_world| and \term{C/C++ Application} to |bin/hello_word.elf|.
+
+Leave the build setting on ``Select Automatically'': building this project is |make|'s job,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} so this never actually triggers a build from \term{Eclipse}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{FPGAsteelEclipseDebugConfigMain.png}
+    \caption{The \term{Main} tab.}
+    \label{fig:fpgasteel-hello-debug-main}
+\end{figure}
+
+On the \term{Debugger} tab, enable ``Start OpenOCD locally'', pointing it at the \term{OpenOCD} binary installed in Paragraph~\ref{subsec:fpgasteel-install-paths}, and set \term{Config options} to both config files plus a non-destructive |init_reset| (the board must already be sitting at ``Ready for JTAG'' via the \term{SD card}, Section~\ref{sec:fpgasteel-hello-prerequisites}; this must not reset it):
+
+\begin{shellcode}
+-f /home/wheel/projects/FPGAsteel/sw/hello_word/openocd/altera-usb-blaster2.cfg
+-f /home/wheel/projects/FPGAsteel/sw/hello_word/openocd/altera_fpgasoc_de.cfg
+-c "init; reset init"
+\end{shellcode}
+
+Under \term{GDB Client Setup}, point ``Start GDB session'' at the |arm-none-eabi-gdb| from the same toolchain install and add two \term{Commands}: |set mem inaccessible-by-default off| (so \term{GDB} doesn't refuse to read/write memory it hasn't seen mapped) and |set remotetimeout 5| (gives \term{GDB} more time to wait on \term{OpenOCD}'s replies).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{FPGAsteelEclipseDebugConfigDebugger}
+    \caption{The \term{Debugger} tab.}
+    \label{fig:fpgasteel-hello-debug-debugger}
+\end{figure}
+
+On the \term{Startup} tab, leave ``Initial Reset'' and ``Pre-run/Restart reset'' both unchecked: resetting the \term{HPS} here would lose the \term{DDR}/\term{FPGA}/bridge/cache-\term{MMU} state the \term{SD card} prepared.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} Check ``Enable \term{Arm} semihosting'' and set both ``Load symbols'' and ``Load executable'' to use the project's own |hello_word.elf|.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{FPGAsteelEclipseDebugConfigStartup}
+    \caption{The \term{Startup} tab.}
+    \label{fig:fpgasteel-hello-debug-startup}
+\end{figure}
+
+\subsection{Start debugging}
+\label{subsec:fpgasteel-hello-start-debugging}
+
+Power on the board and make sure it comes to a stop at the \term{U-Boot} prompt (``Ready for JTAG'', Section~\ref{sec:fpgasteel-hello-prerequisites}): if it doesn't, check the \term{SD card} setup before going any further. Only then press \term{Debug}: \term{OpenOCD} connects over \term{JTAG}, halts the \term{CPU}, loads |hello_word.elf|, stops at the entry point, and is ready for step/breakpoint/run.

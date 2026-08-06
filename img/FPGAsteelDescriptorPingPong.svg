@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 1560 524"
+   font-family="'Segoe UI', Arial, sans-serif"
+   version="1.1"
+   id="svg513"
+   sodipodi:docname="05_descriptor-ping-pong.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   width="1560"
+   height="524"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview515"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="1.0321039"
+     inkscape:cx="224.78357"
+     inkscape:cy="357.52214"
+     inkscape:window-width="2560"
+     inkscape:window-height="1403"
+     inkscape:window-x="2560"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg513"
+     height="639px" />
+  <defs
+     id="defs461">
+    <marker
+       id="arrow"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         class="line-fill"
+         d="M 0,0 10,5 0,10 Z"
+         id="path456" />
+    </marker>
+    <style
+       id="style459">
+      .bg     { fill: #ffffff; }
+      .panel  { fill: #fafafa; stroke: #888; }
+      .neutral{ fill: #e0e0e0; stroke: #888; }
+      .accent { fill: #2ca02c; stroke: #1e7a1e; }
+      .txt        { fill: #222; }
+      .txt-muted  { fill: #555; }
+      .txt-accent { fill: #ffffff; }
+      .line      { stroke: #555; }
+      .line-fill { fill: #555; }
+
+      @media (prefers-color-scheme: dark) {
+        .bg     { fill: #1e1e1e; }
+        .panel  { fill: #2a2a2a; stroke: #777; }
+        .neutral{ fill: #3c3c3c; stroke: #888; }
+        .accent { fill: #2ca02c; stroke: #8be28b; }
+        .txt        { fill: #eaeaea; }
+        .txt-muted  { fill: #bbbbbb; }
+        .txt-accent { fill: #ffffff; }
+        .line      { stroke: #bbbbbb; }
+        .line-fill { fill: #bbbbbb; }
+      }
+    </style>
+  </defs>
+  <rect
+     class="bg"
+     x="3.8248394"
+     y="2.7110095"
+     width="1543.9663"
+     height="517.65668"
+     id="rect463"
+     style="stroke-width:0.894721" />
+  <text
+     x="780"
+     y="36"
+     text-anchor="middle"
+     font-size="20"
+     class="txt-muted"
+     id="text465"
+     style="font-size:33.3333px">the two states keep alternating, forever</text>
+  <!-- state A panel -->
+  <rect
+     class="panel"
+     x="60"
+     y="70"
+     width="600"
+     height="300"
+     rx="16"
+     stroke-dasharray="6, 4"
+     id="rect467" />
+  <text
+     x="360"
+     y="106"
+     text-anchor="middle"
+     font-size="20"
+     class="txt-muted"
+     id="text469"
+     style="font-size:29.3333px">state A</text>
+  <rect
+     class="accent"
+     x="110"
+     y="150"
+     width="220"
+     height="140"
+     rx="12"
+     id="rect471" />
+  <text
+     x="220"
+     y="210"
+     text-anchor="middle"
+     font-size="24"
+     class="txt-accent"
+     id="text473"
+     style="font-size:26.6667px">desc0</text>
+  <text
+     x="220"
+     y="240"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-accent"
+     id="text475"
+     style="font-size:18.6667px">running</text>
+  <rect
+     class="neutral"
+     x="390"
+     y="150"
+     width="220"
+     height="140"
+     rx="12"
+     id="rect477" />
+  <text
+     x="500"
+     y="210"
+     text-anchor="middle"
+     font-size="24px"
+     class="txt"
+     id="text479">desc1</text>
+  <text
+     x="500"
+     y="238"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text481"
+     style="font-size:18.6667px">waiting,</text>
+  <text
+     x="500"
+     y="258"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text483"
+     style="font-size:18.6667px">not committed</text>
+  <!-- state B panel -->
+  <rect
+     class="panel"
+     x="900"
+     y="70"
+     width="600"
+     height="300"
+     rx="16"
+     stroke-dasharray="6, 4"
+     id="rect485" />
+  <text
+     x="1200"
+     y="106"
+     text-anchor="middle"
+     font-size="20"
+     class="txt-muted"
+     id="text487"
+     style="font-size:29.3333px">state B</text>
+  <rect
+     class="neutral"
+     x="950"
+     y="150"
+     width="220"
+     height="140"
+     rx="12"
+     id="rect489" />
+  <text
+     x="1060"
+     y="210"
+     text-anchor="middle"
+     font-size="24px"
+     class="txt"
+     id="text491">desc0</text>
+  <text
+     x="1060"
+     y="238"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text493"
+     style="font-size:18.6667px">waiting,</text>
+  <text
+     x="1060"
+     y="258"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text495"
+     style="font-size:18.6667px">not committed</text>
+  <rect
+     class="accent"
+     x="1230"
+     y="150"
+     width="220"
+     height="140"
+     rx="12"
+     id="rect497" />
+  <text
+     x="1340"
+     y="210"
+     text-anchor="middle"
+     font-size="24"
+     class="txt-accent"
+     id="text499"
+     style="font-size:26.6667px">desc1</text>
+  <text
+     x="1340"
+     y="240"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-accent"
+     id="text501"
+     style="font-size:18.6667px">running</text>
+  <!-- forward transition: A -> B -->
+  <line
+     class="line"
+     x1="660"
+     y1="220"
+     x2="896"
+     y2="220"
+     stroke-width="2"
+     marker-end="url(#arrow)"
+     id="line503" />
+  <text
+     x="778"
+     y="196"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text505"
+     style="font-size:18.6667px">desc0 completes;</text>
+  <text
+     x="778"
+     y="250"
+     text-anchor="middle"
+     font-size="16"
+     class="txt-muted"
+     id="text507"
+     style="font-size:18.6667px">ISR commits desc1</text>
+  <!-- backward transition: B -> A, looping underneath, clear of its own label -->
+  <path
+     class="line"
+     d="m 1199.9971,371.97317 c 0,108.07175 -819.40332,108.07175 -819.40332,0"
+     fill="none"
+     stroke-width="1.97599"
+     marker-end="url(#arrow)"
+     id="path509" />
+  <text
+     x="790.77173"
+     y="489.35049"
+     text-anchor="middle"
+     font-size="16px"
+     class="txt-muted"
+     id="text511"
+     style="font-size:18.6667px">desc1 completes; ISR commits desc0</text>
+</svg>

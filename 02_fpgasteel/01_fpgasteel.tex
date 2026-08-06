@@ -1,0 +1,83 @@
+\chapter{\sysname{FPGAsteel}}
+\label{chap:fpgasteel-intro}
+
+The goal of this project is a tutorial on interfacing an \term{OV7670} camera module with a \term{Cyclone V} \term{HPS} through custom \term{FPGA} hardware using \term{DMA} (\term{Direct Memory Access}), so that transferring the video stream into memory requires no \term{CPU} involvement at all. It also documents, step by step, the full toolchain and development environment needed to build and run it.
+
+\section{Quick Start}
+\label{sec:fpgasteel-quick-start}
+
+The prebuilt \term{SD card} image already contains the bootloader and some compiled examples, letting the \term{DE1-SoC} boot straight into a working example, without building anything from source.
+
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Appendix~\ref{app:camera-adapter-board} -- Camera Adapter Board: full analysis of the camera \term{RESET}/\term{POWER-DOWN} hardware bug and the two permanent fixes [ADAPTER-WARN].}
+
+\subsection{Hardware needed}
+
+\begin{itemize}
+    \item A \term{Terasic DE1-SoC} board.
+    \item An \term{OV7670} camera module.
+    \item The custom camera adapter (transmitter and receiver boards, connected by a ribbon cable), wiring the camera to the \term{DE1-SoC}'s \term{GPIO\_0} header. Required only by the examples that use the camera.
+    \item A \term{VGA} monitor and cable. Required only by the examples that show video output.
+    \item A \term{microSD} card, at least 8 GB.
+    \item A \term{micro-USB} cable, for the board's serial console.
+    \item A power supply for the board.
+\end{itemize}
+
+\subsection{Preparing the SD card}
+
+\begin{enumerate}
+    \item Download the \term{SD card} image (a |.7z| archive) from |download.md| and extract it.
+    \item Write the extracted image to the \term{microSD} card (at least 8 GB) with a disk-imaging tool, e.g. |dd| on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
+    \item Insert the card into the \term{DE1-SoC}.
+\end{enumerate}
+
+\subsection{Board configuration}
+
+Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the underside of the board, so that switches 1 through 5 are ON (\term{SW10} uses negative logic: ON means logic 0). This lets the \term{HPS} configure the \term{FPGA} fabric from the \term{SD card} at boot.
+
+\subsection{Connecting the serial console}
+
+Before powering on, connect the \term{DE1-SoC} to a \term{PC} with a \term{micro-USB} cable. This exposes a serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, usable with any terminal emulator (e.g. |picocom|, |PuTTY|).
+
+\subsection{Booting}
+
+Power on the board. A menu appears over the serial console, offering a choice of 6 examples; enter the number of the one to run. Examples 1--5 also show their per-frame processing time, in milliseconds, on the 7-segment display.
+
+\begin{enumerate}
+    \item |hello_word|: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
+    \item |simple_forwarding_example|: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
+    \item |cache_forwarding_example|: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
+    \item |dualcore_dip_example_no_neon_no_icache|: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
+    \item |dualcore_dip_example_no_neon|: same, without \term{NEON}, with the instruction cache enabled.
+    \item |dualcore_dip_example|: same, using \term{NEON}, with the instruction cache enabled.
+\end{enumerate}
+
+\section{Documentation}
+
+The full, numbered documentation starts at |00_PrepareDevEnvironment.md|\footnote{TODO [nota 66]: footnote text was lost when the source was copy-pasted -- please supply it.} and covers, in order, setting up the development environment, the hardware design, board bring-up, and every bare-metal example under |sw/|, up to the dual-core computer-vision example.
+
+\section{Repository layout}
+
+\begin{itemize}
+    \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
+    \begin{itemize}
+        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header.
+        \item |my_vhdl/|: custom \term{Platform Designer} \term{VHDL} components written for this project.
+        \item |quartus/|: \term{Quartus} project, |soc_system.qsys|, top-level \term{VHDL}, pin assignments.
+    \end{itemize}
+    \item |sw/|: bare-metal example applications (\term{C++}), one folder per example.
+    \item |docs/|: reference manuals and this project's own documentation.
+    \begin{itemize}
+        \item |Altera/|: \term{Intel}/\term{Altera} manuals (\term{Avalon} interface specs, Embedded Peripherals IP User Guide, Cyclone V HPS Technical Reference Manual).
+        \item |FPGAsteel/|: this project's own numbered documentation (this file included).
+        \item |Misc/|: miscellaneous reference material (bootloader generation flow).
+        \item |OV7670_CameraModule/|: \term{OV7670} datasheet, implementation guide, and camera module schematic.
+        \item |Terasic_DE1-SoC/|: \term{DE1-SoC} schematic, \term{GHRD} archive, and \term{Terasic}'s own user manuals.
+    \end{itemize}
+    \item |repos/|: git submodules (\term{U-Boot}, \term{GHRD}, \term{HPS} hwlib, \term{FPGA} top-level files).
+    \item |sdcard/|: \term{SD card} boot partition contents and bootloader image, used to build the flashable image (Quick Start).
+    \item |WARNING.md|: camera hardware bug note (symlink to |hw/camera_adapter/WARNING.md|).
+    \item |LICENSE|: MIT.
+\end{itemize}
