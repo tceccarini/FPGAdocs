@@ -16,7 +16,7 @@ See Chapter~\ref{chap:fpgalix-devenv} for the installation and configuration of 
 \section{Introduction}
 \label{sec:fpgalix-introduction}
 
-On reset, the fixed-function \term{Boot ROM} samples the \term{BSEL[2:0]} pins to select the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback). On the \term{DE1-SoC}, these pins are hardwired on the \term{PCB} to boot from \term{SD/MMC}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type \term{A2}) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands control to \term{SPL}, which brings up clocks, pin muxing and \term{DDR}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}.
+On reset, the fixed-function \term{Boot ROM} samples the \term{BSEL[2:0]} pins to select the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback). On the \term{DE1-SoC}, these pins are hardwired on the \term{PCB} to boot from \term{SD/MMC} \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type \term{A2}) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands control to \term{SPL}, which brings up clocks, pin muxing and \term{DDR} \cite{CV-TRM}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}.
 
 From this point, \term{U-Boot}'s boot script (|sw/boot.script|, Section~\ref{sec:fpgalix-boot-script}) loads the \term{FPGA} bitstream from the \term{SD} card and programs the \term{FPGA} fabric through the \term{HPS} \term{FPGA Manager}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and then loads the \term{Linux} kernel (\texttt{zImage}) together with its \term{Device Tree Blob}, booting it with \texttt{bootz}. The kernel then mounts the second \term{SD} card partition (\term{ext4}) as its root filesystem and starts \texttt{init}, which brings up the userspace built by \term{Buildroot}.\footnote{See Section~\ref{sec:fpgalix-buildroot}}
 
@@ -34,7 +34,7 @@ From this point, \term{U-Boot}'s boot script (|sw/boot.script|, Section~\ref{sec
 
 \begin{enumerate}
     \item The hardware project is compiled in \term{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \term{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
-    \item |cv_bsp_generator.py| (part of the \term{U-Boot} source tree) is run on the handoff folder, generating the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
+    \item |cv_bsp_generator.py| \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) is run on the handoff folder, generating the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
     \item These headers are copied into \term{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
     \item |make| is invoked to build the bootloader image.
 \end{enumerate}
@@ -59,7 +59,7 @@ git clone --recurse-submodules https://github.com/tceccarini/FPGAlix.git
 cd FPGAlix
 \end{shellcode}
 
-The |--recurse-submodules| flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under |repos/| (including |u-boot-socfpga|, required in the following section, and |linux-socfpga| and |buildroot|, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
+The |--recurse-submodules| flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under |repos/| (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and |buildroot| \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
 
 \section{Building the bootloader}
 \label{sec:fpgalix-bootloader}
@@ -634,15 +634,4 @@ From the \term{PC}, \term{SSH} access as the new user can then be verified:
 \begin{shellcode}
 ssh <username>@<board-ip>
 \end{shellcode}
-
-\section{References}
-
-\begin{description}
-    \item[MACNICA-BOOT] History of the bootloader build flow (Figure~\ref{fig:fpgalix-boot-generation-flow}, Section~\ref{sec:fpgalix-bootloader-flow}) and the |cv_bsp_generator.py| step.
-    \item[CV-TRM] Boot \term{ROM}, \term{BSEL[2:0]} and boot source selection (used in Section~\ref{sec:fpgalix-introduction}).
-    \item[DE1-SCH] \term{HPS\_BOOTSEL[2:0]} hardwiring on this board (used in Section~\ref{sec:fpgalix-introduction}).
-    \item[SUB-UBOOT] Source used to build the bootloader (cited in Section~\ref{sec:fpgalix-bootloader}) and the boot script (cited in Section~\ref{sec:fpgalix-boot-script}).
-    \item[SUB-LINUX] Kernel source (used in Section~\ref{sec:fpgalix-kernel}).
-    \item[SUB-BUILDROOT] Root filesystem source (used in Section~\ref{sec:fpgalix-buildroot}); |docs/manual/prerequisite.adoc| and the individual |package/*/Config.in| files constituted the source consulted for used in Paragraph~\ref{subsec:fpgalix-buildroot-config}, rather than any project \term{README}.
-\end{description}
 

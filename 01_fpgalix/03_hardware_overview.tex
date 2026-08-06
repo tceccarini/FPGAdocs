@@ -49,12 +49,12 @@ Two termination strategies are employed, one at each end of the cable:
 
 \subsection{Video signal timing}
 
-The two data-sheet's figures below describe how the video pins behave and are the basis for the acquisition core described in Section~\ref{sec:fpgalix-acquisition-core}.
+The two figures from the data-sheet \cite{OV7670-DS} below describe how the video pins behave and are the basis for the acquisition core described in Section~\ref{sec:fpgalix-acquisition-core}.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\linewidth]{OV7670_HTiming}
-    \caption{OV7670 horizontal timing (source: OV7670/OV7171 data-sheet).}
+    \caption{OV7670 horizontal timing (source: \cite{OV7670-DS}).}
     \label{fig:ov7670-htiming}
 \end{figure}
 
@@ -63,12 +63,12 @@ Within a frame, \term{HREF}'s rising edge marks the start of a line and its fall
 
 The number of bytes per pixel depends on the output format configured over \term{SCCB}. \term{RGB565}, \term{RGB555}, \term{RGB444}, and \term{YUV422} transmit each pixel as 2 bytes over 2 \term{PCLK} cycles. \term{RAW Bayer} and processed Bayer transmit each pixel as a single byte, and to compensate the camera halves \term{PCLK}'s frequency in that mode, so the pixel period (and with it, line and frame timing, Figure~\ref{fig:ov7670-vtiming} below) stays the same regardless of format.
 
-Byte ordering and bit layout within each format are given in the data-sheet\footnote{TODO: reference 23 was present in the source text but is missing here -- please supply it.}, not reproduced here.
+Byte ordering and bit layout within each format are given in the data-sheet \cite{OV7670-DS}\footnote{TODO: reference 23 was present in the source text but is missing here -- please supply it.}, not reproduced here.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\linewidth]{OV7670_VGAFrameTiming}
-    \caption{OV7670 VGA frame timing (source: OV7670/OV7171 data-sheet).}
+    \caption{OV7670 VGA frame timing (source: \cite{OV7670-DS}).}
     \label{fig:ov7670-vtiming}
 \end{figure}
 
@@ -174,7 +174,7 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\linewidth]{HPSRamCtrlSubsycFromIntelManual}
-    \caption{\term{SDRAM} Controller Subsystem high-level block diagram (source: Cyclone V Hard Processor System Technical Reference Manual, Figure 12-1).}
+    \caption{\term{SDRAM} Controller Subsystem high-level block diagram (source: \cite[Figure 12-1, p.~12-2]{CV-TRM}).}
     \label{fig:fpgalix-hps-sdram}
 \end{figure}
 
@@ -183,7 +183,7 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\linewidth]{HPSL3InterconnectIntelManual}
-    \caption{\term{L3} Interconnect and \term{L4} buses (source: Cyclone V Hard Processor System Technical Reference Manual, Figure 8-1). This diagram covers the \term{L3}-routed paths only; the \term{FPGA}-to-\term{HPS} \term{SDRAM} interface \texttt{msgdma\_0} uses is not part of it and appears, aggregated, in Figure~\ref{fig:fpgalix-hps-sdram} instead. It is included here for the \term{L2} Cache's two masters: one into the \term{L3} Interconnect, one going straight to the \term{SDRAM} Controller Subsystem, the same separation \texttt{msgdma\_0}'s dedicated port relies on.}
+    \caption{\term{L3} Interconnect and \term{L4} buses (source: \cite[Figure 8-1, p.~8-2]{CV-TRM}). This diagram covers the \term{L3}-routed paths only; the \term{FPGA}-to-\term{HPS} \term{SDRAM} interface \texttt{msgdma\_0} uses is not part of it and appears, aggregated, in Figure~\ref{fig:fpgalix-hps-sdram} instead. It is included here for the \term{L2} Cache's two masters: one into the \term{L3} Interconnect, one going straight to the \term{SDRAM} Controller Subsystem, the same separation \texttt{msgdma\_0}'s dedicated port relies on.}
     \label{fig:fpgalix-l3-interconnect}
 \end{figure}
 
@@ -228,19 +228,6 @@ The diagram in Figure~\ref{fig:fpgalix-system-overview} is the complete \term{Pl
 \end{figure}
 \end{landscape}
 
-Several blocks shown here are not covered by a dedicated chapter: the \term{LED}, \term{switch}, and \term{key} \term{PIOs}, the \term{System ID} core, the \term{JTAG UART}, the \term{Interrupt Latency Counter}, and the \term{HPS} peripherals wired to their own dedicated pins (\term{Ethernet}, \term{USB}, \term{SD/MMC}, \term{QSPI} flash, and the various serial buses). None of these originate from this project's own design work; they were inherited and combined from the \term{Cyclone V} \term{Golden Hardware Reference Design} (|repos/ghrd-socfpga/cv_soc_devkit_ghrd|) and from the \term{DE1-SoC} \term{Embedded Linux} Systems guide (|docs/Misc/DE1-SoC_Embedded_Linux_Systems_1_9.pdf|), the two starting points this system was built from, and are documented no further here. The chapters above account for everything specific to this project: the camera, its clocking, the path from acquisition to \term{DDR3}, and the 7-segment displays.
-
-\section{References}
-
-\begin{description}
-    \item[OV7670-DS] OV7670/OV7171 sensor datasheet.
-    \item[OV7670-IG] OV7670 Implementation Guide.
-    \item[OV7670-SCH] OV7670 camera module schematic.
-    \item[AVALON-SPEC] Avalon-MM and Avalon-ST conventions.
-    \item[EP-IPUG] Register maps and programming model for the standard Avalon IP cores used throughout this document.
-    \item[CV-TRM] SDRAM Controller Subsystem and MPFE Multi-Port Arbitration chapters; Figure 12-1, page 12-2, reproduced as Figure~\ref{fig:fpgalix-hps-sdram}; Figure 8-1, page 8-2, reproduced as Figure~\ref{fig:fpgalix-l3-interconnect}.
-    \item[] Camera adapter board: schematics, bill of materials, photograph of the assembled system and the RESET/POWER-DOWN hardware bug --- see Appendix~\ref{app:camera-adapter-board}.
-    \item[ADAPTER-PCB] Camera adapter PCB layouts.
-\end{description}
+Several blocks shown here are not covered by a dedicated chapter: the \term{LED}, \term{switch}, and \term{key} \term{PIOs}, the \term{System ID} core, the \term{JTAG UART}, the \term{Interrupt Latency Counter}, and the \term{HPS} peripherals wired to their own dedicated pins (\term{Ethernet}, \term{USB}, \term{SD/MMC}, \term{QSPI} flash, and the various serial buses). None of these originate from this project's own design work; they were inherited and combined from the \term{Cyclone V} \term{Golden Hardware Reference Design} \cite{GHRD} and from the \term{DE1-SoC} \term{Embedded Linux} Systems guide \cite{UPM-DE1}, the two starting points this system was built from, and are documented no further here. The chapters above account for everything specific to this project: the camera, its clocking, the path from acquisition to \term{DDR3}, and the 7-segment displays.
 
 

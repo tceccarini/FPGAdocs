@@ -22,7 +22,7 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
     \item spins forever.
 \end{itemize}
 
-On a working setup, the serial console prints |OV7670 PID = 0x76|, the \term{OV7670}'s fixed product \term{ID} (datasheet, register 0x0A).
+On a working setup, the serial console prints |OV7670 PID = 0x76|, the \term{OV7670}'s fixed product \term{ID} (\cite{OV7670-DS}, register 0x0A).
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-i2c-hardware}
@@ -40,7 +40,7 @@ Software communicates with the camera over \term{SCCB} through two modules place
 \subsection{AvalonI2C}
 \label{subsec:fpgasteel-i2c-avaloni2c}
 
-|AvalonI2C| class (|src/AvalonI2C.{h,cpp}|) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (|altera_avalon_i2c|), master mode, 7-bit addressing only. Unlike |System|/|Serial| it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
+|AvalonI2C| class (|src/AvalonI2C.{h,cpp}|) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (|altera_avalon_i2c|), master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike |System|/|Serial| it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
 
 \begin{itemize}
     \item \textbf{\texttt{init(speed)}:} |speed| selects the bus speed mode, |Speed::Standard| (100 \term{kHz}) or |Speed::Fast| (400 \term{kHz}). Disables the core (|CTRL|), masks interrupts (|ISER|, this driver polls, it doesn't use them), clears pending status bits (|ISR|), programs the |SCL_HIGH|/|SCL_LOW|/|SDA_HOLD| bus-timing registers for the requested speed, then reconfigures |CTRL| with the bus speed and \term{FIFO} thresholds and enables the core.
@@ -91,11 +91,4 @@ serial->printf("OV7670 PID = 0x%02X\r\n", pid);
 \end{lstlisting}
 
 |ExceptionSystem|, |ExceptionSerial|, |ExceptionRingBuffer| and |ExceptionI2C| are all caught around this block and reported over \term{Serial}, exactly as in |hello_word|.
-
-\section{References}
-
-\begin{description}
-    \item[EP-IPUG] Chapter 15, ``Intel FPGA Avalon \term{I\textsuperscript{2}C} (Host) Core'': register map (Section 15.5) and programming model (Section 15.7.6, Figure 54), followed by |AvalonI2C::init()|.
-    \item[OV7670-DS] \term{PID} register (0x0A, fixed value 0x76) used as the check in Section~\ref{sec:fpgasteel-i2c-how-it-works}.
-\end{description}
 

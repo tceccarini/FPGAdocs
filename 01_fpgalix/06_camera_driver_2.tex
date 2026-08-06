@@ -33,7 +33,7 @@ This problem was found empirically, through trial and error: streaming from the 
 
 With this in place, |camera_driver_2| can tell a complete frame from a short one, and, as intended, logs and discards the latter rather than passing it to \term{userspace} as valid.
 
-A further, unrelated problem in the same driver caused the \term{DMA} engine to stall permanently after the very first short frame, and a second capture session to start from corrupted internal state left behind by the first. Both were fixed as well, and are documented, with the exact patch, in |camera_driver_2/README.md|, ``Kernel patch (mandatory)''.
+A further, unrelated problem in the same driver caused the \term{DMA} engine to stall permanently after the very first short frame, and a second capture session to start from corrupted internal state left behind by the first. Both were fixed as well, and are documented, with the exact patch, in \cite[``Kernel patch (mandatory)'']{DRV2-README}.
 
 \textbf{Note:} All four changes are already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule.\footnote{TODO [nota 45]: ...} No manual patching is required.
 
@@ -122,13 +122,6 @@ insmod fpgalix_camera.ko
 ssh <username>@<board-ip> "v4l2-ctl -d /dev/video0 --stream-mmap --stream-to=-" | python3 view.py -dwg
 \end{shellcode}
 
-|v4l2-ctl|, run on the board, streams raw frames to its own standard output instead of a file; piped over \term{SSH}, |view.py| reads them from its standard input and displays them. Its processing modes (|-r/-d/-dw/-dwg/-F|) are documented in |camera_driver_2/README.md|, ``view.py --- Live preview''. Its dependencies, |python3|, |python3-numpy| and |python3-opencv|, are already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}.
+|v4l2-ctl|, run on the board, streams raw frames to its own standard output instead of a file; piped over \term{SSH}, |view.py| reads them from its standard input and displays them. Its processing modes (|-r/-d/-dw/-dwg/-F|) are documented in \cite[``view.py --- Live preview'']{DRV2-README}. Its dependencies, |python3|, |python3-numpy| and |python3-opencv|, are already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}.
 
 |v4l2-ctl| itself reads directly from |/dev/video0| and needs no elevated privileges beyond read access to that device node.
-
-\section{References}
-
-\begin{description}
-    \item[DRV2-README] Exact kernel patch (used in Section~\ref{sec:fpgalix-camera-short-frames}) and |view.py| processing modes (used in Paragraph~\ref{subsec:fpgalix-camera-viewing}).
-    \item[] Appendix~\ref{app:camera-adapter-board} --- Camera Adapter Board. The camera adapter's line buffer hardware bug (used in Section~\ref{sec:fpgalix-camera-usage}).
-\end{description}

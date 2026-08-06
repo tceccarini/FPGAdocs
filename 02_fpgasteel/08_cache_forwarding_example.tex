@@ -24,7 +24,7 @@ The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()|
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-cache-forwarding-hardware}
 
-Unchanged.\footnote{TODO [nota 150]: footnote text was lost when the source was copy-pasted -- please supply it.} Both \term{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project.
+Unchanged.\footnote{TODO [nota 150]: footnote text was lost when the source was copy-pasted -- please supply it.} Both \term{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}).
 
 \section{Operating principles}
 \label{sec:fpgasteel-cache-forwarding-operating-principles}
@@ -46,7 +46,7 @@ This project (unlike |dualcore_forwarding_example|) only runs on one core, so th
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{img/FPGAsteelHpsTrm.png}
-    \caption[Cortex-A9 MPU Subsystem Block Diagram]{Cortex-A9 MPU Subsystem Block Diagram, reproduced from the Cyclone V Hard Processor System Technical Reference Manual, Figure 10-2, p.\ 176.\footnotemark{} Reported here for reference; not original work.}
+    \caption[Cortex-A9 MPU Subsystem Block Diagram]{Cortex-A9 MPU Subsystem Block Diagram, reproduced from \cite[Figure 10-2, p.~176]{CV-TRM}.\footnotemark{} Reported here for reference; not original work.}
     \label{fig:fpgasteel-cortex-a9-mpu-subsystem}
 \end{figure}
 \footnotetext{TODO [nota 152]: footnote text was lost when the source was copy-pasted -- please supply it.}
@@ -66,7 +66,7 @@ The fix is the same operation in both cases, just named differently depending on
 \subsubsection{Enabling the MMU}
 \label{subsubsec:fpgasteel-enabling-mmu}
 
-The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} also being on: cacheability and shareability are per-region attributes carried by the \term{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to |alt_mmu_va_space_create()| (|HWLib|), which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
+The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} also being on: cacheability and shareability are per-region attributes carried by the \term{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to |alt_mmu_va_space_create()| (\unresolved{\texttt{HWLib}}), which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
 
 \begin{table}[htbp]
     \centering
@@ -89,7 +89,7 @@ The \term{DDR} region is the only one marked cacheable; the other two are left n
 \subsubsection{HWLib performs the work}
 \label{subsubsec:fpgasteel-hwlib-performs-work}
 
-None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \term{SCU} and setting the \term{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \term{HWLib} has no wrapper for that specific step. Everything else, building the section table, switching the \term{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \term{HWLib} (|intel-socfpga-hwlib|):
+None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \term{SCU} and setting the \term{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \unresolved{\term{HWLib}} has no wrapper for that specific step. Everything else, building the section table, switching the \term{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \unresolved{\term{HWLib}} (|intel-socfpga-hwlib|):
 
 |alt_mmu_va_space_create()|/|alt_mmu_va_space_enable()|, |alt_cache_l1_data_enable()|, |alt_cache_l2_init()|/|alt_cache_l2_enable()|, and later |alt_cache_system_clean()|/|alt_cache_system_invalidate()|. Paragraph~\ref{subsec:fpgasteel-cache-system-class} walks through |System::enableCache()|, which is where all of these calls are made, in the order they must run.
 
@@ -256,10 +256,6 @@ Neither |borrow()| nor |giveBack()| needs a cache operation of its own: both onl
 \label{sec:fpgasteel-cache-forwarding-references}
 
 \begin{itemize}
-    \item \textbf{[AVALON-SPEC]} Defines the \term{Avalon-ST} and \term{Avalon-MM} conventions used throughout Section~\ref{sec:fpgasteel-cache-forwarding-hardware}.
-    \item \textbf{[EP-IPUG]} \term{mSGDMA} extended descriptor format and prefetcher operation, behind |PrefetcherExtendedDescriptor| and |PrefetchedMSGDMA| (used in Paragraph~\ref{subsec:fpgasteel-cache-prefetcher-extended-descriptor}, used in Paragraph~\ref{subsec:fpgasteel-cache-prefetched-msgdma}).
-    \item \textbf{[OV7670-DS]} Register tables behind |Camera::configureSensor()| (used in Paragraph~\ref{subsec:fpgasteel-cache-camera-class}) and the pixel formats behind |SimpleFilters| (used in Paragraph~\ref{subsec:fpgasteel-cache-simple-filters}).
-    \item \textbf{[CV-TRM]} Chapter 10, ``MPU Subsystem'': Figure 10-2 (Cortex-A9 MPU Subsystem Block Diagram, p.\ 176), cited in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}.
-    \item \textbf{HWLib headers} (|alt_cache.h|, |alt_mmu.h|), from |intel-socfpga-hwlib|. Cache/\term{MMU} function reference behind |System::enableCache()| (used in Paragraph~\ref{subsec:fpgasteel-cache-system-class}) and |CacheAwareFrame|/|CacheAwareFramePool| (used in Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, used in Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}).
-    \item \textbf{Quartus 22.1 HAL headers} (|altera_msgdma_csr_regs.h|, |altera_msgdma_prefetcher_regs.h|, |altera_msgdma_descriptor_regs.h|, |altera_msgdma_response_regs.h|). Register/bit definitions behind |PrefetchedMSGDMA| and |PrefetcherExtendedDescriptor|.
+    \item \unresolved{\textbf{HWLib headers} (\texttt{alt\_cache.h}, \texttt{alt\_mmu.h}), from \texttt{intel-socfpga-hwlib}. Cache/\term{MMU} function reference behind \texttt{System::enableCache()} (used in Paragraph~\ref{subsec:fpgasteel-cache-system-class}) and \texttt{CacheAwareFrame}/\texttt{CacheAwareFramePool} (used in Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, used in Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}).}
+    \item \unresolved{\textbf{Quartus 22.1 HAL headers} (\texttt{altera\_msgdma\_csr\_regs.h}, \texttt{altera\_msgdma\_prefetcher\_regs.h}, \texttt{altera\_msgdma\_descriptor\_regs.h}, \texttt{altera\_msgdma\_response\_regs.h}). Register/bit definitions behind \texttt{PrefetchedMSGDMA} and \texttt{PrefetcherExtendedDescriptor}.}
 \end{itemize}

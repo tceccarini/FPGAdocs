@@ -21,7 +21,7 @@ A number of \term{apt} packages are also required, for building the bootloader a
 
 Even for a bare-metal application, the \term{HPS} cannot jump straight to user code out of reset: the \term{ARM} core has no working \term{DRAM}, clocks or pin muxing yet, and those can only be brought up by running code from on-chip \term{RAM} first. The bootloader (\term{SPL} + \term{U-Boot}) performs this early hardware init and then loads the bare-metal application into \term{DDR}; it is not tied to running \term{Linux}.
 
-On reset, the fixed-function \term{Boot ROM} samples the |BSEL[2:0]| pins to pick the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback; see the \term{HPS} \term{TRM}, ``Boot Select''). On the \term{DE1-SoC}, |HPS_BOOTSEL[2:0]| is hardwired on the \term{PCB} to 101 (boot from \term{SD/MMC}), so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type A2) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands off to \term{SPL}, which brings up clocks, pin muxing and \term{DDR}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}, which loads and starts the bare-metal application from wherever it is at that point: as an |.elf| pushed over \term{JTAG} when debugging (e.g.\ from \term{Eclipse}/\term{OpenOCD}, \term{U-Boot} only needs to have brought up \term{DDR}), or as a raw |.bin| read from the \term{SD} card boot partition when booting standalone.
+On reset, the fixed-function \term{Boot ROM} samples the |BSEL[2:0]| pins to pick the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback; see \cite[``Boot Select'']{CV-TRM}). On the \term{DE1-SoC}, |HPS_BOOTSEL[2:0]| is hardwired on the \term{PCB} to 101 (boot from \term{SD/MMC}) \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type A2) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands off to \term{SPL}, which brings up clocks, pin muxing and \term{DDR}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}, which loads and starts the bare-metal application from wherever it is at that point: as an |.elf| pushed over \term{JTAG} when debugging (e.g.\ from \term{Eclipse}/\term{OpenOCD}, \term{U-Boot} only needs to have brought up \term{DDR}), or as a raw |.bin| read from the \term{SD} card boot partition when booting standalone.
 
 \begin{figure}[htbp]
     \centering
@@ -37,12 +37,12 @@ Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build
 
 \begin{enumerate}
     \item Compile the hardware project in \term{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \term{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
-    \item Run |cv_bsp_generator.py| (part of the \term{U-Boot} source tree) on the handoff folder: it generates the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
+    \item Run |cv_bsp_generator.py| \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) on the handoff folder: it generates the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
     \item Copy these headers into \term{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
     \item Run |make| to build the bootloader image.
 \end{enumerate}
 
-\textbf{Note:} in other projects this flow normally starts by cloning the \term{U-Boot} source from \term{GitHub}. In \sysname{FPGAsteel} this step is not needed: |repos/u-boot-socfpga| is already tracked as a \term{git} submodule (see |.gitmodules|), so the source is already in place after |git submodule update --init|.
+\textbf{Note:} in other projects this flow normally starts by cloning the \term{U-Boot} source from \term{GitHub}. In \sysname{FPGAsteel} this step is not needed: |repos/u-boot-socfpga| \cite{SUB-UBOOT} is already tracked as a \term{git} submodule (see |.gitmodules|), so the source is already in place after |git submodule update --init|.
 
 \begin{warningbox}
     \term{Platform Designer}'s \term{IP} search path (Tools > Options > IP Catalog, ``IP Search Path'') is a \term{Quartus}-wide setting, not scoped to a single project. Every custom component this design uses (|pclk_reset_controller|, |ov7670_data_interface|, |avalon_st_64_to_24_repacker|, |pll_lock_reset_sync|, Hardware Overview~\ref{chap:fpgasteel-hw-overview}) lives under |hw/my_vhdl/qsys_components/|, and \term{Platform Designer} can only resolve them if that folder is listed there. Check this setting, not just the first time on a new machine, but every time you switch between working on \sysname{FPGAsteel} and \sysname{FPGAlix} on the same machine: each project has its own |hw/my_vhdl/qsys_components/|, and a search path left pointing at the other project's folder will make step 1 above fail.
@@ -334,13 +334,3 @@ sync
 \end{shellcode}
 
 Replace |/dev/sdX| with the actual \term{SD} card device. Double-check the target device before running, this command will overwrite it completely.
-
-\section{References}
-\label{sec:fpgasteel-board-references}
-
-\begin{description}
-    \item[MACNICA-BOOT] History of the bootloader build flow (Figure~\ref{fig:fpgasteel-bootloader-generation}) and the |cv_bsp_generator.py| step.
-    \item[CV-TRM] Boot \term{ROM}, \term{BSEL[2:0]} and boot source selection (used in Section~\ref{sec:fpgasteel-board-introduction}).
-    \item[DE1-SCH] \term{HPS\_BOOTSEL[2:0]} hardwiring on this board (used in Section~\ref{sec:fpgasteel-board-introduction}).
-    \item[SUB-UBOOT] Source used to build the bootloader (cited in Section~\ref{sec:fpgasteel-building-bootloader}) and the boot scripts (cited in Section~\ref{sec:fpgasteel-boot-scripts}).
-\end{description}

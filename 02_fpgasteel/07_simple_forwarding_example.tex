@@ -26,7 +26,7 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
 Then, in the main loop, it:
 
 \begin{itemize}
-    \item converts each captured frame from \term{RGB565} to \term{RGB24} (|SimpleFilters|);
+    \item converts each captured frame from \term{RGB565} to \term{RGB24} \cite{OV7670-DS} (|SimpleFilters|);
     \item shows the conversion time, in milliseconds, on the 7-segment display (|HexDisplay|).
 \end{itemize}
 
@@ -40,7 +40,7 @@ The rationale behind this datapath's configuration, width choice, prefetcher ena
 \subsection{Camera capture (\term{Avalon-ST}$\rightarrow$\term{Avalon-MM})}
 \label{subsec:fpgasteel-simple-forwarding-camera-capture}
 
-Four blocks carry camera pixels into \term{HPS} \term{DDR}, in order:
+Four blocks carry camera pixels into \term{HPS} \term{DDR}, in order (the \term{Avalon-ST}/\term{Avalon-MM} conventions used here are defined in \cite{AVALON-SPEC}):
 
 \begin{enumerate}
     \item \textbf{\texttt{ov7670\_video\_interface}} (|ov7670_data_interface|, custom \term{IP} inherited unchanged from \sysname{FPGAlix} and renamed here, see Paragraph~\ref{subsec:fpgasteel-renamed-instances}): reads the \term{OV7670}'s parallel pixel bus (\term{HREF}/\term{VSYNC}/8-bit data) and repackages it into a standard \term{Avalon-ST} byte stream, one frame = one packet (\term{SOP} on the first byte, \term{EOP} on the last).
@@ -89,7 +89,7 @@ Camera capture and \term{VGA} output are both built around the same descriptor /
 
 \subsubsection{What a descriptor is}
 
-A |PrefetcherExtendedDescriptor|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} is a 64-byte hardware record containing:
+A |PrefetcherExtendedDescriptor|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} is a 64-byte hardware record containing, in the ``Extended Descriptor Format when Prefetcher is Enabled'' \cite[Table 305, p.~379]{EP-IPUG}: 
 
 \begin{itemize}
     \item a source and/or destination \term{DDR} address (depending on transfer direction),
@@ -124,7 +124,7 @@ The instant a running descriptor's transfer finishes, hardware itself clears its
 \begin{figure}[htbp]
     \centering
     \includesvg[width=0.9\linewidth]{FPGAsteelDescriptorPrefetcher}
-    \caption[simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output.]{simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output. This diagram is approximate, meant to convey the idea; for the exact register-level behavior, see the Embedded Peripherals \term{IP} User Guide.\footnotemark}
+    \caption[simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output.]{simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output. This diagram is approximate, meant to convey the idea; for the exact register-level behavior, see \cite{EP-IPUG}.\footnotemark}
     \label{fig:fpgasteel-descriptor-prefetcher}
 \end{figure}
 \footnotetext{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
@@ -223,7 +223,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-prefetcher-extended-descriptor}
 
-|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{Intel/Altera, Embedded Peripherals \term{IP} User Guide [EP-IPUG] --- see Appendix~\ref{app:references}.}
+|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{\cite{EP-IPUG}.}
 
 \begin{table}[htbp]
     \centering
@@ -247,7 +247,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
         0x3C & [31], [30], [29:0] & Control & |control| \\
         \hline
     \end{tabular}
-    \caption{Layout of the \texttt{Descriptor} struct, as fixed by the \term{mSGDMA} \term{IP} core (source: Embedded Peripherals \term{IP} User Guide, Table 305121; not original work).}
+    \caption{Layout of the \texttt{Descriptor} struct, as fixed by the \term{mSGDMA} \term{IP} core (source: \cite[Table 305121]{EP-IPUG}; not original work).}
     \label{tab:fpgasteel-descriptor-layout}
 \end{table}
 
@@ -417,15 +417,6 @@ Every exception the code in this snippet can throw (|ExceptionSystem|, |Exceptio
 |debugTools/view_frame.py| decodes a raw frame buffer dumped from target memory (e.g.\ via \term{GDB} |dump memory|) into a viewable image, for any of the six |ColorScheme| formats; see its |--help| for options (\term{Bayer} pattern for |Mosaic8|, |--save| to a \term{PNG} instead of displaying it). Useful to check what the camera actually captured, or what |SimpleFilters::convert()| produced, independently of the \term{VGA} output.
 
 |ImageJ|\footnote{TODO [nota 136]: footnote text was lost when the source was copy-pasted -- please supply it.} is an optional alternative for a quick look at the same dump without running the script: File $>$ Import $>$ Raw..., image type ``8-bit'' for a |Mosaic8| dump or ``RGB (24-bit)'' for an \term{RGB24} one, with the frame's width, height, and an offset of 0.
-
-\section{References}
-\label{sec:fpgasteel-simple-forwarding-references}
-
-\begin{itemize}
-    \item \textbf{[AVALON-SPEC]} Defines the \term{Avalon-ST} and \term{Avalon-MM} conventions used throughout Section~\ref{sec:fpgasteel-simple-forwarding-hardware} (ready/valid handshaking, \term{SOP}/\term{EOP} packet framing, byte enables).
-    \item \textbf{[EP-IPUG]} Chapter on the \term{mSGDMA} core: extended descriptor format (Table 305, ``Extended Descriptor Format when Prefetcher is Enabled'', p.\ 379; reproduced in Paragraph~\ref{subsec:fpgasteel-prefetcher-extended-descriptor}) and prefetcher operation, followed by |PrefetcherExtendedDescriptor| and |PrefetchedMSGDMA|.
-    \item \textbf{[OV7670-DS]} Register tables behind |Camera::configureSensor()| (used in Paragraph~\ref{subsec:fpgasteel-camera-class}) and the pixel formats behind |SimpleFilters| (used in Paragraph~\ref{subsec:fpgasteel-simple-filters}).
-\end{itemize}
 
 
 

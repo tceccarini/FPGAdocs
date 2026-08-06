@@ -18,7 +18,7 @@ Two additional requirements, specific to this project:
 
 |dualcore_bringup_test| (under |sw/dualcore_bringup_test|) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at once: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. |dualcore_forwarding_example| builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
 
-The sequence used to bring \term{CPU1} up\footnote{TODO [nota 183]: footnote text was lost when the source was copy-pasted -- please supply it.} is not documented step-by-step anywhere in Intel's own \term{Cyclone V Hard Processor System Technical Reference Manual} (\term{TRM}) or \term{HWLib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence \term{Linux} itself uses to bring up its second core, implemented in |arch/arm/mach-socfpga/platsmp.c|. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
+The sequence used to bring \term{CPU1} up\footnote{TODO [nota 183]: footnote text was lost when the source was copy-pasted -- please supply it.} is not documented step-by-step anywhere in Intel's own \cite{CV-TRM} or \unresolved{\term{HWLib}}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence \term{Linux} itself uses to bring up its second core, implemented in \unresolved{\texttt{arch/arm/mach-socfpga/platsmp.c}}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-hardware}
@@ -38,13 +38,13 @@ Neither the camera capture nor the \term{VGA} output datapaths are used here.
 \subsection{CPU1 starts held in reset}
 \label{subsec:fpgasteel-dualcore-cpu1-reset}
 
-On the \term{Cyclone V HPS}, only one core ever comes out of reset by itself. This behavior is documented in the \term{TRM} Chapter 10 (``\term{Cortex-A9} Microprocessor Unit Subsystem''), p.\ 10-6, which states:
+On the \term{Cyclone V HPS}, only one core ever comes out of reset by itself. This behavior is documented in \cite[Chapter 10, ``\term{Cortex-A9} Microprocessor Unit Subsystem'', p.~10-6]{CV-TRM}, which states:
 
 \begin{quote}
     ``When a cold or warm reset is issued in the \term{MPU}, \term{CPU0} is released from reset automatically. If \term{CPU1} is present, then its reset signals are left asserted when a cold or warm reset is issued. After \term{CPU0} comes out of reset, it can deassert \term{CPU1}'s reset signals by clearing the \term{CPU1} bit in the \term{MPU} Module Reset (|mpumodrst|) register in the \term{Reset Manager}.''
 \end{quote}
 
-The \term{TRM}'s \term{Reset Manager} chapter (Chapter 4, ``Reset Sequencing'', p.\ 4-11) states the same fact from the reset controller's own point of view:
+The \term{Reset Manager} chapter \cite[Chapter 4, ``Reset Sequencing'', p.~4-11]{CV-TRM} states the same fact from the reset controller's own point of view:
 
 \begin{quote}
     ``After the reset manager releases the \term{MPU} subsystem from reset, \term{CPU1} is left in reset and \term{CPU0} begins executing code from the reset vector address. Software is responsible for deasserting \term{CPU1}[...]''.
@@ -66,16 +66,16 @@ trampoline[1] = (uint32_t)&_start_core1; /* target address */
 
 0xE51FF004 is the \term{ARM} encoding of |ldr pc, [pc, \#-4]|: loaded at address 0, this instruction reads the 32-bit word stored 4 bytes behind the current program counter, i.e.\ the second trampoline word, and branches to it. This two-instruction idiom is the standard way to perform a long, absolute jump to an address that a plain relative branch instruction cannot reach on its own.
 
-This only works because address 0x0 is not, on this board at this moment, what it is by default. The \term{TRM}'s system interconnect address map (Chapter 8, Figure 8-4, p.\ 8-6) shows that for the \term{MPU}, address 0x0 normally maps to the on-chip \term{Boot ROM}, not \term{SDRAM}. \term{U-Boot}, however, reconfigures the system's interconnect remap register early in its own boot process so that address 0x0 maps to \term{SDRAM} instead (needed for \term{U-Boot}'s own exception vectors); this project's trampoline write relies entirely on that remap already being in place by the time |main()| runs.
+This only works because address 0x0 is not, on this board at this moment, what it is by default. The system interconnect address map \cite[Chapter 8, Figure 8-4, p.~8-6]{CV-TRM} shows that for the \term{MPU}, address 0x0 normally maps to the on-chip \term{Boot ROM}, not \term{SDRAM}. \term{U-Boot}, however, reconfigures the system's interconnect remap register early in its own boot process so that address 0x0 maps to \term{SDRAM} instead (needed for \term{U-Boot}'s own exception vectors); this project's trampoline write relies entirely on that remap already being in place by the time |main()| runs.
 
-\term{CPU1}'s start address register, |cpu1startaddr|, is written too, with the same target address. According to the \term{TRM} (Chapter 6, ``\term{L3 Interconnect}'', p.\ 6-7), this register is what the \term{Boot ROM}'s own reset handler reads to know where to jump, in the ordinary case where \term{CPU1} actually restarts execution from the \term{Boot ROM}. Since the remap above means \term{CPU1} will execute the trampoline at 0x0 directly instead, this write is redundant in this specific setup.
+\term{CPU1}'s start address register, |cpu1startaddr|, is written too, with the same target address. According to \cite[Chapter 6, ``\term{L3 Interconnect}'', p.~6-7]{CV-TRM}, this register is what the \term{Boot ROM}'s own reset handler reads to know where to jump, in the ordinary case where \term{CPU1} actually restarts execution from the \term{Boot ROM}. Since the remap above means \term{CPU1} will execute the trampoline at 0x0 directly instead, this write is redundant in this specific setup.
 
 \subsection{Cache maintenance for the trampoline}
 \label{subsec:fpgasteel-dualcore-cache-maintenance}
 
 Before releasing \term{CPU1}, |main()| explicitly cleans the two trampoline words from the \term{CPU}'s own caches back to \term{DDR}: the \term{L1} data cache via the |DCCMVAC| coprocessor operation (|mcr p15, 0, Rd, c7, c10, 1|, once per word), then the shared \term{PL310} \term{L2} controller via its ``Clean Line by PA'' and ``Cache Sync'' registers (0xFFFEF7B0, 0xFFFEF730). Both are followed by a |dsb| to guarantee the writes have actually completed before reset is deasserted.
 
-This project's own boot script (|boot.script.jtag_debug|, Section~\ref{sec:fpgasteel-dualcore-prerequisites}) leaves the caches disabled by the time |main()| runs, which would make this cleaning step a no-op here: cleaning an address that was never cached has nothing to write back. The sequence is included anyway because it is copied unconditionally from \term{Linux}'s |platsmp.c|, where it runs with the primary core's caches fully enabled and is not optional; keeping the same steps here, rather than trimming what looks redundant in this particular context, is what makes the sequence a faithful, directly-comparable copy of the mechanism \term{Linux} itself relies on.
+This project's own boot script (|boot.script.jtag_debug|, Section~\ref{sec:fpgasteel-dualcore-prerequisites}) leaves the caches disabled by the time |main()| runs, which would make this cleaning step a no-op here: cleaning an address that was never cached has nothing to write back. The sequence is included anyway because it is copied unconditionally from \term{Linux}'s \unresolved{\texttt{platsmp.c}}, where it runs with the primary core's caches fully enabled and is not optional; keeping the same steps here, rather than trimming what looks redundant in this particular context, is what makes the sequence a faithful, directly-comparable copy of the mechanism \term{Linux} itself relies on.
 
 \subsection{Releasing CPU1}
 \label{subsec:fpgasteel-dualcore-releasing-cpu1}
@@ -144,13 +144,6 @@ If the hex display shows 123, both cores are confirmed running independently, wh
 \label{sec:fpgasteel-dualcore-references}
 
 \begin{itemize}
-    \item \textbf{[CV-TRM]}:
-    \begin{itemize}
-        \item Chapter 4, ``\term{Reset Manager}'' / ``Reset Sequencing'', p.\ 4-11: \term{CPU1} left in reset after any cold/warm reset (used in Paragraph~\ref{subsec:fpgasteel-dualcore-cpu1-reset}).
-        \item Chapter 6, ``\term{L3 Interconnect}'', p.\ 6-7: the \term{Boot ROM}'s use of |cpu1startaddr| (used in Paragraph~\ref{subsec:fpgasteel-dualcore-boot-address}).
-        \item Chapter 8, ``System Interconnect'', Figure 8-4, p.\ 8-6: default address map showing \term{Boot ROM}, not \term{SDRAM}, at address 0x0 for the \term{MPU} (used in Paragraph~\ref{subsec:fpgasteel-dualcore-boot-address}).
-        \item Chapter 10, ``\term{Cortex-A9} Microprocessor Unit Subsystem'' / ``Reset'', p.\ 10-6: \term{CPU0} auto-released, \term{CPU1} reset left asserted (used in Paragraph~\ref{subsec:fpgasteel-dualcore-cpu1-reset}).
-    \end{itemize}
-    \item \term{Linux} kernel, |arch/arm/mach-socfpga/platsmp.c|. Source of the reset/trampoline/cache-clean/release sequence this project reimplements in bare metal (used in Section~\ref{sec:fpgasteel-dualcore-about}); not vendored in this repository, analysed with the assistance of \term{Claude Code}.
-    \item |dualcore_forwarding_example|: the same bring-up sequence, extended with cache, \term{SCU}, and \term{MMU} configuration and real work dispatched to \term{CPU1}.
+    \item \unresolved{\term{Linux} kernel, \texttt{arch/arm/mach-socfpga/platsmp.c}. Source of the reset/trampoline/cache-clean/release sequence this project reimplements in bare metal (used in Section~\ref{sec:fpgasteel-dualcore-about}); not vendored in this repository, analysed with the assistance of \term{Claude Code}.}
+    \item \unresolved{\texttt{dualcore\_forwarding\_example}: the same bring-up sequence, extended with cache, \term{SCU}, and \term{MMU} configuration and real work dispatched to \term{CPU1}.}
 \end{itemize}
