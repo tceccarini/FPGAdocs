@@ -184,7 +184,7 @@ Represents a single image frame: it owns (or wraps) the pixel buffer, together w
 
 |FramePool| manages a set of |Frame| objects built over memory the caller allocates. The caller decides |count|, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and |count| to |FramePool|'s constructor. The pool uses no heap allocation and no locks: it can be shared safely between the main loop and a single \term{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
 
-Internally, |FramePool| also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at runtime, they are fixed at compile time to |MAX_SLOTS = 8|, and |count| is clamped to |MAX_SLOTS| if it ever exceeds it. |MAX_SLOTS| only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what |count| controls.
+Internally, |FramePool| also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at run time, they are fixed at compile time to |MAX_SLOTS = 8|, and |count| is clamped to |MAX_SLOTS| if it ever exceeds it. |MAX_SLOTS| only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what |count| controls.
 
 Each of the |count| active slots moves through the same cycle of four states, one step per method call:
 

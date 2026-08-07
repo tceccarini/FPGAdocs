@@ -37,7 +37,7 @@ Every \term{Platform Designer} instance on the capture path was renamed; the und
 \label{tab:fpgasteel-renamed-instances}
 \end{table}
 
-|ov7670_data_interface| gained a new register, |frame_size|. The hardware behavior is backward compatible with \sysname{FPGAlix}'s version. The |FRAME_SIZE| \term{VHDL} generic still exists, but it no longer fixes the frame size at synthesis time: it now only sets |frame_size|'s value on reset, as a default. From that point on, software can overwrite the register with a different byte count at runtime, and the acquisition \term{FSM} uses whatever value the register currently holds. This is what lets the capture path switch between the \term{OV7670}'s 1-byte-per-pixel (\term{RAW}/processed \term{Bayer}) and 2-byte-per-pixel (\term{RGB565}/\term{RGB555}/\term{RGB444}/\term{YUV422}) output formats without recompiling the hardware.
+|ov7670_data_interface| gained a new register, |frame_size|. The hardware behavior is backward compatible with \sysname{FPGAlix}'s version. The |FRAME_SIZE| \term{VHDL} generic still exists, but it no longer fixes the frame size at synthesis time: it now only sets |frame_size|'s value on reset, as a default. From that point on, software can overwrite the register with a different byte count at run time, and the acquisition \term{FSM} uses whatever value the register currently holds. This is what lets the capture path switch between the \term{OV7670}'s 1-byte-per-pixel (\term{RAW}/processed \term{Bayer}) and 2-byte-per-pixel (\term{RGB565}/\term{RGB555}/\term{RGB444}/\term{YUV422}) output formats without recompiling the hardware.
 
 \subsection{mSGDMA configuration}
 \label{subsec:fpgasteel-msgdma-config}
