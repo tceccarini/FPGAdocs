@@ -187,7 +187,7 @@ This file describes the hardware topology of the \term{SoC} and is maintained ma
 
 \subsubsection{The Device Tree Source is already provided}
 
-|socfpga_cyclone5_fpgalix.dts| is not part of the upstream kernel; it was authored for this project\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} and is already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} matching the current hardware. If the \term{Platform Designer} hardware configuration has not changed, this file requires no further editing.
+|socfpga_cyclone5_fpgalix.dts| is not part of the upstream kernel; it was authored for this project and is already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule, matching the current hardware. If the \term{Platform Designer} hardware configuration has not changed, this file requires no further editing.
 
 \subsubsection{Compiling the Device Tree Blob}
 
@@ -202,7 +202,7 @@ The compiled \term{DTB} is accessible via the symlink |sdcard/boot_partition/soc
 \subsection{Updating the Device Tree Source}
 \label{subsec:fpgalix-dts-update}
 
-This section only applies when the \term{HPS} subsystem has been modified in \term{Platform Designer}; otherwise |socfpga_cyclone5_fpgalix.dts|\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} already matches the current hardware, and this section can be skipped.
+This section only applies when the \term{HPS} subsystem has been modified in \term{Platform Designer}; otherwise |socfpga_cyclone5_fpgalix.dts| already matches the current hardware, and this section can be skipped.
 
 \subsubsection{Using sopc2dts as a reference}
 
@@ -359,7 +359,7 @@ This same build also produces the toolchain used by the |make arm| target of |sw
 \section{Generating the FPGA bitstream (RBF)}
 \label{sec:fpgalix-bitstream}
 
-The \term{FPGA} fabric on the \term{DE1-SoC} may be configured through several paths: over \term{JTAG} from \term{Quartus}, over \term{JTAG} via a \term{JTAG} adapter tool, or by the \term{HPS} itself at boot, through the \term{FPGA Manager}. \sysname{FPGAlix} employs the last of these: \term{U-Boot} loads the bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager}, prior to booting \term{Linux}.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+The \term{FPGA} fabric on the \term{DE1-SoC} may be configured through several paths: over \term{JTAG} from \term{Quartus}, over \term{JTAG} via a \term{JTAG} adapter tool, or by the \term{HPS} itself at boot, through the \term{FPGA Manager}. \sysname{FPGAlix} employs the last of these: \term{U-Boot} loads the bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager}, prior to booting \term{Linux}.
 
 \subsection{MSEL configuration (SW10)}
 \label{subsec:fpgalix-msel}
@@ -424,7 +424,7 @@ The final image may be written to the \term{SD} card using:
 
 \begin{itemize}
     \item \term{Linux}: |dd| (see the last step below)
-    \item \term{Windows}/\term{Mac}: \term{balenaEtcher}\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}, free and open-source software; the image and target drive are selected accordingly.
+    \item \term{Windows}/\term{Mac}: \term{balenaEtcher}\footnote{\term{balenaEtcher} --- \url{https://etcher.balena.io/}}, free and open-source software; the image and target drive are selected accordingly.
 \end{itemize}
 
 \subsection{Create the image file}
@@ -537,7 +537,7 @@ sudo mkfs.ext4 -L rootfs /dev/loopNp2
 
 \subsection{Mount and copy the files}
 
-All commands below, like the rest of this section, are run from |sdcard/|;\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} |boot_partition/|, |rootfs_overlay/|, |rootfs.tar| and |u-boot-with-spl.sfp| are paths relative to it.
+All commands below, like the rest of this section, are run from |sdcard/|; |boot_partition/|, |rootfs_overlay/|, |rootfs.tar| and |u-boot-with-spl.sfp| are paths relative to it.
 
 \begin{shellcode}
 cd sdcard/

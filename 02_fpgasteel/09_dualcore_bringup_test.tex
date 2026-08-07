@@ -4,13 +4,13 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}),\footnote{TODO [nota 181]: footnote text was lost when the source was copy-pasted -- please supply it.} including the |boot.script.jtag_debug| script, the same one used by every example in this project.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), including the |boot.script.jtag_debug| script, the same one used by every example in this project.
 
 Two additional requirements, specific to this project:
 
 \begin{itemize}
     \item The \term{Eclipse} debug configuration's \term{OpenOCD} options must set |CHIPCORES=1|, not |CHIPCORES=2|. With |CHIPCORES=2|, \term{OpenOCD} halts \term{CPU1} over \term{JTAG} as soon as it starts running; once \term{JTAG} has halted a core this way, this project's own software has no way to resume it again, so \term{CPU1} never reaches |main1()|.
-    \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled. Both are already required by Hello World (Chapter~\ref{chap:fpgasteel-hello-world});\footnote{TODO [nota 182]: footnote text was lost when the source was copy-pasted -- please supply it.} they matter even more here, since a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up this project performs.
+    \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled. Both are already required by Hello World (Chapter~\ref{chap:fpgasteel-hello-world}); they matter even more here, since a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up this project performs.
 \end{itemize}
 
 \section{About this project}
@@ -18,7 +18,7 @@ Two additional requirements, specific to this project:
 
 |dualcore_bringup_test| (under |sw/dualcore_bringup_test|) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at once: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. |dualcore_forwarding_example| builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
 
-The sequence used to bring \term{CPU1} up\footnote{TODO [nota 183]: footnote text was lost when the source was copy-pasted -- please supply it.} is not documented step-by-step anywhere in Intel's own \cite{CV-TRM} or \unresolved{\term{HWLib}}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence \term{Linux} itself uses to bring up its second core, implemented in \unresolved{\texttt{arch/arm/mach-socfpga/platsmp.c}}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
+The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \cite{CV-TRM} or \unresolved{\term{HWLib}}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence \term{Linux} itself uses to bring up its second core, implemented in \unresolved{\texttt{arch/arm/mach-socfpga/platsmp.c}}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-hardware}
@@ -80,7 +80,7 @@ This project's own boot script (|boot.script.jtag_debug|, Section~\ref{sec:fpgas
 \subsection{Releasing CPU1}
 \label{subsec:fpgasteel-dualcore-releasing-cpu1}
 
-The last step is simply clearing the reset bit again (|RSTMGR\_MPUMODRST| = 0x0). \term{CPU1} immediately fetches from address 0x0, runs the two-word trampoline from Paragraph~\ref{subsec:fpgasteel-dualcore-boot-address}, and lands in |_start_core1|.\footnote{TODO [nota 184]: footnote text was lost when the source was copy-pasted -- please supply it.}
+The last step is simply clearing the reset bit again (|RSTMGR\_MPUMODRST| = 0x0). \term{CPU1} immediately fetches from address 0x0, runs the two-word trampoline from Paragraph~\ref{subsec:fpgasteel-dualcore-boot-address}, and lands in |_start_core1|.
 
 \section{Code structure}
 \label{sec:fpgasteel-dualcore-code-structure}
@@ -101,13 +101,13 @@ Plain \term{C}, no classes. Source: |main.c|.
 \term{CPU1}'s own minimal entry stub, since \term{CPU1} starts with no stack and no runtime set up at all, unlike \term{CPU0} (which inherits \term{U-Boot}'s stack until its own \term{C} runtime takes over). Source: |startup_core1.S|.
 
 \begin{itemize}
-    \item |_start_core1|: sets the stack pointer to |_stack1|,\footnote{TODO [nota 185]: footnote text was lost when the source was copy-pasted -- please supply it.} then calls |main1()|. If |main1()| ever returned, which it does not, execution would fall into a |wfe|/branch-to-self trap loop immediately after.
+    \item |_start_core1|: sets the stack pointer to |_stack1|, then calls |main1()|. If |main1()| ever returned, which it does not, execution would fall into a |wfe|/branch-to-self trap loop immediately after.
 \end{itemize}
 
 \subsection{Linker script (ldscripts/cvav-ddr.ld)}
 \label{subsec:fpgasteel-dualcore-linker-script}
 
-Identical to the single-core project template (the same one Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) uses\footnote{TODO [nota 186]: footnote text was lost when the source was copy-pasted -- please supply it.}) except for one change: the template's single stack region is split into two, so that \term{CPU0} and \term{CPU1} never share, or overlap, the memory backing their stacks.
+Identical to the single-core project template (the same one Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) uses) except for one change: the template's single stack region is split into two, so that \term{CPU0} and \term{CPU1} never share, or overlap, the memory backing their stacks.
 
 \begin{table}[htbp]
     \centering
@@ -123,7 +123,7 @@ Identical to the single-core project template (the same one Simple Forwarding Ex
     \label{tab:fpgasteel-dualcore-stack-layout}
 \end{table}
 
-|_stack1| is not a cosmetic addition: |startup_core1.S|\footnote{TODO [nota 187]: footnote text was lost when the source was copy-pasted -- please supply it.} loads it directly into stack pointer before calling |main1()|, so this linker change is what actually gives \term{CPU1} a valid, dedicated stack to run on at all. Without it, \term{CPU1} would start with whatever stack pointer happened to already contain, most likely 0x0, the address that has just been overwritten with the trampoline.
+|_stack1| is not a cosmetic addition: |startup_core1.S| loads it directly into stack pointer before calling |main1()|, so this linker change is what actually gives \term{CPU1} a valid, dedicated stack to run on at all. Without it, \term{CPU1} would start with whatever stack pointer happened to already contain, most likely 0x0, the address that has just been overwritten with the trampoline.
 
 \section{How it works}
 \label{sec:fpgasteel-dualcore-how-it-works}
@@ -131,10 +131,10 @@ Identical to the single-core project template (the same one Simple Forwarding Ex
 The full sequence, \term{CPU0}'s and \term{CPU1}'s sides together:
 
 \begin{enumerate}
-    \item \term{OpenOCD} halts \term{CPU0} over \term{JTAG} and loads the \term{ELF}.\footnote{TODO [nota 188]: footnote text was lost when the source was copy-pasted -- please supply it.} \term{CPU1} is still held in hardware reset\footnote{TODO [nota 189]: footnote text was lost when the source was copy-pasted -- please supply it.} and has not executed anything at all yet.
+    \item \term{OpenOCD} halts \term{CPU0} over \term{JTAG} and loads the \term{ELF}. \term{CPU1} is still held in hardware reset and has not executed anything at all yet.
     \item \term{CPU0} runs |main()|: \term{LED}s turn on, dashes show on the hex display.
     \item \term{CPU0} runs the five-step bring-up sequence (Paragraphs~\ref{subsec:fpgasteel-dualcore-boot-address}--\ref{subsec:fpgasteel-dualcore-releasing-cpu1}).
-    \item \term{CPU1} comes out of reset, executes the trampoline at 0x0, and lands in |_start_core1|,\footnote{TODO [nota 190]: footnote text was lost when the source was copy-pasted -- please supply it.} which sets up its stack and calls |main1()|.
+    \item \term{CPU1} comes out of reset, executes the trampoline at 0x0, and lands in |_start_core1|, which sets up its stack and calls |main1()|.
     \item \term{CPU1} writes 123 to the hex display and loops forever; \term{CPU0}, after a short busy-wait, also loops forever.
 \end{enumerate}
 

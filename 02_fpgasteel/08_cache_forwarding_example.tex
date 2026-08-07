@@ -4,27 +4,28 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-cache-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}),\footnote{TODO [nota 137]: footnote text was lost when the source was copy-pasted -- please supply it.} plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Chapter~\ref{chap:fpgasteel-i2c-example}, Section~\ref{sec:fpgasteel-i2c-prerequisites}).\footnote{TODO [nota 138]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
-    \textbf{Hardware bug:} same camera \term{RESET}/\term{POWER-DOWN} caveat as I\textsuperscript{2}C Example.\footnote{TODO [nota 139]: footnote text was lost when the source was copy-pasted -- please supply it.}\footnote{TODO [nota 140]: footnote text was lost when the source was copy-pasted -- please supply it.}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{About this project}
 \label{sec:fpgasteel-cache-forwarding-about}
 
-|cache_forwarding_example| (under |sw/cache_forwarding_example|) runs the exact same camera-to-\term{VGA} forwarding pipeline as |simple_forwarding_example|,\footnote{TODO [nota 141]: footnote text was lost when the source was copy-pasted -- please supply it.} over the same \term{FPGA} hardware, unchanged,\footnote{TODO [nota 142]: footnote text was lost when the source was copy-pasted -- please supply it.} but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (|SimpleFilters::convert()|, in particular) but introduces a new problem absent from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}):\footnote{TODO [nota 143]: footnote text was lost when the source was copy-pasted -- please supply it.} the two \term{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \term{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
+|cache_forwarding_example| (under |sw/cache_forwarding_example|) runs the exact same camera-to-\term{VGA} forwarding pipeline as |simple_forwarding_example|, over the same \term{FPGA} hardware, unchanged, but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (|SimpleFilters::convert()|, in particular) but introduces a new problem absent from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): the two \term{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \term{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
 
-Compared to Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}),\footnote{TODO [nota 144]: footnote text was lost when the source was copy-pasted -- please supply it.} this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, |System::enableCache()|\footnote{TODO [nota 145]: footnote text was lost when the source was copy-pasted -- please supply it.} enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \term{MMU} mapping.
+Compared to Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, |System::enableCache()| enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \term{MMU} mapping.
 
-Everything else at startup, and in the main loop, is structurally the same as Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): |Camera| and |Vga| still run the same descriptor/prefetcher pipelines,\footnote{TODO [nota 146]: footnote text was lost when the source was copy-pasted -- please supply it.} and |SimpleFilters| still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through |CacheAwareFrame|/|CacheAwareFramePool| (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain |Frame|/|FramePool| from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}),\footnote{TODO [nota 147]: footnote text was lost when the source was copy-pasted -- please supply it.} so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.\footnote{TODO [nota 148]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Everything else at startup, and in the main loop, is structurally the same as Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): |Camera| and |Vga| still run the same descriptor/prefetcher pipelines, and |SimpleFilters| still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through |CacheAwareFrame|/|CacheAwareFramePool| (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain |Frame|/|FramePool| from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.
 
-The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()| and |Vga::onTransferComplete()|, are unaltered: comparing this project's |Camera.cpp|/|Vga.cpp| against Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})'s\footnote{TODO [nota 149]: footnote text was lost when the source was copy-pasted -- please supply it.} shows no logic difference at all.
+The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()| and |Vga::onTransferComplete()|, are unaltered: comparing this project's |Camera.cpp|/|Vga.cpp| against Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})'s shows no logic difference at all.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-cache-forwarding-hardware}
 
-Unchanged.\footnote{TODO [nota 150]: footnote text was lost when the source was copy-pasted -- please supply it.} Both \term{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}).
+Unchanged: see Section~\ref{sec:fpgasteel-simple-forwarding-hardware}. Both \term{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}).
 
 \section{Operating principles}
 \label{sec:fpgasteel-cache-forwarding-operating-principles}
@@ -35,7 +36,7 @@ Unchanged.\footnote{TODO [nota 150]: footnote text was lost when the source was 
 \subsubsection{The cache and SCU hardware}
 \label{subsubsec:fpgasteel-cache-scu-hardware}
 
-The Cyclone V SoC \term{FPGA} integrates a built-in dual-core \term{ARM} Cortex-A9 processor.\footnote{TODO [nota 151]: footnote text was lost when the source was copy-pasted -- please supply it.} Each core is provided with two separate 32 KB caches, one for data and one for instructions, plus its own \term{MMU} and \term{NEON}/\term{FPU} media processing engine.
+The Cyclone V SoC \term{FPGA} integrates a built-in dual-core \term{ARM} Cortex-A9 processor. Each core is provided with two separate 32 KB caches, one for data and one for instructions, plus its own \term{MMU} and \term{NEON}/\term{FPU} media processing engine.
 
 Moreover, the two cores share a single 512 KB \term{L2} cache (a \term{PL310} controller), holding both data and instructions for either core.
 
@@ -46,10 +47,9 @@ This project (unlike |dualcore_forwarding_example|) only runs on one core, so th
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{img/FPGAsteelHpsTrm.png}
-    \caption[Cortex-A9 MPU Subsystem Block Diagram]{Cortex-A9 MPU Subsystem Block Diagram, reproduced from \cite[Figure 10-2, p.~176]{CV-TRM}.\footnotemark{} Reported here for reference; not original work.}
+    \caption[Cortex-A9 MPU Subsystem Block Diagram]{Cortex-A9 MPU Subsystem Block Diagram, reproduced from \cite[Figure 10-2, p.~176]{CV-TRM}. Reported here for reference; not original work.}
     \label{fig:fpgasteel-cortex-a9-mpu-subsystem}
 \end{figure}
-\footnotetext{TODO [nota 152]: footnote text was lost when the source was copy-pasted -- please supply it.}
 
 \subsubsection{DMA vs.\ cache coherency}
 \label{subsubsec:fpgasteel-dma-cache-coherency}
@@ -79,12 +79,11 @@ The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} al
         0xFC000000 & 64 MB & Device & Non-shareable & Never (\term{XN}) & \term{HPS} peripherals (\term{UART}, \term{GIC}, timers, \ldots) \\
         \hline
     \end{tabular}
-    \caption[MMU section mapping built by System::enableCache()]{\term{MMU} section mapping built by System::enableCache().\footnotemark{}}
+    \caption[MMU section mapping built by System::enableCache()]{\term{MMU} section mapping built by System::enableCache().}
     \label{tab:fpgasteel-mmu-section-mapping}
 \end{table}
-\footnotetext{TODO [nota 153]: footnote text was lost when the source was copy-pasted -- please supply it.}
 
-The \term{DDR} region is the only one marked cacheable; the other two are left non-cacheable/device on purpose, since caching either register accesses or the descriptor memory the prefetcher polls\footnote{TODO [nota 154]: footnote text was lost when the source was copy-pasted -- please supply it.} would make software see stale values there too.
+The \term{DDR} region is the only one marked cacheable; the other two are left non-cacheable/device on purpose, since caching either register accesses or the descriptor memory the prefetcher polls would make software see stale values there too.
 
 \subsubsection{HWLib performs the work}
 \label{subsubsec:fpgasteel-hwlib-performs-work}
@@ -96,72 +95,72 @@ None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through cus
 \subsection{Descriptors and the prefetcher}
 \label{subsec:fpgasteel-cache-descriptors-prefetcher}
 
-Unchanged.\footnote{TODO [nota 155]: footnote text was lost when the source was copy-pasted -- please supply it.} Everything there, the descriptor layout, the ping-pong loop between |desc0|/|desc1|, |OWNED_BY_HW|, and the prefetcher itself, applies here without modification.
+Unchanged: see Section~\ref{subsec:fpgasteel-descriptors-prefetcher}. Everything there, the descriptor layout, the ping-pong loop between |desc0|/|desc1|, |OWNED_BY_HW|, and the prefetcher itself, applies here without modification.
 
 \subsection{Camera capture internals}
 \label{subsec:fpgasteel-cache-camera-capture}
 
-Unchanged.\footnote{TODO [nota 156]: footnote text was lost when the source was copy-pasted -- please supply it.} |Camera::onTransferComplete()| runs the identical sequence; the only new step it now demands from its caller is the explicit |cacheInvalidate()| on the buffer it hands over,\footnote{TODO [nota 157]: footnote text was lost when the source was copy-pasted -- please supply it.} since the \term{ISR} itself has no reason to do that on the \term{DMA} core's behalf.
+Unchanged: see Section~\ref{subsec:fpgasteel-camera-capture-interrupt}. |Camera::onTransferComplete()| runs the identical sequence; the only new step it now demands from its caller is the explicit |cacheInvalidate()| on the buffer it hands over, since the \term{ISR} itself has no reason to do that on the \term{DMA} core's behalf.
 
 \subsection{VGA output internals}
 \label{subsec:fpgasteel-cache-vga-output}
 
-Unchanged.\footnote{TODO [nota 158]: footnote text was lost when the source was copy-pasted -- please supply it.} |Vga::onTransferComplete()| runs the identical sequence; the new step it now demands from its caller is the explicit |cacheFlush()| before a frame is pushed into |vgaPool|.\footnote{TODO [nota 159]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Section~\ref{subsec:fpgasteel-vga-output-interrupt}. |Vga::onTransferComplete()| runs the identical sequence; the new step it now demands from its caller is the explicit |cacheFlush()| before a frame is pushed into |vgaPool|.
 
 \section{Code structure}
 \label{sec:fpgasteel-cache-code-structure}
 
-Only the classes that differ from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})\footnote{TODO [nota 160]: footnote text was lost when the source was copy-pasted -- please supply it.} are documented in full here; everything else is covered by reference. Paragraphs~\ref{subsec:fpgasteel-cache-system-class}--\ref{subsec:fpgasteel-cache-aware-framepool} are entirely new in this project.
+Only the classes that differ from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) are documented in full here; everything else is covered by reference. Paragraphs~\ref{subsec:fpgasteel-cache-system-class}--\ref{subsec:fpgasteel-cache-aware-framepool} are entirely new in this project.
 
 \subsection{Frame class}
 \label{subsec:fpgasteel-cache-frame-class}
 
-Unchanged,\footnote{TODO [nota 161]: footnote text was lost when the source was copy-pasted -- please supply it.} with one access-level change: |m_buffer| moved from private to protected, so that |CacheAwareFrame|\footnote{TODO [nota 162]: footnote text was lost when the source was copy-pasted -- please supply it.} can reach the raw pointer directly instead of going through |getBuffer()|. No behavioral change.
+Unchanged, with one access-level change: |m_buffer| moved from private to protected, so that |CacheAwareFrame| can reach the raw pointer directly instead of going through |getBuffer()|. No behavioral change.
 
 \subsection{FramePool class}
 \label{subsec:fpgasteel-cache-framepool}
 
-Unchanged,\footnote{TODO [nota 163]: footnote text was lost when the source was copy-pasted -- please supply it.} with two internal changes needed to support |CacheAwareFramePool|:\footnote{TODO [nota 164]: footnote text was lost when the source was copy-pasted -- please supply it.} |MAX_SLOTS| and the |m_frameStorage| bookkeeping array moved from private to protected, and |m_queueCount| changed from a plain |volatile unsigned| to |std::atomic<unsigned>|. Neither changes the public producer/consumer \term{API} (|borrow()|/|push()|/|pop()|/|giveBack()|) or its behavior.
+Unchanged, with two internal changes needed to support |CacheAwareFramePool|: |MAX_SLOTS| and the |m_frameStorage| bookkeeping array moved from private to protected, and |m_queueCount| changed from a plain |volatile unsigned| to |std::atomic<unsigned>|. Neither changes the public producer/consumer \term{API} (|borrow()|/|push()|/|pop()|/|giveBack()|) or its behavior.
 
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-cache-prefetcher-extended-descriptor}
 
-Unchanged.\footnote{TODO [nota 165]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Section~\ref{subsec:fpgasteel-prefetcher-extended-descriptor}.
 
 \subsection{MsgdmaPrefetcherMemory class}
 \label{subsec:fpgasteel-cache-msgdma-prefetcher-memory}
 
-Unchanged.\footnote{TODO [nota 166]: footnote text was lost when the source was copy-pasted -- please supply it.} Descriptor memory is left non-cacheable by the \term{MMU} mapping (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}), so this class needs no cache maintenance of its own.
+Unchanged: see Section~\ref{subsec:fpgasteel-msgdma-prefetcher-memory}. Descriptor memory is left non-cacheable by the \term{MMU} mapping (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}), so this class needs no cache maintenance of its own.
 
 \subsection{PrefetchedMSGDMA class}
 \label{subsec:fpgasteel-cache-prefetched-msgdma}
 
-Unchanged.\footnote{TODO [nota 167]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Section~\ref{subsec:fpgasteel-prefetched-msgdma}.
 
 \subsection{Camera class}
 \label{subsec:fpgasteel-cache-camera-class}
 
-Unchanged.\footnote{TODO [nota 168]: footnote text was lost when the source was copy-pasted -- please supply it.} |onTransferComplete()| is functionally identical to Simple Forwarding Example (Section~\ref{sec:fpgasteel-cache-forwarding-about} above).
+Unchanged: see Section~\ref{subsec:fpgasteel-camera-class}. |onTransferComplete()| is functionally identical to Simple Forwarding Example (Section~\ref{sec:fpgasteel-cache-forwarding-about} above).
 
 \subsection{Vga class}
 \label{subsec:fpgasteel-cache-vga-class}
 
-Unchanged.\footnote{TODO [nota 169]: footnote text was lost when the source was copy-pasted -- please supply it.} |onTransferComplete()| is functionally identical to Simple Forwarding Example.
+Unchanged: see Section~\ref{subsec:fpgasteel-vga-class}. |onTransferComplete()| is functionally identical to Simple Forwarding Example.
 
 \subsection{SimpleFilters class}
 \label{subsec:fpgasteel-cache-simple-filters}
 
-Unchanged.\footnote{TODO [nota 170]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Section~\ref{subsec:fpgasteel-simple-filters}.
 
 \subsection{HexDisplay class}
 \label{subsec:fpgasteel-cache-hex-display}
 
-Unchanged.\footnote{TODO [nota 171]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
 
 \subsection{System class}
 \label{subsec:fpgasteel-cache-system-class}
 
-|System| is the same singleton used in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})\footnote{TODO [nota 172]: footnote text was lost when the source was copy-pasted -- please supply it.} (|init()|, |micros()|, |millis()|, |delay()|, |delayMicroseconds()|, |deInit()|, all identical), plus one new method this project actually relies on: |enableCache()|. Source: |src/System.{h,cpp}|.
+|System| is the same singleton used in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) (|init()|, |micros()|, |millis()|, |delay()|, |delayMicroseconds()|, |deInit()|, all identical), plus one new method this project actually relies on: |enableCache()|. Source: |src/System.{h,cpp}|.
 
 \begin{itemize}
     \item |enableCache()|: enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 \term{MMU} mapping discussed in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}. Must be called after |init()|. It performs the following actions in order:
@@ -177,11 +176,11 @@ Unchanged.\footnote{TODO [nota 171]: footnote text was lost when the source was 
 \subsection{CacheAwareFrame class}
 \label{subsec:fpgasteel-cache-aware-frame}
 
-|CacheAwareFrame| extends |Frame|\footnote{TODO [nota 173]: footnote text was lost when the source was copy-pasted -- please supply it.} with the two cache operations Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency} requires, plus cache-line-aligned allocation, needed because a flush or invalidate operates on whole cache lines: performing one on a buffer that shares a line with unrelated data would flush or invalidate that neighboring data too. Source: |src/CacheAwareFrame.{h,cpp}|.
+|CacheAwareFrame| extends |Frame| with the two cache operations Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency} requires, plus cache-line-aligned allocation, needed because a flush or invalidate operates on whole cache lines: performing one on a buffer that shares a line with unrelated data would flush or invalidate that neighboring data too. Source: |src/CacheAwareFrame.{h,cpp}|.
 
 \begin{itemize}
     \item |CacheAwareFrame(width, height, colorScheme)| (overloaded constructor, form 1): allocates a new buffer via |memalign()|, aligned to |ALT_CACHE_LINE_SIZE|, owned by this object and released by the destructor. Throws |ExceptionFrame| if the allocation fails.
-    \item |CacheAwareFrame(buffer, bufferSize, width, height, colorScheme)| (overloaded constructor, form 2): wraps an existing buffer, exactly like |Frame|'s equivalent constructor;\footnote{TODO [nota 174]: footnote text was lost when the source was copy-pasted -- please supply it.} the caller is responsible for making sure that buffer is itself cache-line aligned.
+    \item |CacheAwareFrame(buffer, bufferSize, width, height, colorScheme)| (overloaded constructor, form 2): wraps an existing buffer, exactly like |Frame|'s equivalent constructor; the caller is responsible for making sure that buffer is itself cache-line aligned.
     \item |~CacheAwareFrame()| (destructor): frees the buffer, but only if it was allocated by form 1 above.
     \item |cacheFlush()|: cleans this frame's buffer from the \term{CPU} caches to \term{DDR} (|alt_cache_system_clean()|). Call this after the \term{CPU} has written the buffer and before a \term{DMA} master reads it.
     \item |cacheInvalidate()|: invalidates this frame's buffer in the \term{CPU} caches (|alt_cache_system_invalidate()|). Call this after a \term{DMA} master has written the buffer and before the \term{CPU} reads it.
@@ -190,14 +189,14 @@ Unchanged.\footnote{TODO [nota 171]: footnote text was lost when the source was 
 \subsection{CacheAwareFramePool class}
 \label{subsec:fpgasteel-cache-aware-framepool}
 
-|CacheAwareFramePool| extends |FramePool|\footnote{TODO [nota 175]: footnote text was lost when the source was copy-pasted -- please supply it.} with the same two operations, applied automatically at the point where a frame changes hands between producer and consumer, so that calling code cannot forget to call them. Source: |src/CacheAwareFramePool.{h,cpp}|.
+|CacheAwareFramePool| extends |FramePool| with the same two operations, applied automatically at the point where a frame changes hands between producer and consumer, so that calling code cannot forget to call them. Source: |src/CacheAwareFramePool.{h,cpp}|.
 
 \begin{itemize}
     \item |CacheAwareFramePool(count, width, height, colorScheme)| (overloaded constructor, form 1): allocates its own cache-line-aligned storage block internally, sized |count| times a per-frame stride rounded up to a multiple of |ALT_CACHE_LINE_SIZE| (needed whenever the raw frame size is not already a multiple of the cache line size, so that one frame's buffer never shares a cache line with the next frame's). Freed by the destructor.
     \item |CacheAwareFramePool(count, width, height, colorScheme, storage)| (overloaded constructor, form 2): uses caller-provided storage instead. Throws |ExceptionFramePool| if |storage| is not itself cache-line aligned.
     \item |~CacheAwareFramePool()| (destructor): frees the storage block, but only if it was allocated by form 1 above.
-    \item |push(frame, flushCache)|: if |flushCache| is true, calls |frame->cacheFlush()| first, then forwards to |FramePool::push()|.\footnote{TODO [nota 176]: footnote text was lost when the source was copy-pasted -- please supply it.}
-    \item |pop(invalidateCache)|: forwards to |FramePool::pop()|;\footnote{TODO [nota 177]: footnote text was lost when the source was copy-pasted -- please supply it.} if |invalidateCache| is true, calls |cacheInvalidate()| on the returned frame before returning it.
+    \item |push(frame, flushCache)|: if |flushCache| is true, calls |frame->cacheFlush()| first, then forwards to |FramePool::push()|.
+    \item |pop(invalidateCache)|: forwards to |FramePool::pop()|; if |invalidateCache| is true, calls |cacheInvalidate()| on the returned frame before returning it.
 \end{itemize}
 
 \section{How it works}
@@ -245,12 +244,12 @@ Each cache call above fires at the exact moment a buffer changes hands between t
     \item |vgaPool.push(vgaFrame, true)| handles the ``\term{CPU} writes, \term{DMA} reads'' case: |SimpleFilters::convert()| has just written a converted \term{RGB24} frame on the \term{CPU}, and |Vga|'s \term{mSGDMA} core is about to read it. Flushing first pushes those \term{CPU} writes out to \term{DDR}, so the \term{DMA} core doesn't read a buffer that is only partially, or not yet, written back.
 \end{itemize}
 
-Neither |borrow()| nor |giveBack()| needs a cache operation of its own: both only touch bookkeeping state inside |FramePool|,\footnote{TODO [nota 178]: footnote text was lost when the source was copy-pasted -- please supply it.} never the pixel buffer itself.
+Neither |borrow()| nor |giveBack()| needs a cache operation of its own: both only touch bookkeeping state inside |FramePool|, never the pixel buffer itself.
 
 \section{Debug tooling}
 \label{sec:fpgasteel-cache-forwarding-debug-tooling}
 
-|debugTools/view_frame.py|, same tool as in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}),\footnote{TODO [nota 179]: footnote text was lost when the source was copy-pasted -- please supply it.} works unchanged here. One caveat specific to this project: a raw memory dump (e.g.\ via \term{GDB} |dump memory|) reads \term{DDR} directly, not through the \term{CPU}'s caches, so a buffer whose cache lines have not been flushed yet may still show stale data in the dump. When inspecting a \term{CPU}-written buffer with this tool, dump it after the corresponding |cacheFlush()|,\footnote{TODO [nota 180]: footnote text was lost when the source was copy-pasted -- please supply it.} i.e.\ after |push(frame, true)| has run.
+|debugTools/view_frame.py|, same tool as in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), works unchanged here. One caveat specific to this project: a raw memory dump (e.g.\ via \term{GDB} |dump memory|) reads \term{DDR} directly, not through the \term{CPU}'s caches, so a buffer whose cache lines have not been flushed yet may still show stale data in the dump. When inspecting a \term{CPU}-written buffer with this tool, dump it after the corresponding |cacheFlush()|, i.e.\ after |push(frame, true)| has run.
 
 \section{References}
 \label{sec:fpgasteel-cache-forwarding-references}

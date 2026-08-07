@@ -82,7 +82,7 @@ Not on \term{PATH}, and not meant to be: two other \term{ARM} toolchains exist i
 
 \begin{itemize}
     \item \term{Buildroot} builds its own internal toolchain (|arm-buildroot-linux-gnueabihf-...|) as part of |repos/buildroot/output/host/bin/|. It is what |sw/vision_core|'s |make arm| target uses, and it must stay separate from the toolchain above: mixing the two (e.g. linking an object built with one against a library built with the other) produces \term{glibc} \term{ABI} mismatches.
-    \item The host's own native |gcc|/|g++| is used for |sw/vision_core|'s |make intel| target,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} which is a completely separate, \term{x86\_64} build of the same program.
+    \item The host's own native |gcc|/|g++| is used for |sw/vision_core|'s |make intel| target,\footnote{See Chapter~\ref{chap:fpgalix-vision-core}.} which is a completely separate, \term{x86\_64} build of the same program.
 \end{itemize}
 
 \subsection{USB-Blaster and serial console access}
@@ -137,4 +137,4 @@ Both the \term{VHDL} sources under |hw/| and the \term{C/C++} and \term{Python} 
 
 \section{Getting the installers}
 
-See Chapter~\ref{chap:fpgalix-board-bring-up}\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} for where to get \term{Quartus Prime}, the \term{ARM GNU} toolchain, and the \term{Ubuntu 22.04 LTS} image.
+See Chapter~\ref{chap:fpgalix-board-bring-up} for where to get \term{Quartus Prime}, the \term{ARM GNU} toolchain, and the \term{Ubuntu 22.04 LTS} image.

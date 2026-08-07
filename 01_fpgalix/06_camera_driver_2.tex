@@ -4,7 +4,7 @@
 \section{Introduction}
 \label{sec:fpgalix-camera-intro}
 
-|sw/camera_driver_2| is a \term{V4L2} driver for the \term{OV7670} camera, capturing frames through the \term{Altera} \term{mSGDMA} engine\footnote{TODO [nota 42]: ...} into a standard |/dev/videoN| device. Its development was assisted by \term{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
+|sw/camera_driver_2| is a \term{V4L2} driver for the \term{OV7670} camera, capturing frames through the \term{Altera} \term{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard |/dev/videoN| device. Its development was assisted by \term{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
 
 \section{Building}
 \label{sec:fpgalix-camera-building}
@@ -15,7 +15,7 @@ export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make
 \end{shellcode}
 
-This produces |bin/fpgalix_camera.ko|, cross-compiled against the kernel source tree.\footnote{TODO [nota 43]: ...}
+This produces |bin/fpgalix_camera.ko|, cross-compiled against the kernel source tree.
 
 \section{V4L2 buffer allocation}
 \label{sec:fpgalix-camera-buffer-allocation}
@@ -27,7 +27,7 @@ This driver uses \term{MMAP}, backed by \term{vb2}'s \term{DMA}-contiguous alloc
 \section{Detecting short frames}
 \label{sec:fpgalix-camera-short-frames}
 
-The \term{Avalon-ST} pipeline feeding the \term{mSGDMA}\footnote{TODO [nota 44]: ...} marks the end of every frame with an \term{EOP} (\term{End-Of-Packet}) marker. If \term{EOP} arrives before the buffer \term{mSGDMA} was writing to is full, the result is a short frame, and the \term{Altera} \term{mSGDMA} driver already present in the \term{Linux} kernel (|drivers/dma/altera-msgdma.c|), written independently of this project, gave |camera_driver_2| no way to detect this.
+The \term{Avalon-ST} pipeline feeding the \term{mSGDMA} marks the end of every frame with an \term{EOP} (\term{End-Of-Packet}) marker. If \term{EOP} arrives before the buffer \term{mSGDMA} was writing to is full, the result is a short frame, and the \term{Altera} \term{mSGDMA} driver already present in the \term{Linux} kernel (|drivers/dma/altera-msgdma.c|), written independently of this project, gave |camera_driver_2| no way to detect this.
 
 This problem was found empirically, through trial and error: streaming from the \term{VHDL} test pattern generators under |hw/my_vhdl/qsys_components/| showed frames coming out wrong. Tracing it to its root cause was then done by setting \term{Claude Code} to analyse the driver's source directly, over considerable iteration, several analysis passes rather than a single one, before the fault was narrowed down to three compounding problems: the \term{DMA} descriptors were not even configured to react to an early \term{EOP} in the first place; once that was corrected, the completion information the hardware did report for each transfer was still being read and then discarded, rather than passed up to |camera_driver_2|; and the first check used to detect this, once it was passed up, proved unreliable on some \term{mSGDMA} hardware revisions and had to be made more robust. All three were fixed.
 
@@ -35,7 +35,7 @@ With this in place, |camera_driver_2| can tell a complete frame from a short one
 
 A further, unrelated problem in the same driver caused the \term{DMA} engine to stall permanently after the very first short frame, and a second capture session to start from corrupted internal state left behind by the first. Both were fixed as well, and are documented, with the exact patch, in \cite[``Kernel patch (mandatory)'']{DRV2-README}.
 
-\textbf{Note:} All four changes are already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule.\footnote{TODO [nota 45]: ...} No manual patching is required.
+\textbf{Note:} All four changes are already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule. No manual patching is required.
 
 \section{Current limitations}
 \label{sec:fpgalix-camera-limitations}
@@ -47,11 +47,12 @@ The \term{OV7670} sensor itself is neither initialized nor reset by the driver: 
 \section{Usage}
 \label{sec:fpgalix-camera-usage}
 
-Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header.\footnote{TODO [nota 46]: ...}
+Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header.
 
 \begin{warningbox}
-    Do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods. A hardware bug in the adapter's line buffer can cause it to overheat and be permanently damaged.\footnote{TODO [nota 47]: ...}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over |scp|; any other transfer method works just as well. If transferring over \term{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: |root| has no working \term{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs |root|, since loading a kernel module and accessing hardware registers directly both require it, reached one of two ways:
 
@@ -63,7 +64,7 @@ Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the file
 \subsection{Deploying the module and utilities}
 \label{subsec:fpgalix-camera-transfer}
 
-The compiled module\footnote{TODO [nota 48]: ...} and the debug scripts used in the following steps are copied onto the board together, over |scp|, into a dedicated |camera_driver_2/| folder in the regular user's home directory:
+The compiled module and the debug scripts used in the following steps are copied onto the board together, over |scp|, into a dedicated |camera_driver_2/| folder in the regular user's home directory:
 
 \begin{shellcode}
 cd sw/camera_driver_2
@@ -86,7 +87,7 @@ su
 ./resetCtrl.sh
 \end{shellcode}
 
-Option 2, ``Deassert reset'', is selected. This releases |pclk_reset_controller|'s |sw_release| bit,\footnote{TODO [nota 49]: ...} a prerequisite for the camera to respond over \term{I\textsuperscript{2}C} at all.
+Option 2, ``Deassert reset'', is selected. This releases |pclk_reset_controller|'s |sw_release| bit, a prerequisite for the camera to respond over \term{I\textsuperscript{2}C} at all.
 
 \subsection{Configuring the OV7670 over I2C}
 \label{subsec:fpgalix-camera-i2c-config}

@@ -4,11 +4,12 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-simple-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}),\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Chapter~\ref{chap:fpgasteel-i2c-example}, Section~\ref{sec:fpgasteel-i2c-prerequisites}).\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
-    \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{About this project}
 \label{sec:fpgasteel-simple-forwarding-about}
@@ -30,7 +31,7 @@ Then, in the main loop, it:
     \item shows the conversion time, in milliseconds, on the 7-segment display (|HexDisplay|).
 \end{itemize}
 
-The camera capture and \term{VGA} output run on two independent \term{mSGDMA} cores, each in a ping-pong descriptor pair.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+The camera capture and \term{VGA} output run on two independent \term{mSGDMA} cores, each in a ping-pong descriptor pair.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-simple-forwarding-hardware}
@@ -49,14 +50,14 @@ Four blocks carry camera pixels into \term{HPS} \term{DDR}, in order (the \term{
     \item \textbf{\texttt{ov7670\_video\_msgdma}}: an \term{mSGDMA} core (\term{ST}$\rightarrow$\term{MM} direction) with its prefetcher enabled. It writes each incoming packet into whichever \term{DDR} buffer the current descriptor points to; the descriptors themselves live in |ov7670_prefercher_descriptor_mem|, a small on-chip \term{RAM}.
 \end{enumerate}
 
-|ov7670_data_interface| cannot pause the camera, since the sensor's pixel clock runs free regardless of what happens downstream. So, if the \term{Avalon-ST} ready signal from the rest of the chain above goes low in the middle of a frame (backpressure), it gives up on that frame outright: it stops forwarding bytes, counts a dropped frame, and once ready comes back it closes the truncated packet with a bare \term{EOP} before waiting for the next frame to start. A frame cut short this way still completes the \term{DMA} transfer on the software side, just with fewer bytes than expected; |Camera::onTransferComplete()|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} catches this by checking |bytesTransferred == FRAME_SIZE| and discards the frame instead of handing it to the pool.
+|ov7670_data_interface| cannot pause the camera, since the sensor's pixel clock runs free regardless of what happens downstream. So, if the \term{Avalon-ST} ready signal from the rest of the chain above goes low in the middle of a frame (backpressure), it gives up on that frame outright: it stops forwarding bytes, counts a dropped frame, and once ready comes back it closes the truncated packet with a bare \term{EOP} before waiting for the next frame to start. A frame cut short this way still completes the \term{DMA} transfer on the software side, just with fewer bytes than expected; |Camera::onTransferComplete()| catches this by checking |bytesTransferred == FRAME_SIZE| and discards the frame instead of handing it to the pool.
 
 The full state machine behind this behavior (\term{WAIT\_SYNC}/\term{ACQUIRE}/\term{WAIT\_READY}) is documented in PART~I -- \sysname{FPGAlix}, Section~\ref{sec:fpgalix-acquisition-core}.
 
 \subsection{VGA output (\term{Avalon-MM}$\rightarrow$\term{Avalon-ST})}
 \label{subsec:fpgasteel-simple-forwarding-vga-output}
 
-Conceptually, the flow runs in the opposite direction from camera capture:\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} four blocks carry frames from \term{DDR} back out to the \term{VGA} connector.
+Conceptually, the flow runs in the opposite direction from camera capture: four blocks carry frames from \term{DDR} back out to the \term{VGA} connector.
 
 \begin{enumerate}
     \item \textbf{\texttt{vga\_msgdma}}: an \term{mSGDMA} core (\term{MM}$\rightarrow$\term{ST} direction) with its prefetcher enabled. It reads a frame from whichever \term{DDR} buffer the current descriptor points to and turns it into an \term{Avalon-ST} stream; descriptors live in |vga_prefercher_descriptor_mem|.
@@ -69,8 +70,8 @@ Conceptually, the flow runs in the opposite direction from camera capture:\footn
 \label{subsec:fpgasteel-simple-forwarding-other-ip}
 
 \begin{itemize}
-    \item \textbf{\texttt{ov7670\_ctrl\_interface}} (\term{SCCB} master) and \textbf{\texttt{ov7670\_PCLK\_reset\_controller}} (camera reset) are the same cores as in I\textsuperscript{2}C Example (Chapter~\ref{chap:fpgasteel-i2c-example}, Section~\ref{sec:fpgasteel-i2c-hardware}).\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
-    \item \textbf{\texttt{hex\_display\_controller}} drives the 7-segment display.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+    \item \textbf{\texttt{ov7670\_ctrl\_interface}} (\term{SCCB} master) and \textbf{\texttt{ov7670\_PCLK\_reset\_controller}} (camera reset) are the same cores as in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-hardware}).
+    \item \textbf{\texttt{hex\_display\_controller}} drives the 7-segment display.
     \item The two datapaths above, camera capture and \term{VGA} output, are each built around an |altera_msgdma| core with its prefetcher enabled.
 \end{itemize}
 
@@ -89,7 +90,7 @@ Camera capture and \term{VGA} output are both built around the same descriptor /
 
 \subsubsection{What a descriptor is}
 
-A |PrefetcherExtendedDescriptor|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} is a 64-byte hardware record containing, in the ``Extended Descriptor Format when Prefetcher is Enabled'' \cite[Table 305, p.~379]{EP-IPUG}: 
+A |PrefetcherExtendedDescriptor| is a 64-byte hardware record containing, in the ``Extended Descriptor Format when Prefetcher is Enabled'' \cite[Table 305, p.~379]{EP-IPUG}: 
 
 \begin{itemize}
     \item a source and/or destination \term{DDR} address (depending on transfer direction),
@@ -124,21 +125,20 @@ The instant a running descriptor's transfer finishes, hardware itself clears its
 \begin{figure}[htbp]
     \centering
     \includesvg[width=0.9\linewidth]{FPGAsteelDescriptorPrefetcher}
-    \caption[simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output.]{simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output. This diagram is approximate, meant to convey the idea; for the exact register-level behavior, see \cite{EP-IPUG}.\footnotemark}
+    \caption[simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output.]{simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output. This diagram is approximate, meant to convey the idea; for the exact register-level behavior, see \cite{EP-IPUG}.}
     \label{fig:fpgasteel-descriptor-prefetcher}
 \end{figure}
-\footnotetext{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
 
 \subsection{Camera capture internals}
 \label{subsec:fpgasteel-camera-capture-interrupt}
 
 Camera runs the mechanism from Paragraph~\ref{subsec:fpgasteel-descriptors-prefetcher} on |ov7670_video_msgdma| / |ov7670_prefercher_descriptor_mem|; |desc0| and |desc1| each hold a destination address only, since this is an \term{ST}--\term{MM} transfer (the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address).
 
-\textbf{What happens in the ISR.} |Camera::onTransferComplete()|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}, in order:
+\textbf{What happens in the ISR.} |Camera::onTransferComplete()|, in order:
 \begin{enumerate}
     \item reads the destination address out of the descriptor that just finished, identifies which |camPool| buffer it points to, and returns that frame to the pool (|push()| if the transfer was clean, |giveBack()| otherwise, Paragraph~\ref{subsec:fpgasteel-framepool});
     \item pulls a fresh buffer out of |camPool| (|borrow()|) for the descriptor that is about to run next, the one still waiting, not yet committed, and writes that buffer's address into its destination field;
-    \item commits that descriptor (|commitSTtoMM|), reactivating it\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}.
+    \item commits that descriptor (|commitSTtoMM|), reactivating it.
 \end{enumerate}
 
 |camPool| itself (a |FramePool|, Paragraph~\ref{subsec:fpgasteel-framepool}) is instantiated once by |main()|; |Camera| only ever reaches it through the pointer it was given in |init(pool)|.
@@ -148,12 +148,12 @@ Camera runs the mechanism from Paragraph~\ref{subsec:fpgasteel-descriptors-prefe
 
 |Vga| runs the same mechanism on |vga_msgdma| / |vga_prefercher_descriptor_mem|; |desc0| and |desc1| each hold a source address only, since this is an \term{MM}--\term{ST} transfer (the destination is the outgoing \term{Avalon-ST} stream, not a memory address).
 
-\textbf{What happens in the ISR.} |Vga::onTransferComplete()|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} runs every time a transfer completes, and checks whether |vgaPool| has a new frame ready (|pop()|):
+\textbf{What happens in the ISR.} |Vga::onTransferComplete()| runs every time a transfer completes, and checks whether |vgaPool| has a new frame ready (|pop()|):
 \begin{itemize}
     \item if there is one available: it writes the new frame's buffer address into the source field of the descriptor that's about to run next (the one still waiting, not yet committed), and gives the old frame, the one that had just finished being shown, back to the pool (|giveBack()|);
     \item else (i.e.\ if none is available): it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it; that frame is never given back to the pool, since it's still the one in use.
 \end{itemize}
-Either way, it then commits that descriptor (|commitMMtoST|), reactivating it\footnote{TODO [nota 131]: footnote text was lost when the source was copy-pasted -- please supply it.}.
+Either way, it then commits that descriptor (|commitMMtoST|), reactivating it.
 
 |vgaPool| itself (a |FramePool|, Paragraph~\ref{subsec:fpgasteel-framepool}) is instantiated once by |main()|; |Vga| only ever reaches it through the pointer it was given in |init(pool)|.
 
@@ -184,7 +184,7 @@ Represents a single image frame: it owns (or wraps) the pixel buffer, together w
 
 |FramePool| manages a set of |Frame| objects built over memory the caller allocates. The caller decides |count|, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and |count| to |FramePool|'s constructor. The pool uses no heap allocation and no locks: it can be shared safely between the main loop and a single \term{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
 
-Internally, |FramePool| also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at run time, they are fixed at compile time to |MAX_SLOTS = 8|, and |count| is clamped to |MAX_SLOTS| if it ever exceeds it. |MAX_SLOTS| only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what |count| controls.
+Internally, |FramePool| also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at runtime, they are fixed at compile time to |MAX_SLOTS = 8|, and |count| is clamped to |MAX_SLOTS| if it ever exceeds it. |MAX_SLOTS| only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what |count| controls.
 
 Each of the |count| active slots moves through the same cycle of four states, one step per method call:
 
@@ -223,7 +223,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-prefetcher-extended-descriptor}
 
-|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{\cite{EP-IPUG}.}
+|PrefetcherExtendedDescriptor| is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named |Descriptor| (the class itself is declared |alignas(64)|, which is what actually guarantees the descriptor's required hardware alignment). The layout of |Descriptor| is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{See: \cite{EP-IPUG}.}
 
 \begin{table}[htbp]
     \centering
@@ -291,13 +291,13 @@ Manages the on-chip descriptor \term{RAM} that both the \term{CPU} and the prefe
     \item |capacity()|: returns the maximum number of extended descriptors that fit in the memory.
     \item |operator[](index)|: returns a \term{CPU}-side |PrefetcherExtendedDescriptor *| for the descriptor at |index|. Bounds-checked: throws |ExceptionMsgdma(IndexOutOfRange)| if |index >= capacity()|.
     \item |prefetcherAddress(index)|: returns the matching prefetcher-side address (relative to base 0) for the descriptor at |index|. Same bounds check as |operator[]|.
-    \item |cpuBase|: returns the \term{CPU}-side base address, passed to |PrefetcherExtendedDescriptor::setNext()|/|linkSelfLoop()|\footnote{TODO [nota 122]: footnote text was lost when the source was copy-pasted -- please supply it.} so they can translate a \term{CPU}-side next-descriptor pointer into the prefetcher-side offset it must be stored as.
+    \item |cpuBase|: returns the \term{CPU}-side base address, passed to |PrefetcherExtendedDescriptor::setNext()|/|linkSelfLoop()| so they can translate a \term{CPU}-side next-descriptor pointer into the prefetcher-side offset it must be stored as.
 \end{itemize}
 
 \subsection{PrefetchedMSGDMA class}
 \label{subsec:fpgasteel-prefetched-msgdma}
 
-Drives an |altera_msgdma| core with its prefetcher enabled: the dispatcher \term{CSR} and prefetcher \term{CSR} registers are what this class actually operates on. The constructor also takes two interrupt-routing values: |gicIrqId|, the number that identifies this core's completion interrupt among all the interrupt lines the \term{GIC} (Generic Interrupt Controller) manages, and |irqTargetCore|, a bitmask of which \term{CPU} core(s) should handle it. |registerInterrupt()| below is what actually uses |gicIrqId| to tell the \term{GIC} which interrupts to route to this class's callback. One more constructor parameter, |descriptorMemBase|, is only recorded: this class never reads it back. It exists so that a |PrefetchedMSGDMA| and a |MsgdmaPrefetcherMemory|\footnote{TODO [nota 123]: footnote text was lost when the source was copy-pasted -- please supply it.} can be constructed from using this base address. The same class serves both \term{ST}$\rightarrow$\term{MM} and \term{MM}$\rightarrow$\term{ST} transfers: direction is entirely a property of the descriptor content (source/destination, \term{SOP}/\term{EOP} flags), not of this driver. Source: |src/PrefetchedMSGDMA.{h,cpp}|.
+Drives an |altera_msgdma| core with its prefetcher enabled: the dispatcher \term{CSR} and prefetcher \term{CSR} registers are what this class actually operates on. The constructor also takes two interrupt-routing values: |gicIrqId|, the number that identifies this core's completion interrupt among all the interrupt lines the \term{GIC} (Generic Interrupt Controller) manages, and |irqTargetCore|, a bitmask of which \term{CPU} core(s) should handle it. |registerInterrupt()| below is what actually uses |gicIrqId| to tell the \term{GIC} which interrupts to route to this class's callback. One more constructor parameter, |descriptorMemBase|, is only recorded: this class never reads it back. It exists so that a |PrefetchedMSGDMA| and a |MsgdmaPrefetcherMemory| can be constructed from using this base address. The same class serves both \term{ST}$\rightarrow$\term{MM} and \term{MM}$\rightarrow$\term{ST} transfers: direction is entirely a property of the descriptor content (source/destination, \term{SOP}/\term{EOP} flags), not of this driver. Source: |src/PrefetchedMSGDMA.{h,cpp}|.
 
 \begin{itemize}
     \item |PrefetchedMSGDMA(csrBase, prefetcherCsrBase, descriptorMemBase, gicIrqId, irqTargetCore)| (constructor): records the register bases and the \term{IRQ} identification needed by |init()|/|start()| and |registerInterrupt()| below.
@@ -305,14 +305,14 @@ Drives an |altera_msgdma| core with its prefetcher enabled: the dispatcher \term
     \item |start(descIndex = 0)|: starts the prefetcher from the descriptor at |descIndex|. Throws |ExceptionMsgdma(PrefetcherBusy)| if already running, |ExceptionMsgdma(NotInitialized)| if |init()| hasn't run.
     \item |stop()|: clears the prefetcher's \term{RUN} bit and stops the dispatcher.
     \item |deInit()|: stops both prefetcher and dispatcher (teardown).
-    \item |isBusy|: returns whether the dispatcher's read/write masters are currently executing a transfer on the bus. This reflects the dispatcher only, not the prefetcher pipeline: it can read |false| between two back-to-back descriptors even while the prefetcher still has more queued. To check whether a specific descriptor's transfer has completed, poll that descriptor's |isComplete()| instead\footnote{TODO [nota 124]: footnote text was lost when the source was copy-pasted -- please supply it.}.
+    \item |isBusy|: returns whether the dispatcher's read/write masters are currently executing a transfer on the bus. This reflects the dispatcher only, not the prefetcher pipeline: it can read |false| between two back-to-back descriptors even while the prefetcher still has more queued. To check whether a specific descriptor's transfer has completed, poll that descriptor's |isComplete()| instead.
     \item |registerInterrupt(callback, context)|: enables the transfer-complete \term{IRQ} in the \term{GIC} and registers |callback| to run from \term{ISR} context for any descriptor committed with the transfer-complete \term{IRQ} bit set. |callback| must not throw: exceptions inside an \term{ISR} are undefined behavior, which is why |Camera::onTransferComplete()| and |Vga::onTransferComplete()| (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) both wrap their body in a local try/catch instead of letting anything escape.
 \end{itemize}
 
 \subsection{Camera class}
 \label{subsec:fpgasteel-camera-class}
 
-|Camera| is a singleton that owns three collaborators, all by composition, not inheritance: |AvalonSCCB|, for talking to the sensor's control registers over \term{SCCB}/\term{I\textsuperscript{2}C}; |PrefetchedMSGDMA|, driving the |ov7670_video_msgdma| core\footnote{TODO [nota 125]: footnote text was lost when the source was copy-pasted -- please supply it.}; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|ov7670_prefercher_descriptor_mem|). It does not touch the \term{OV7670}'s |ov7670_pclk| reset line: releasing the sensor from reset is explicitly left to the caller (|PclkResetController|, used directly by |main()|, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). |desc0|/|desc1|\footnote{TODO [nota 126]: footnote text was lost when the source was copy-pasted -- please supply it.} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address.
+|Camera| is a singleton that owns three collaborators, all by composition, not inheritance: |AvalonSCCB|, for talking to the sensor's control registers over \term{SCCB}/\term{I\textsuperscript{2}C}; |PrefetchedMSGDMA|, driving the |ov7670_video_msgdma| core; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|ov7670_prefercher_descriptor_mem|). It does not touch the \term{OV7670}'s |ov7670_pclk| reset line: releasing the sensor from reset is explicitly left to the caller (|PclkResetController|, used directly by |main()|, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). |desc0|/|desc1| each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: |src/Camera.{h,cpp}|.
 
@@ -322,7 +322,7 @@ Source: |src/Camera.{h,cpp}|.
     \item |deInit()|: stops the \term{DMA}, disables the data interface, and soft-resets the sensor.
     \item |verticalFlip(enable)|: toggles the \term{OV7670}'s \term{MVFP} register, bit 5, directly.
     \item |horizontalMirror(enable)|: toggles the \term{OV7670}'s \term{MVFP} register, bit 4, directly.
-    \item |getDroppedFramesCounter|: returns the |ov7670_data_interface|'s hardware counter, incremented whenever the \term{FPGA}-side pipeline itself drops a frame\footnote{TODO [nota 127]: footnote text was lost when the source was copy-pasted -- please supply it.}; independent of the software fallback described under |onTransferComplete()| below.
+    \item |getDroppedFramesCounter|: returns the |ov7670_data_interface|'s hardware counter, incremented whenever the \term{FPGA}-side pipeline itself drops a frame; independent of the software fallback described under |onTransferComplete()| below.
     \item |clearDroppedFramesCounter()|: resets that counter to zero.
     \item |hasIsrFault()|: returns whether the \term{ISR} (below) caught an exception.
     \item |getIsrFaultType()|: returns the type of the exception the \term{ISR} caught; only meaningful if |hasIsrFault()| is true.
@@ -333,7 +333,7 @@ Source: |src/Camera.{h,cpp}|.
 \subsection{Vga class}
 \label{subsec:fpgasteel-vga-class}
 
-|Vga| is a singleton that owns two collaborators, by composition, not inheritance: |PrefetchedMSGDMA|, driving the |vga_msgdma| core\footnote{TODO [nota 128]: footnote text was lost when the source was copy-pasted -- please supply it.}; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|vga_prefercher_descriptor_mem|). Unlike |Camera|, it has nothing external to configure over a control bus: |vga_controller|\footnote{TODO [nota 129]: footnote text was lost when the source was copy-pasted -- please supply it.} is fixed-function, with no equivalent of |AvalonSCCB|. Instead, |Vga| generates its own 8-bar color test pattern internally, so \term{VGA} output is already running the moment |init()| returns, before any real frame exists. |desc0|/|desc1|\footnote{TODO [nota 130]: footnote text was lost when the source was copy-pasted -- please supply it.} each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \term{Avalon-ST} stream, not a \term{DDR} address.
+|Vga| is a singleton that owns two collaborators, by composition, not inheritance: |PrefetchedMSGDMA|, driving the |vga_msgdma| core; and |MsgdmaPrefetcherMemory|, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (|vga_prefercher_descriptor_mem|). Unlike |Camera|, it has nothing external to configure over a control bus: |vga_controller| is fixed-function, with no equivalent of |AvalonSCCB|. Instead, |Vga| generates its own 8-bar color test pattern internally, so \term{VGA} output is already running the moment |init()| returns, before any real frame exists. |desc0|/|desc1| each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \term{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: |src/Vga.{h,cpp}|.
 
@@ -344,7 +344,7 @@ Source: |src/Vga.{h,cpp}|.
     \item |hasIsrFault()|: returns whether the \term{ISR} (below) caught an exception; \term{VGA} output freezes on the last frame while a fault is set.
     \item |getIsrFaultType()|: returns the type of the exception the \term{ISR} caught; only meaningful if |hasIsrFault()| is true.
     \item |clearIsrFault()|: clears the fault flag.
-    \item |onTransferComplete()| (private, the \term{ISR}): runs every time a transfer completes, and checks whether |vgaPool| has a new frame ready (|pop()|): if there is one available, it writes the new frame's buffer address into the source field of the descriptor that's about to run next, and gives the old frame, the one that had just finished being shown, back to the pool (|giveBack()|); if none is available, it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it (that frame is never given back to the pool, since it's still the one in use). Either way, it then commits that descriptor (|commitMMtoST|), reactivating it\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}. This is what lets the display keep showing the last converted frame indefinitely if the main loop temporarily falls behind, instead of underrunning.
+    \item |onTransferComplete()| (private, the \term{ISR}): runs every time a transfer completes, and checks whether |vgaPool| has a new frame ready (|pop()|): if there is one available, it writes the new frame's buffer address into the source field of the descriptor that's about to run next, and gives the old frame, the one that had just finished being shown, back to the pool (|giveBack()|); if none is available, it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it (that frame is never given back to the pool, since it's still the one in use). Either way, it then commits that descriptor (|commitMMtoST|), reactivating it. This is what lets the display keep showing the last converted frame indefinitely if the main loop temporarily falls behind, instead of underrunning.
 \end{itemize}
 
 \subsection{SimpleFilters class}
@@ -353,7 +353,7 @@ Source: |src/Vga.{h,cpp}|.
 Stateless, static-only class for converting one |Frame| to \term{RGB24} in software. Source: |src/SimpleFilters.{h,cpp}|.
 
 \begin{itemize}
-    \item |convert(src, dst)|, the only public method: converts |src|, a |Frame| in any |Frame::ColorScheme|\footnote{TODO [nota 132]: footnote text was lost when the source was copy-pasted -- please supply it.} other than \term{RGB24}, into |dst|, which must already be \term{RGB24}. Each source format gets its own conversion: |Mosaic8| is a naive per-pixel demosaic (each pixel keeps only its own \term{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), |YUYV16| gets a full \term{BT.601} \term{YUV}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (|RGB565|, |RGB555|, |RGB444|) are straight bit-unpacked to \term{RGB24}. Throws |ExceptionCamera| if |dst| isn't \term{RGB24}, or if |src| is a format |convert| doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use |memcpy| instead).
+    \item |convert(src, dst)|, the only public method: converts |src|, a |Frame| in any |Frame::ColorScheme| other than \term{RGB24}, into |dst|, which must already be \term{RGB24}. Each source format gets its own conversion: |Mosaic8| is a naive per-pixel demosaic (each pixel keeps only its own \term{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), |YUYV16| gets a full \term{BT.601} \term{YUV}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (|RGB565|, |RGB555|, |RGB444|) are straight bit-unpacked to \term{RGB24}. Throws |ExceptionCamera| if |dst| isn't \term{RGB24}, or if |src| is a format |convert| doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use |memcpy| instead).
 \end{itemize}
 
 \subsection{HexDisplay class}
@@ -407,7 +407,7 @@ while (true) {
 }
 \end{lstlisting}
 
-|camPool| and |vgaPool| are each shared between the main loop and one \term{ISR}: |Camera|'s \term{ISR}\footnote{TODO [nota 133]: footnote text was lost when the source was copy-pasted -- please supply it.} produces into |camPool|, the main loop consumes; the main loop produces into |vgaPool|, |Vga|'s \term{ISR}\footnote{TODO [nota 134]: footnote text was lost when the source was copy-pasted -- please supply it.} consumes. |FramePool|'s lock-free design\footnote{TODO [nota 135]: footnote text was lost when the source was copy-pasted -- please supply it.} is what makes this safe without disabling interrupts around the main loop's |pop()|/|borrow()| calls.
+|camPool| and |vgaPool| are each shared between the main loop and one \term{ISR}: |Camera|'s \term{ISR} produces into |camPool|, the main loop consumes; the main loop produces into |vgaPool|, |Vga|'s \term{ISR} consumes. |FramePool|'s lock-free design is what makes this safe without disabling interrupts around the main loop's |pop()|/|borrow()| calls.
 
 Every exception the code in this snippet can throw (|ExceptionSystem|, |ExceptionSerial|, |ExceptionRingBuffer|, |ExceptionI2C|, |ExceptionCamera|, |ExceptionMsgdma|, |ExceptionHexDisplay|, |ExceptionFramePool|) is caught around this block and reported over |Serial|, exactly as in |hello_word| and |i2c_example|.
 
@@ -416,7 +416,7 @@ Every exception the code in this snippet can throw (|ExceptionSystem|, |Exceptio
 
 |debugTools/view_frame.py| decodes a raw frame buffer dumped from target memory (e.g.\ via \term{GDB} |dump memory|) into a viewable image, for any of the six |ColorScheme| formats; see its |--help| for options (\term{Bayer} pattern for |Mosaic8|, |--save| to a \term{PNG} instead of displaying it). Useful to check what the camera actually captured, or what |SimpleFilters::convert()| produced, independently of the \term{VGA} output.
 
-|ImageJ|\footnote{TODO [nota 136]: footnote text was lost when the source was copy-pasted -- please supply it.} is an optional alternative for a quick look at the same dump without running the script: File $>$ Import $>$ Raw..., image type ``8-bit'' for a |Mosaic8| dump or ``RGB (24-bit)'' for an \term{RGB24} one, with the frame's width, height, and an offset of 0.
+|ImageJ|\footnote{\term{ImageJ} --- \url{https://imagej.net/ij/}} is an optional alternative for a quick look at the same dump without running the script: File $>$ Import $>$ Raw..., image type ``8-bit'' for a |Mosaic8| dump or ``RGB (24-bit)'' for an \term{RGB24} one, with the frame's width, height, and an offset of 0.
 
 
 

@@ -11,7 +11,7 @@ The prebuilt SD card image already contains the bootloader, kernel, root filesys
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
-\footnotetext{See Appendix~\ref{app:camera-adapter-board} -- Camera Adapter Board: full analysis of the camera \term{RESET}/\term{POWER-DOWN} hardware bug and the two permanent fixes \cite{ADAPTER-WARN}.}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \subsection{Hardware needed}
 
@@ -36,11 +36,11 @@ The prebuilt SD card image already contains the bootloader, kernel, root filesys
 
 \subsection{Board configuration}
 
-Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the underside of the board, so that switches 1 through 5 are ON (\term{SW10} uses negative logic: ON means logic 0). This lets the \term{HPS} configure the \term{FPGA} fabric from the SD card at boot.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the underside of the board, so that switches 1 through 5 are ON (\term{SW10} uses negative logic: ON means logic 0). This lets the \term{HPS} configure the \term{FPGA} fabric from the SD card at boot.\footnote{See Chapter~\ref{chap:fpgalix-board-bring-up}.}
 
 \subsection{Booting and logging in}
 
-Connect the \term{Ethernet} cable, insert the SD card, and power on the board. The board's IP address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+Connect the \term{Ethernet} cable, insert the SD card, and power on the board. The board's IP address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
 
 Two ways to log in, default password |1q2w3e4r| for both accounts:
 
@@ -51,14 +51,14 @@ Two ways to log in, default password |1q2w3e4r| for both accounts:
 ssh wheel@<board-ip>
 \end{shellcode}
 
-    \item over the serial console (115200 baud, 8N1, e.g. |picocom|), directly as |root|; no network needed for this path.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+    \item over the serial console (115200 baud, 8N1, e.g. |picocom|), directly as |root|; no network needed for this path.
 \end{itemize}
 
 \subsection{Running the software}
 
-|hexip_daemon|\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} is already running once the board boots; no action needed. The prebuilt SD card image also already contains |camera_driver_2| and |vision_core|, built and placed in |wheel|'s own home directory (|/home/wheel/camera_driver_2/|, |/home/wheel/vision_core/|); no building or |scp|-ing is needed here. Building from source and deploying over |scp|, covered in full in Chapter~\ref{chap:fpgalix-camera-driver-2}\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} and Chapter~\ref{chap:fpgalix-vision-core}\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}, only matters after changing their source.
+|hexip_daemon| is already running once the board boots; no action needed. The prebuilt SD card image also already contains |camera_driver_2| and |vision_core|, built and placed in |wheel|'s own home directory (|/home/wheel/camera_driver_2/|, |/home/wheel/vision_core/|); no building or |scp|-ing is needed here. Building from source and deploying over |scp|, covered in full in later chapters, only matters after changing their source.
 
-Log in as |wheel| (or |root| from the serial console, cd-ing to |/home/wheel| first), then bring the camera up and load the driver:\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+Log in as |wheel| (or |root| from the serial console, cd-ing to |/home/wheel| first), then bring the camera up and load the driver:
 
 \begin{shellcode}
 cd camera_driver_2
@@ -69,7 +69,7 @@ su                              # Not need if already logged in as root.
 insmod fpgalix_camera.ko        # load camera driver module
 \end{shellcode}
 
-Then run |vision_core|,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} still as |root|, from the sibling directory:
+Then run |vision_core|, still as |root|, from the sibling directory:
 
 \begin{shellcode}
 cd ../vision_core
@@ -83,7 +83,7 @@ Source [webcam/ov7670, default: webcam]: ov7670
 Encoding [mjpeg/h264/raw, default: mjpeg]:
 \end{shellcode}
 
-|ov7670| is mandatory on the board, the |webcam| source being only for the native \term{Intel} (|make intel|) build; |MJPEG|, left at its default by pressing Enter, is what this project recommends for full-color output here since the \term{HPS} having no hardware video encoder.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+|ov7670| is mandatory on the board, the |webcam| source being only for the native \term{Intel} (|make intel|) build; |MJPEG|, left at its default by pressing Enter, is what this project recommends for full-color output here since the \term{HPS} having no hardware video encoder.
 
 Once running, view the stream on a PC:
 
@@ -91,11 +91,9 @@ Once running, view the stream on a PC:
 ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
 \end{shellcode}
 
-\section{Documentation}
-
-The full, numbered documentation starts at |00_PrepareDevEnvironment.md|\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} and covers, in order, setting up the development environment, the hardware design, board bring-up, and every application under |sw/|.
-
 \section{Repository layout}
+
+The \sysname{FPGAlix} repository \cite{FPGALIX-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
 
 \begin{itemize}
     \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).

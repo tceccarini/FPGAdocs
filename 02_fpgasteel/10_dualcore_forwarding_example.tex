@@ -1,40 +1,41 @@
 \chapter{Dual-Core Forwarding Example}
 \label{chap:fpgasteel-dualcore-forwarding}
 
-\section{Prerequisites}
+\section{Prerequisites} 
 \label{sec:fpgasteel-dualcore-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}),\footnote{TODO [nota 191]: footnote text was lost when the source was copy-pasted -- please supply it.} plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Chapter~\ref{chap:fpgasteel-i2c-example}, Section~\ref{sec:fpgasteel-i2c-prerequisites}).\footnote{TODO [nota 192]: footnote text was lost when the source was copy-pasted -- please supply it.} The boot script is the same |boot.script.jtag_debug| used by every other example; this project brings its own caches and \term{MMU} up entirely through |System::prepareCacheSubsystem()|/|initCore()|,\footnote{TODO [nota 193]: footnote text was lost when the source was copy-pasted -- please supply it.} which does not depend on whatever cache state the boot script left behind.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}). The boot script is the same |boot.script.jtag_debug| used by every other example; this project brings its own caches and \term{MMU} up entirely through |System::prepareCacheSubsystem()|/|initCore()|, which does not depend on whatever cache state the boot script left behind.
 
 \begin{warningbox}
-    \textbf{Hardware bug:} same camera \term{RESET}/\term{POWER-DOWN} caveat as I\textsuperscript{2}C Example.\footnote{TODO [nota 194]: footnote text was lost when the source was copy-pasted -- please supply it.}\footnote{TODO [nota 195]: footnote text was lost when the source was copy-pasted -- please supply it.}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
-Two additional requirements, inherited from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}, Section~\ref{sec:fpgasteel-dualcore-prerequisites}),\footnote{TODO [nota 196]: footnote text was lost when the source was copy-pasted -- please supply it.} and equally necessary here since \term{CPU1} is brought up the same way:
+Two additional requirements, inherited from Dual-Core Bring-up Test (Section~\ref{sec:fpgasteel-dualcore-prerequisites}), and equally necessary here since \term{CPU1} is brought up the same way:
 
 \begin{itemize}
-    \item \term{OpenOCD} must only ever attach to \term{CPU0} (|CHIPCORES=1|, not 2).
-    \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled, for the same reason as Dual-Core Bring-up Test:\footnote{TODO [nota 197]: footnote text was lost when the source was copy-pasted -- please supply it.} a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up.
+ \item \term{OpenOCD} must only ever attach to \term{CPU0} (|CHIPCORES=1|, not 2).
+ \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled, for the same reason as Dual-Core Bring-up Test: a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up.
 \end{itemize}
 
 \section{About this project}
 \label{sec:fpgasteel-dualcore-forwarding-about}
 
-|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}),\footnote{TODO [nota 198]: footnote text was lost when the source was copy-pasted -- please supply it.} and the \term{CPU1} bring-up mechanism from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).\footnote{TODO [nota 199]: footnote text was lost when the source was copy-pasted -- please supply it.} What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism\footnote{TODO [nota 200]: footnote text was lost when the source was copy-pasted -- please supply it.} built on top of the bring-up sequence from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).\footnote{TODO [nota 201]: footnote text was lost when the source was copy-pasted -- please supply it.}
+|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}), and the \term{CPU1} bring-up mechanism from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}). What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).
 
-At startup, in addition to what Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}) already does,\footnote{TODO [nota 202]: footnote text was lost when the source was copy-pasted -- please supply it.} this project:
+At startup, in addition to what Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}) already does, this project:
 
 \begin{itemize}
-    \item brings up the shared \term{MMU} page table, the \term{SCU}, and the \term{L2} cache once, from \term{CPU0} (|System::prepareCacheSubsystem()|), then enables the \term{MMU} and \term{L1} data cache on each core individually (|System::initCore()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}); unlike Cache Forwarding Example,\footnote{TODO [nota 203]: footnote text was lost when the source was copy-pasted -- please supply it.} |initCore()| can also enable the \term{L1} instruction cache on each core, controlled by a single compile-time flag;
-    \item boots \term{CPU1} (|Core1::start()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}), using the same reset/trampoline/cache-clean/release sequence as Dual-Core Bring-up Test,\footnote{TODO [nota 204]: footnote text was lost when the source was copy-pasted -- please supply it.} and waits for it to report itself ready before doing anything else.
+ \item brings up the shared \term{MMU} page table, the \term{SCU}, and the \term{L2} cache once, from \term{CPU0} (|System::prepareCacheSubsystem()|), then enables the \term{MMU} and \term{L1} data cache on each core individually (|System::initCore()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}); unlike Cache Forwarding Example, |initCore()| can also enable the \term{L1} instruction cache on each core, controlled by a single compile-time flag;
+ \item boots \term{CPU1} (|Core1::start()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}), using the same reset/trampoline/cache-clean/release sequence as Dual-Core Bring-up Test, and waits for it to report itself ready before doing anything else.
 \end{itemize}
 
-Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding});\footnote{TODO [nota 205]: footnote text was lost when the source was copy-pasted -- please supply it.} Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
+Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}); Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-forwarding-hardware}
 
-Unchanged.\footnote{TODO [nota 206]: footnote text was lost when the source was copy-pasted -- please supply it.} The hardware is exactly that of Cache Forwarding Example (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}, the \term{mSGDMA} extended descriptor format is documented in \cite{EP-IPUG}).
+Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardware is exactly that of Cache Forwarding Example (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}, the \term{mSGDMA} extended descriptor format is documented in \cite{EP-IPUG}).
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-forwarding-operating-principles}
@@ -42,23 +43,23 @@ Unchanged.\footnote{TODO [nota 206]: footnote text was lost when the source was 
 \subsection{Bringing CPU1 up}
 \label{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}
 
-The mechanism is exactly the one described in Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}, Section~\ref{sec:fpgasteel-dualcore-operating-principles}):\footnote{TODO [nota 207]: footnote text was lost when the source was copy-pasted -- please supply it.} assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write |cpu1startaddr| for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. |Core1::start()| (|Core1.cpp|) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
+The mechanism is exactly the one described in Dual-Core Bring-up Test (Section~\ref{sec:fpgasteel-dualcore-operating-principles}): assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write |cpu1startaddr| for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. |Core1::start()| (|Core1.cpp|) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
 
 \begin{itemize}
-    \item registers are written through \unresolved{\term{HWLib}'s} \term{socal} accessors (|alt\_setbits\_word(ALT\_RSTMGR\_MPUMODRST\_ADDR, ...)|, |alt\_write\_word(ALT\_SYSMGR\_ROMCODE\_CPU1STARTADDR\_ADDR, ...)|) instead of the hand-written pointer casts Dual-Core Bring-up Test\footnote{TODO [nota 208]: footnote text was lost when the source was copy-pasted -- please supply it.} uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
-    \item an |sev| (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test.\footnote{TODO [nota 209]: footnote text was lost when the source was copy-pasted -- please supply it.} This is carried over unconditionally from \term{Linux}'s own \unresolved{\texttt{platsmp.c}} sequence, the same source Dual-Core Bring-up Test\footnote{TODO [nota 210]: footnote text was lost when the source was copy-pasted -- please supply it.} credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop,\footnote{TODO [nota 211]: footnote text was lost when the source was copy-pasted -- please supply it.} which never waits in |wfe|.
+ \item registers are written through \unresolved{\term{HWLib}'s} \term{socal} accessors (|alt\_setbits\_word(ALT\_RSTMGR\_MPUMODRST\_ADDR, ...)|, |alt\_write\_word(ALT\_SYSMGR\_ROMCODE\_CPU1STARTADDR\_ADDR, ...)|) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
+ \item an |sev| (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test. This is carried over unconditionally from \term{Linux}'s own \unresolved{\texttt{platsmp.c}} sequence, the same source Dual-Core Bring-up Test credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop, which never waits in |wfe|.
 \end{itemize}
 
-\term{CPU1} lands in |_start_core1| (|startup_core1.S|, identical to Dual-Core Bring-up Test's\footnote{TODO [nota 212]: footnote text was lost when the source was copy-pasted -- please supply it.} own copy), which sets up its stack and calls |main1()|, defined in |Core1.cpp| as a thin wrapper around |Core1::run()|.\footnote{TODO [nota 213]: footnote text was lost when the source was copy-pasted -- please supply it.}
+\term{CPU1} lands in |_start_core1| (|startup_core1.S|, identical to Dual-Core Bring-up Test's own copy), which sets up its stack and calls |main1()|, defined in |Core1.cpp| as a thin wrapper around |Core1::run()|.
 
 \subsection{Shared MMU, per-core caches}
 \label{subsec:fpgasteel-dualcore-forwarding-shared-mmu}
 
-The \term{SCU}/\term{L1}/\term{L2} architecture is the one in \cite[Chapter 10, Figure 10-2, p.~176]{CV-TRM}. Unlike Cache Forwarding Example,\footnote{TODO [nota 214]: footnote text was lost when the source was copy-pasted -- please supply it.} where only one core ever runs, this project has two cores that both need cache and \term{MMU} support, and a page table is not something that can safely be built twice. The work is split into two methods on |System|:
+The \term{SCU}/\term{L1}/\term{L2} architecture is the one in \cite[Chapter 10, Figure 10-2, p.~176]{CV-TRM}. Unlike Cache Forwarding Example, where only one core ever runs, this project has two cores that both need cache and \term{MMU} support, and a page table is not something that can safely be built twice. The work is split into two methods on |System|:
 
 \begin{itemize}
-    \item |prepareCacheSubsystem()|, called once, from \term{CPU0}, before \term{CPU1} exists: enables the \term{SCU}, disables whatever cache state \term{U-Boot} left behind, declares the same three-region flat 1:1 mapping as Cache Forwarding Example's\footnote{TODO [nota 215]: footnote text was lost when the source was copy-pasted -- please supply it.} |System::enableCache()| and hands it, together with a storage allocator, to |alt\_mmu\_va\_space\_create()|; \unresolved{\term{HWLib}} is what actually writes the section table into that storage, exactly as in Subparagraph~\ref{subsubsec:fpgasteel-hwlib-performs-work}. |prepareCacheSubsystem()| then enables the \term{L2} cache and calls |initCore()| for \term{CPU0} itself.
-    \item |initCore()|, called once per core (by |prepareCacheSubsystem()| for \term{CPU0}, and again by |Core1::run()| for \term{CPU1} after it starts): enables the \term{VFP}/\term{NEON} coprocessor access bits (\term{CPU1} does not inherit this from \term{U-Boot} the way \term{CPU0} does), sets the |ACTLR.SMP| bit to join the \term{SCU} coherency domain, points the \term{MMU} at the one shared table via |alt\_mmu\_va\_space\_enable()|, and enables the \term{L1} data cache. It also optionally enables the \term{L1} instruction cache on each core, gated behind the |ICACHE\_ENABLE| compile-time flag (|Config.h|); Cache Forwarding Example\footnote{TODO [nota 216]: footnote text was lost when the source was copy-pasted -- please supply it.} has no equivalent switch at all, since it never touches the instruction cache.
+ \item |prepareCacheSubsystem()|, called once, from \term{CPU0}, before \term{CPU1} exists: enables the \term{SCU}, disables whatever cache state \term{U-Boot} left behind, declares the same three-region flat 1:1 mapping as Cache Forwarding Example's |System::enableCache()| and hands it, together with a storage allocator, to |alt\_mmu\_va\_space\_create()|; \unresolved{\term{HWLib}} is what actually writes the section table into that storage, exactly as in Subparagraph~\ref{subsubsec:fpgasteel-hwlib-performs-work}. |prepareCacheSubsystem()| then enables the \term{L2} cache and calls |initCore()| for \term{CPU0} itself.
+ \item |initCore()|, called once per core (by |prepareCacheSubsystem()| for \term{CPU0}, and again by |Core1::run()| for \term{CPU1} after it starts): enables the \term{VFP}/\term{NEON} coprocessor access bits (\term{CPU1} does not inherit this from \term{U-Boot} the way \term{CPU0} does), sets the |ACTLR.SMP| bit to join the \term{SCU} coherency domain, points the \term{MMU} at the one shared table via |alt\_mmu\_va\_space\_enable()|, and enables the \term{L1} data cache. It also optionally enables the \term{L1} instruction cache on each core, gated behind the |ICACHE\_ENABLE| compile-time flag (|Config.h|); Cache Forwarding Example has no equivalent switch at all, since it never touches the instruction cache.
 \end{itemize}
 
 Both cores' \term{MMU}s are pointed, via |alt\_mmu\_va\_space\_enable()|, at the exact same translation table (|s\_ttb1|, built once by \unresolved{\term{HWLib}} inside |prepareCacheSubsystem()|): each core has its own private \term{TLB} caching entries from it, but the entries themselves, and therefore the memory attributes every address gets, are identical on both cores. This matters for Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency}: if the two cores disagreed on which regions were cacheable, keeping them coherent with each other would not even be well-defined.
@@ -71,104 +72,104 @@ This is the actual ``scheduler'' this project uses to hand work to \term{CPU1}, 
 The whole mechanism rests on two abstract classes, |Worker| and |DualCoreJob| (Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-worker}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-job}). Any task that needs to run split across the two cores must extend |DualCoreJob|, and must be able to hand back two |Worker| objects through |getWorker0()|, the one \term{CPU0} will run, and |getWorker1()|, the one \term{CPU1} will run. Calling |start()| is what actually assigns |worker1| to \term{CPU1}, through |Core1::dispatch()| (Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}/\ref{subsec:fpgasteel-dualcore-forwarding-core1}): from that moment on, \term{CPU1}'s own loop, which is constantly polling, notices that a worker with |status == Ready| is waiting for it, flips it to |Running|, and calls its |run()|. |awaitDone()|, the other half of the |DualCoreJob| interface, is what blocks the caller until both \term{CPU}s have actually finished: \term{CPU0}'s own worker, run synchronously inside |start()| itself, and \term{CPU1}'s, watched afterwards through its own status flag.
 
 \begin{figure}[htbp]
-    \centering
-    \includesvg[width=\linewidth]{FPGAsteelWorkerDispatchSequence}
-    \caption{One call to \texttt{DualCoreFormatConverter::convert()}, seen as a fork/join sequence between the two cores. \texttt{start()} (top bar) forks the two halves apart via the hand-off into that slot; \texttt{awaitDone()} (bottom bar) joins them back together once \term{CPU0}'s own poll of \texttt{worker1.status} succeeds.}
-    \label{fig:fpgasteel-dualcore-forwarding-dispatch-sequence}
+ \centering
+ \includesvg[width=\linewidth]{FPGAsteelWorkerDispatchSequence}
+ \caption{One call to \texttt{DualCoreFormatConverter::convert()}, seen as a fork/join sequence between the two cores. \texttt{start()} (top bar) forks the two halves apart via the hand-off into that slot; \texttt{awaitDone()} (bottom bar) joins them back together once \term{CPU0}'s own poll of \texttt{worker1.status} succeeds.}
+ \label{fig:fpgasteel-dualcore-forwarding-dispatch-sequence}
 \end{figure}
 
 Two details the figure cannot show are worth spelling out, since both are exactly the kind of thing that looks arbitrary until it isn't.
 
 \begin{itemize}
-    \item \textbf{The write order in \texttt{dispatch()} is not incidental.} It sets |worker.status| to |Ready| before storing |\&worker| into |m\_worker|, because \term{CPU1}'s loop only ever checks |status| after it has already seen a non-null |m\_worker|; if the order were reversed, \term{CPU1} could see the pointer while |status| still said |Stopped|. Symmetrically, |Core1::run()| clears |m\_worker| back to |nullptr| only after |status| has already reached its final value (|Completed| or |Error|), which is what makes it safe for the next |dispatch()| to reuse the slot.
-    \item \textbf{Worker vs.\ job, and the states in between.} A |Worker| is a single, reusable object with a |Worker::status| field. A job is whatever piece of work \term{Core1} currently holds that |Worker| for; the same |Worker| object stands for a different job every time it is dispatched. This distinction matters here because the same |Worker| gets assigned to \term{Core1} again and again: the main loop (|main0.cpp|, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls |DualCoreFormatConverter::convert()| once per frame, assigning a new job to \term{Core1} every time.
+ \item \textbf{The write order in \texttt{dispatch()} is not incidental.} It sets |worker.status| to |Ready| before storing |\&worker| into |m\_worker|, because \term{CPU1}'s loop only ever checks |status| after it has already seen a non-null |m\_worker|; if the order were reversed, \term{CPU1} could see the pointer while |status| still said |Stopped|. Symmetrically, |Core1::run()| clears |m\_worker| back to |nullptr| only after |status| has already reached its final value (|Completed| or |Error|), which is what makes it safe for the next |dispatch()| to reuse the slot.
+ \item \textbf{Worker vs.\ job, and the states in between.} A |Worker| is a single, reusable object with a |Worker::status| field. A job is whatever piece of work \term{Core1} currently holds that |Worker| for; the same |Worker| object stands for a different job every time it is dispatched. This distinction matters here because the same |Worker| gets assigned to \term{Core1} again and again: the main loop (|main0.cpp|, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls |DualCoreFormatConverter::convert()| once per frame, assigning a new job to \term{Core1} every time.
 \end{itemize}
 
 |Worker::status| moves through a fixed sequence: |Stopped| (idle, not yet committed to \term{Core1}) $\rightarrow$ |Ready| (committed by |Core1::dispatch()|, waiting for \term{CPU1} to notice it) $\rightarrow$ |Running| (\term{CPU1} is inside |Worker::run()|) $\rightarrow$ |Completed| or |Error| (this job is finished). |Core1::m\_worker| answers a narrower, unrelated question: has any |Worker| currently been assigned to \term{Core1}, whichever job it happens to represent right now; |Core1::isIdle()| is exactly |Core1::m\_worker == nullptr|.
 
-This is why polling |Core1::isIdle()| cannot tell a caller whether its own job has finished: by the time no |Worker| is assigned to \term{Core1} anymore, \term{Core1} may already be free to accept a completely different job assigned later. |DualCoreFormatConverter::awaitDone()|\footnote{TODO [nota 217]: footnote text was lost when the source was copy-pasted -- please supply it.} instead polls the specific |Worker| object it dispatched, watching its own |Worker::status| for |Completed|/|Error|, which stays correct no matter how many further jobs get assigned to \term{Core1} afterward.
+This is why polling |Core1::isIdle()| cannot tell a caller whether its own job has finished: by the time no |Worker| is assigned to \term{Core1} anymore, \term{Core1} may already be free to accept a completely different job assigned later. |DualCoreFormatConverter::awaitDone()| instead polls the specific |Worker| object it dispatched, watching its own |Worker::status| for |Completed|/|Error|, which stays correct no matter how many further jobs get assigned to \term{Core1} afterward.
 
 This split only stays safe because of one invariant, enforced everywhere: exactly one core ever writes each field. \term{CPU0} is the only core that ever calls |Core1::dispatch()|, and \term{CPU1} is the only core that ever clears |Core1::m\_worker|; |Core1::dispatch()|'s own busy-wait further guarantees only one job is ever in flight at a time. With exactly one writer per field, and no second job to race against, plain atomics are enough: no mutex, no semaphore, the same reasoning that already lets |FramePool| work without locks.
 
 \subsection{Cache coherency across two cores, and into DMA}
 \label{subsec:fpgasteel-dualcore-forwarding-cache-coherency}
 
-|DualCoreFormatConverter|\footnote{TODO [nota 218]: footnote text was lost when the source was copy-pasted -- please supply it.} splits one frame conversion into a top half, run synchronously on \term{CPU0}, and a bottom half, dispatched to \term{CPU1} through the mechanism above. Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu} already put both cores in the same \term{SCU} coherency domain, which means a plain memory write by one core is automatically visible to a subsequent read by the other, no cache instruction required, which is exactly what lets \term{CPU0} poll |m\_worker1.status|\footnote{TODO [nota 219]: footnote text was lost when the source was copy-pasted -- please supply it.} and see \term{CPU1}'s updates to it at all.
+|DualCoreFormatConverter| splits one frame conversion into a top half, run synchronously on \term{CPU0}, and a bottom half, dispatched to \term{CPU1} through the mechanism above. Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu} already put both cores in the same \term{SCU} coherency domain, which means a plain memory write by one core is automatically visible to a subsequent read by the other, no cache instruction required, which is exactly what lets \term{CPU0} poll |m\_worker1.status| and see \term{CPU1}'s updates to it at all.
 
-That automatic coherency covers the two \term{ARM} cores only. It says nothing about the two \term{mSGDMA} cores in the \term{FPGA} fabric: as established in Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency}, those \term{DMA} masters read and write \term{DDR} directly and are not part of the \term{SCU}'s coherency domain, on this project exactly as much as on Cache Forwarding Example.\footnote{TODO [nota 220]: footnote text was lost when the source was copy-pasted -- please supply it.} So, the converted frame still needs the same clean-before-\term{DMA}-reads treatment Cache Forwarding Example\footnote{TODO [nota 221]: footnote text was lost when the source was copy-pasted -- please supply it.} established, the only question is which core is responsible for it.
+That automatic coherency covers the two \term{ARM} cores only. It says nothing about the two \term{mSGDMA} cores in the \term{FPGA} fabric: as established in Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency}, those \term{DMA} masters read and write \term{DDR} directly and are not part of the \term{SCU}'s coherency domain, on this project exactly as much as on Cache Forwarding Example. So, the converted frame still needs the same clean-before-\term{DMA}-reads treatment Cache Forwarding Example established, the only question is which core is responsible for it.
 
 A cache clean instruction only ever operates on the core that executes it: a clean issued on \term{CPU0} cannot reach into \term{CPU1}'s own \term{L1} cache banks and force them to write back, and vice versa. This is why |DualCoreFormatConverter::HalfFrameWorker::run()| (|DualCoreFormatConverter.cpp|) ends with its own |alt\_cache\_l1\_data\_clean(dst, width * height * 3)| on the half it just wrote, executed by whichever core actually ran that particular worker: \term{CPU0} cleans its own half's \term{L1} lines synchronously, right after converting it; \term{CPU1} cleans its own half's \term{L1} lines from inside |Core1::run()|'s worker loop, right after its own |run()| returns. Each core can only clean what it itself dirtied, so each core does exactly that, immediately.
 
-That still only gets both halves as far as the shared \term{L2}, not to \term{DDR}. The final step is the same one Cache Forwarding Example\footnote{TODO [nota 222]: footnote text was lost when the source was copy-pasted -- please supply it.} already relies on: |vgaPool.push(vgaFrame, true)| (|main0.cpp|, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls |CacheAwareFrame::cacheFlush()|, which cleans both \term{L1} and \term{L2} for the whole buffer, but only from \term{CPU0}, the core that calls it. By that point \term{CPU0}'s own half is already clean (the per-worker clean above made that a harmless no-op), and \term{CPU1}'s half, already pushed out of \term{CPU1}'s \term{L1} into the shared \term{L2} by its own per-worker clean, is exactly what this last, single \term{L2} clean reaches and finally pushes on to \term{DDR}. Two per-core \term{L1} cleans, one shared \term{L2}-and-\term{DDR} clean: that is the whole coherency story for a frame two cores wrote together.
+That still only gets both halves as far as the shared \term{L2}, not to \term{DDR}. The final step is the same one Cache Forwarding Example already relies on: |vgaPool.push(vgaFrame, true)| (|main0.cpp|, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls |CacheAwareFrame::cacheFlush()|, which cleans both \term{L1} and \term{L2} for the whole buffer, but only from \term{CPU0}, the core that calls it. By that point \term{CPU0}'s own half is already clean (the per-worker clean above made that a harmless no-op), and \term{CPU1}'s half, already pushed out of \term{CPU1}'s \term{L1} into the shared \term{L2} by its own per-worker clean, is exactly what this last, single \term{L2} clean reaches and finally pushes on to \term{DDR}. Two per-core \term{L1} cleans, one shared \term{L2}-and-\term{DDR} clean: that is the whole coherency story for a frame two cores wrote together.
 
 \section{Code structure}
 \label{sec:fpgasteel-dualcore-forwarding-code-structure}
 
-Only classes that differ from Cache Forwarding Example\footnote{TODO [nota 223]: footnote text was lost when the source was copy-pasted -- please supply it.} are documented in full here; Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-worker}--\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-format-converter} are entirely new.
+Only classes that differ from Cache Forwarding Example are documented in full here; Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-worker}--\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-format-converter} are entirely new.
 
 \subsection{Frame class}
 \label{subsec:fpgasteel-dualcore-forwarding-frame}
 
-Unchanged.\footnote{TODO [nota 224]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-frame-class}.
 
 \subsection{FramePool class}
 \label{subsec:fpgasteel-dualcore-forwarding-framepool}
 
-Unchanged.\footnote{TODO [nota 225]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-framepool}.
 
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-dualcore-forwarding-prefetcher-extended-descriptor}
 
-Unchanged.\footnote{TODO [nota 226]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-prefetcher-extended-descriptor}.
 
 \subsection{MsgdmaPrefetcherMemory class}
 \label{subsec:fpgasteel-dualcore-forwarding-msgdma-prefetcher-memory}
 
-Unchanged.\footnote{TODO [nota 227]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-msgdma-prefetcher-memory}.
 
 \subsection{PrefetchedMSGDMA class}
 \label{subsec:fpgasteel-dualcore-forwarding-prefetched-msgdma}
 
-Unchanged.\footnote{TODO [nota 228]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-prefetched-msgdma}.
 
 \subsection{Camera class}
 \label{subsec:fpgasteel-dualcore-forwarding-camera}
 
-Unchanged.\footnote{TODO [nota 229]: footnote text was lost when the source was copy-pasted -- please supply it.} The ISR runs on \term{CPU0} only as every prior project.
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-camera-class}. The ISR runs on \term{CPU0} only as every prior project.
 
 \subsection{Vga class}
 \label{subsec:fpgasteel-dualcore-forwarding-vga}
 
-Unchanged.\footnote{TODO [nota 230]: footnote text was lost when the source was copy-pasted -- please supply it.} Its ISR is also routed to \term{CPU0} only (|VGA\_MSGDMA\_IRQ\_TARGET\_CORE = 0x1|).
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-vga-class}. Its ISR is also routed to \term{CPU0} only (|VGA\_MSGDMA\_IRQ\_TARGET\_CORE = 0x1|).
 
 \subsection{SimpleFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-simple-format-converter}
 
-Renamed from Cache Forwarding Example's\footnote{TODO [nota 231]: footnote text was lost when the source was copy-pasted -- please supply it.} |SimpleFilters|, with the same per-format conversion logic (verified byte-identical body, aside from the renamed class and exception type) but a different shape, so that |DualCoreFormatConverter|\footnote{TODO [nota 232]: footnote text was lost when the source was copy-pasted -- please supply it.} can extend it: |convert()| is now virtual instead of static, the class has a virtual destructor, and the individual per-format helpers (|mosaic8ToRgb24|/|yuyv16ToRgb24|/|rgb565ToRgb24|/|rgb555ToRgb24|/|rgb444ToRgb24|) moved from private to protected so a derived class's own worker objects can call them directly.
+Renamed from Cache Forwarding Example's |SimpleFilters|, with the same per-format conversion logic (verified byte-identical body, aside from the renamed class and exception type) but a different shape, so that |DualCoreFormatConverter| can extend it: |convert()| is now virtual instead of static, the class has a virtual destructor, and the individual per-format helpers (|mosaic8ToRgb24|/|yuyv16ToRgb24|/|rgb565ToRgb24|/|rgb555ToRgb24|/|rgb444ToRgb24|) moved from private to protected so a derived class's own worker objects can call them directly.
 
 \begin{itemize}
-    \item |convert(src, dst)| (virtual): unchanged behavior from Cache Forwarding Example's\footnote{TODO [nota 233]: footnote text was lost when the source was copy-pasted -- please supply it.} |SimpleFilters::convert()|:\footnote{TODO [nota 234]: footnote text was lost when the source was copy-pasted -- please supply it.} converts |src| in any supported |ColorScheme| into |dst|, which must already be \term{RGB24}. Throws |ExceptionFilter| if |dst| isn't \term{RGB24} or |src|'s format isn't handled.
+ \item |convert(src, dst)| (virtual): unchanged behavior from Cache Forwarding Example's |SimpleFilters::convert()|: converts |src| in any supported |ColorScheme| into |dst|, which must already be \term{RGB24}. Throws |ExceptionFilter| if |dst| isn't \term{RGB24} or |src|'s format isn't handled.
 \end{itemize}
 
 \subsection{HexDisplay class}
 \label{subsec:fpgasteel-dualcore-forwarding-hex-display}
 
-Unchanged.\footnote{TODO [nota 235]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-hex-display}.
 
 \subsection{System class}
 \label{subsec:fpgasteel-dualcore-forwarding-system}
 
-Same role as Cache Forwarding Example's\footnote{TODO [nota 236]: footnote text was lost when the source was copy-pasted -- please supply it.} |System|, but |enableCache()| is gone, replaced by the two-method split Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu} already covers in full: |prepareCacheSubsystem()| and |initCore()|.
+Same role as Cache Forwarding Example's |System|, but |enableCache()| is gone, replaced by the two-method split Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu} already covers in full: |prepareCacheSubsystem()| and |initCore()|.
 
 \subsection{CacheAwareFrame class}
 \label{subsec:fpgasteel-dualcore-forwarding-cache-aware-frame}
 
-Unchanged.\footnote{TODO [nota 237]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}.
 
 \subsection{CacheAwareFramePool class}
 \label{subsec:fpgasteel-dualcore-forwarding-cache-aware-framepool}
 
-Unchanged.\footnote{TODO [nota 238]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}.
 
 \subsection{Worker class}
 \label{subsec:fpgasteel-dualcore-forwarding-worker}
@@ -176,52 +177,52 @@ Unchanged.\footnote{TODO [nota 238]: footnote text was lost when the source was 
 Abstract base for one unit of work executed on a single core, and the foundation of the dispatch mechanism in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}. Source: |Worker.h|.
 
 \begin{itemize}
-    \item |status| (public |std::atomic<Status>| member, not a method): the cross-core lifecycle flag itself (|Stopped| $\rightarrow$ |Ready| $\rightarrow$ |Running| $\rightarrow$ |Completed| $\mid$ |Error|), written by whichever core executes the worker, read by whichever core submitted it.
-    \item |run()| (pure virtual, |noexcept|): the actual payload. Must not throw; must set |status| to |Error| itself on failure instead.
-    \item |whatError()| (pure virtual): human-readable description of the last error, valid when |status| is |Error|.
+ \item |status| (public |std::atomic<Status>| member, not a method): the cross-core lifecycle flag itself (|Stopped| $\rightarrow$ |Ready| $\rightarrow$ |Running| $\rightarrow$ |Completed| $\mid$ |Error|), written by whichever core executes the worker, read by whichever core submitted it.
+ \item |run()| (pure virtual, |noexcept|): the actual payload. Must not throw; must set |status| to |Error| itself on failure instead.
+ \item |whatError()| (pure virtual): human-readable description of the last error, valid when |status| is |Error|.
 \end{itemize}
 
 \subsection{DualCoreJob class}
 \label{subsec:fpgasteel-dualcore-forwarding-dualcore-job}
 
-Abstract coordinator interface for a piece of work split into exactly two |Worker|s, one per core; |DualCoreFormatConverter|\footnote{TODO [nota 239]: footnote text was lost when the source was copy-pasted -- please supply it.} is its only implementation in this project. Source: |DualCoreJob.h|.
+Abstract coordinator interface for a piece of work split into exactly two |Worker|s, one per core; |DualCoreFormatConverter| is its only implementation in this project. Source: |DualCoreJob.h|.
 
 \begin{itemize}
-    \item |start()| (pure virtual): launches both workers.
-    \item |awaitDone()| (pure virtual): blocks until both have reached |Completed| or |Error|.
-    \item |getWorker0()|/|getWorker1()| (pure virtual): access to the two underlying |Worker|s.
-    \item |isErrorOccured()| (pure virtual): true if either worker ended in |Error|.
-    \item |whatError(cpuNum)| (pure virtual): error description for the given core (0 or 1).
+ \item |start()| (pure virtual): launches both workers.
+ \item |awaitDone()| (pure virtual): blocks until both have reached |Completed| or |Error|.
+ \item |getWorker0()|/|getWorker1()| (pure virtual): access to the two underlying |Worker|s.
+ \item |isErrorOccured()| (pure virtual): true if either worker ended in |Error|.
+ \item |whatError(cpuNum)| (pure virtual): error description for the given core (0 or 1).
 \end{itemize}
 
 \subsection{Core1 class}
 \label{subsec:fpgasteel-dualcore-forwarding-core1}
 
-Singleton owning everything about \term{CPU1}: bringing it up\footnote{TODO [nota 240]: footnote text was lost when the source was copy-pasted -- please supply it.} and dispatching work to it.\footnote{TODO [nota 241]: footnote text was lost when the source was copy-pasted -- please supply it.} Source: |Core1.{h,cpp}|.
+Singleton owning everything about \term{CPU1}: bringing it up and dispatching work to it. Source: |Core1.{h,cpp}|.
 
 \begin{itemize}
-    \item |getInstance()|: returns the singleton instance.
-    \item |start()|: runs the bring-up sequence from Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}. Must be called once, from \term{CPU0}, after |System::prepareCacheSubsystem()|.
-    \item |getStatus()|: returns |Offline|/|Starting|/|Ready|/|Error|; \term{CPU0} polls this after |start()| to know when \term{CPU1} has finished its own |initCore()|\footnote{TODO [nota 242]: footnote text was lost when the source was copy-pasted -- please supply it.} and is ready to accept work.
-    \item |whatError()|: error description, valid when |getStatus()| is |Error|.
-    \item |dispatch(worker)|: hands |worker| to \term{CPU1}, as described in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}. Blocks until \term{CPU1}'s slot is free.
-    \item |isIdle()|: true if no worker is currently assigned to \term{CPU1}.
-    \item |run()| (private, |noexcept|, called only from |main1()| on \term{CPU1}): calls |System::initCore()| for \term{CPU1}, marks |status| |Ready|, then loops forever picking up and running whatever |dispatch()| places in the slot.\footnote{TODO [nota 243]: footnote text was lost when the source was copy-pasted -- please supply it.}
+ \item |getInstance()|: returns the singleton instance.
+ \item |start()|: runs the bring-up sequence from Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}. Must be called once, from \term{CPU0}, after |System::prepareCacheSubsystem()|.
+ \item |getStatus()|: returns |Offline|/|Starting|/|Ready|/|Error|; \term{CPU0} polls this after |start()| to know when \term{CPU1} has finished its own |initCore()| and is ready to accept work.
+ \item |whatError()|: error description, valid when |getStatus()| is |Error|.
+ \item |dispatch(worker)|: hands |worker| to \term{CPU1}, as described in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}. Blocks until \term{CPU1}'s slot is free.
+ \item |isIdle()|: true if no worker is currently assigned to \term{CPU1}.
+ \item |run()| (private, |noexcept|, called only from |main1()| on \term{CPU1}): calls |System::initCore()| for \term{CPU1}, marks |status| |Ready|, then loops forever picking up and running whatever |dispatch()| places in the slot.
 \end{itemize}
 
 \subsection{DualCoreFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-dualcore-format-converter}
 
-Concrete |DualCoreJob| that splits one |SimpleFormatConverter|-style conversion into a top half and a bottom half, one per core, protected inheritance from |SimpleFormatConverter| since it reuses its per-format conversion helpers\footnote{TODO [nota 244]: footnote text was lost when the source was copy-pasted -- please supply it.} but does not expose |convert()|'s single-core meaning directly. Source: |DualCoreFormatConverter.{h,cpp}|.
+Concrete |DualCoreJob| that splits one |SimpleFormatConverter|-style conversion into a top half and a bottom half, one per core, protected inheritance from |SimpleFormatConverter| since it reuses its per-format conversion helpers but does not expose |convert()|'s single-core meaning directly. Source: |DualCoreFormatConverter.{h,cpp}|.
 
 \begin{itemize}
-    \item |setFrames(src, dst)|: computes the split point (|height / 2|, rounded down to an even row, so a |Mosaic8| source's 2$\times$2 \term{Bayer} pattern is never cut through the middle of a block) and configures both internal |HalfFrameWorker|s' source/destination pointers and dimensions accordingly.
-    \item |convert(src, dst)| (override): |setFrames()| + |start()| + |awaitDone()| in sequence; throws |ExceptionFilter| with whichever worker's error if either failed. This is the method |main0.cpp|'s main loop actually calls;\footnote{TODO [nota 245]: footnote text was lost when the source was copy-pasted -- please supply it.} Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}--\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency} above are what happen underneath it.
-    \item |start()| (override): dispatches the bottom-half worker to \term{CPU1},\footnote{TODO [nota 246]: footnote text was lost when the source was copy-pasted -- please supply it.} then runs the top-half worker synchronously, in place, on \term{CPU0}.
-    \item |awaitDone()| (override): busy-polls the bottom-half worker's status on \term{CPU1}\footnote{TODO [nota 247]: footnote text was lost when the source was copy-pasted -- please supply it.} until |Completed| or |Error|.
-    \item |getWorker0()|/|getWorker1()| (override): accessors for the two |HalfFrameWorker|s.
-    \item |isErrorOccured()|/|whatError(cpuNum)| (override): as |DualCoreJob| specifies.
-    \item |HalfFrameWorker| (private nested class, extends |Worker| and protected |SimpleFormatConverter|): |run()| dispatches to the correct per-format helper for its half, then calls |alt\_cache\_l1\_data\_clean()| on the half it just wrote.\footnote{TODO [nota 248]: footnote text was lost when the source was copy-pasted -- please supply it.}
+ \item |setFrames(src, dst)|: computes the split point (|height / 2|, rounded down to an even row, so a |Mosaic8| source's 2$\times$2 \term{Bayer} pattern is never cut through the middle of a block) and configures both internal |HalfFrameWorker|s' source/destination pointers and dimensions accordingly.
+ \item |convert(src, dst)| (override): |setFrames()| + |start()| + |awaitDone()| in sequence; throws |ExceptionFilter| with whichever worker's error if either failed. This is the method |main0.cpp|'s main loop actually calls; Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}--\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency} above are what happen underneath it.
+ \item |start()| (override): dispatches the bottom-half worker to \term{CPU1}, then runs the top-half worker synchronously, in place, on \term{CPU0}.
+ \item |awaitDone()| (override): busy-polls the bottom-half worker's status on \term{CPU1} until |Completed| or |Error|.
+ \item |getWorker0()|/|getWorker1()| (override): accessors for the two |HalfFrameWorker|s.
+ \item |isErrorOccured()|/|whatError(cpuNum)| (override): as |DualCoreJob| specifies.
+ \item |HalfFrameWorker| (private nested class, extends |Worker| and protected |SimpleFormatConverter|): |run()| dispatches to the correct per-format helper for its half, then calls |alt\_cache\_l1\_data\_clean()| on the half it just wrote.
 \end{itemize}
 
 \section{How it works}
@@ -239,15 +240,15 @@ Core1 & core1 = Core1::getInstance();
 core1.start();
 // bring-up sequence, Section 10.4.1
 while (core1.getStatus() != Core1::Status::Ready
-    && core1.getStatus() != Core1::Status::Error) {}
+ && core1.getStatus() != Core1::Status::Error) {}
 if (core1.getStatus() == Core1::Status::Error) {
-    serial->printf(" FAILED: %s\r\n", core1.whatError());
-    while (true) {}
+ serial->printf(" FAILED: %s\r\n", core1.whatError());
+ while (true) {}
 }
 CacheAwareFramePool camPool(CAMERA_POOL_SIZE, FRAME_WIDTH, FRAME_HEIGHT,
-    CAMERA_COLOR_SCHEME);
+ CAMERA_COLOR_SCHEME);
 CacheAwareFramePool vgaPool(VGA_POOL_SIZE, FRAME_WIDTH, FRAME_HEIGHT,
-    Frame::ColorScheme::RGB24);
+ Frame::ColorScheme::RGB24);
 vga->init(vgaPool);
 pclkResetCtrl->deassertReset();
 sys->delay(1000);
@@ -257,26 +258,26 @@ camera->horizontalMirror(true);
 hex->showDashes();
 DualCoreFormatConverter converter;
 while (true) {
-    // ISR fault checks omitted here, see Camera::hasIsrFault()/Vga::hasIsrFault()
-    if (camPool.available() > 0) {
-        CacheAwareFrame * camFrame = camPool.pop(true);
-        // invalidate: DMA wrote, CPU will read
-        CacheAwareFrame * vgaFrame = static_cast<CacheAwareFrame *>(vgaPool.borrow());
-        uint64_t t0 = sys->millis();
-        converter.convert(*camFrame, *vgaFrame);
-        // split across both cores, Sections 10.4.3-10.4.4
-        uint64_t t1 = sys->millis();
-        camPool.giveBack(camFrame);
-        vgaPool.push(vgaFrame, true);
-        // flush: CPU wrote, DMA will read
-        hex->showNumber(static_cast<uint32_t>(t1 - t0));
-    }
+ // ISR fault checks omitted here, see Camera::hasIsrFault()/Vga::hasIsrFault()
+ if (camPool.available() > 0) {
+  CacheAwareFrame * camFrame = camPool.pop(true);
+  // invalidate: DMA wrote, CPU will read
+  CacheAwareFrame * vgaFrame = static_cast<CacheAwareFrame *>(vgaPool.borrow());
+  uint64_t t0 = sys->millis();
+  converter.convert(*camFrame, *vgaFrame);
+  // split across both cores, Sections 10.4.3-10.4.4
+  uint64_t t1 = sys->millis();
+  camPool.giveBack(camFrame);
+  vgaPool.push(vgaFrame, true);
+  // flush: CPU wrote, DMA will read
+  hex->showNumber(static_cast<uint32_t>(t1 - t0));
+ }
 }
 \end{lstlisting}
 
-The only functional difference from Section~\ref{sec:fpgasteel-cache-forwarding-how-it-works} is |sys->prepareCacheSubsystem()| plus the \term{CPU1} bring-up-and-wait block before the pools are even constructed, and |DualCoreFormatConverter| standing in for Cache Forwarding Example's\footnote{TODO [nota 249]: footnote text was lost when the source was copy-pasted -- please supply it.} single-core conversion call; everything around it, descriptor ping-pong, ISR behavior, cache flush/invalidate placement, is identical.
+The only functional difference from Section~\ref{sec:fpgasteel-cache-forwarding-how-it-works} is |sys->prepareCacheSubsystem()| plus the \term{CPU1} bring-up-and-wait block before the pools are even constructed, and |DualCoreFormatConverter| standing in for Cache Forwarding Example's single-core conversion call; everything around it, descriptor ping-pong, ISR behavior, cache flush/invalidate placement, is identical.
 
-|ExceptionFilter|\footnote{TODO [nota 250]: footnote text was lost when the source was copy-pasted -- please supply it.} joins the exception list this project's catch block handles, alongside every exception Cache Forwarding Example\footnote{TODO [nota 251]: footnote text was lost when the source was copy-pasted -- please supply it.} already lists (|ExceptionSystem|, |ExceptionSerial|, |ExceptionRingBuffer|, |ExceptionI2C|, |ExceptionCamera|, |ExceptionMsgdma|, |ExceptionHexDisplay|, |ExceptionFramePool|, |ExceptionFrame|).
+|ExceptionFilter| joins the exception list this project's catch block handles, alongside every exception Cache Forwarding Example already lists (|ExceptionSystem|, |ExceptionSerial|, |ExceptionRingBuffer|, |ExceptionI2C|, |ExceptionCamera|, |ExceptionMsgdma|, |ExceptionHexDisplay|, |ExceptionFramePool|, |ExceptionFrame|).
 
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-forwarding-debug-tooling}
@@ -287,6 +288,6 @@ The only functional difference from Section~\ref{sec:fpgasteel-cache-forwarding-
 \label{sec:fpgasteel-dualcore-forwarding-references}
 
 \begin{description}
-    \item \unresolved{Linux kernel, \texttt{arch/arm/mach-socfpga/platsmp.c}. Source of the reset/trampoline/cache-clean/release sequence (used in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}); not vendored in this repository, analysed with the assistance of \term{Claude Code} (credited in full in Section~\ref{sec:fpgasteel-dualcore-about}).}
-    \item \unresolved{HWLib headers (\texttt{alt\_cache.h}, \texttt{alt\_mmu.h}, \texttt{socal/alt\_rstmgr.h}, \texttt{socal/alt\_sysmgr.h}), from \texttt{intel-socfpga-hwlib}. Cache/\term{MMU}/reset function and register reference behind Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}, and Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency}.}
+ \item \unresolved{Linux kernel, \texttt{arch/arm/mach-socfpga/platsmp.c}. Source of the reset/trampoline/cache-clean/release sequence (used in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}); not vendored in this repository, analysed with the assistance of \term{Claude Code} (credited in full in Section~\ref{sec:fpgasteel-dualcore-about}).}
+ \item \unresolved{HWLib headers (\texttt{alt\_cache.h}, \texttt{alt\_mmu.h}, \texttt{socal/alt\_rstmgr.h}, \texttt{socal/alt\_sysmgr.h}), from \texttt{intel-socfpga-hwlib}. Cache/\term{MMU}/reset function and register reference behind Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}, and Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency}.}
 \end{description}

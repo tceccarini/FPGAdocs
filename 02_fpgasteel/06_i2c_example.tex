@@ -4,11 +4,12 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-i2c-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}).\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under |hw/camera_adapter|.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}). In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under |hw/camera_adapter|.
 
 \begin{warningbox}
-    \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{About this project}
 \label{sec:fpgasteel-i2c-about}
@@ -60,7 +61,7 @@ Internally, both |write()| and |read()| throw |ExceptionI2C104| on a \term{NACK}
 \subsection{PclkResetController}
 \label{subsec:fpgasteel-i2c-pclkresetcontroller}
 
-|PclkResetController| class (|src/PclkResetController.{h,cpp}|) is a singleton (there's only one on the board) wrapping the |pclk_reset_controller| core's single control register\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}:
+|PclkResetController| class (|src/PclkResetController.{h,cpp}|) is a singleton (there's only one on the board) wrapping the |pclk_reset_controller| core's single control register:
 
 \begin{itemize}
     \item \textbf{\texttt{assertReset()}:} holds the |ov7670_pclk| domain and the camera in reset (|sw_release| = 0).
@@ -70,7 +71,7 @@ Internally, both |write()| and |read()| throw |ExceptionI2C104| on a \term{NACK}
 \subsection{ExceptionI2C}
 \label{subsec:fpgasteel-i2c-exceptioni2c}
 
-|ExceptionI2C| class (|src/Exceptions/ExceptionI2C.h|) follows the same pattern as |ExceptionSystem|/|ExceptionSerial| (Chapter~\ref{chap:fpgasteel-hello-world}, Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an |ErrorType| instead of an |ALT_STATUS_CODE|: |Nack|, |ArbitrationLost|, |Timeout|, or |NotInitialized| (a call made before |init()|).
+|ExceptionI2C| class (|src/Exceptions/ExceptionI2C.h|) follows the same pattern as |ExceptionSystem|/|ExceptionSerial| (Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an |ErrorType| instead of an |ALT_STATUS_CODE|: |Nack|, |ArbitrationLost|, |Timeout|, or |NotInitialized| (a call made before |init()|).
 
 \section{How it works}
 \label{sec:fpgasteel-i2c-how-it-works}

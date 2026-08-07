@@ -23,13 +23,13 @@ sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-
 \end{shellcode}
 
 \begin{itemize}
-    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, |git|: building |repos/u-boot-socfpga|\footnote{TODO [nota 67]: footnote text was lost when the source was copy-pasted -- please supply it.} and its boot scripts.
+    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, |git|: building |repos/u-boot-socfpga| and its boot scripts.
     \item |wget|, |curl|: downloading the \term{Eclipse} tarball.
-    \item |dosfstools|: |mkfs.vfat|, for preparing the \term{SD card}.\footnote{TODO [nota 68]: footnote text was lost when the source was copy-pasted -- please supply it.}
-    \item |picocom|: terminal emulator for the board's serial console.\footnote{TODO [nota 69]: footnote text was lost when the source was copy-pasted -- please supply it.}
-    \item |openjdk-17-jre|: \term{Eclipse} needs \term{Java} 17; a \term{JRE} suffices since it is only used here for debugging, never to compile.\footnote{TODO [nota 70]: footnote text was lost when the source was copy-pasted -- please supply it.}
-    \item |python3|, |python3-numpy|, |python3-matplotlib|: used by |cv_bsp_generator.py|\footnote{TODO [nota 71]: footnote text was lost when the source was copy-pasted -- please supply it.} and |debugTools/view_frame.py|.\footnote{TODO [nota 72]: footnote text was lost when the source was copy-pasted -- please supply it.}
-    \item |pkg-config|, |libopencv-dev|: needed to build |debugTools/linux_dualcore_emulator|\footnote{TODO [nota 73]: footnote text was lost when the source was copy-pasted -- please supply it.}, found only in its Makefile, not mentioned in any chapter's prose.
+    \item |dosfstools|: |mkfs.vfat|, for preparing the \term{SD card}.
+    \item |picocom|: terminal emulator for the board's serial console.
+    \item |openjdk-17-jre|: \term{Eclipse} needs \term{Java} 17; a \term{JRE} suffices since it is only used here for debugging, never to compile.
+    \item |python3|, |python3-numpy|, |python3-matplotlib|: used by |cv_bsp_generator.py| and |debugTools/view_frame.py|.
+    \item |pkg-config|, |libopencv-dev|: needed to build |debugTools/linux_dualcore_emulator|, found only in its Makefile, not mentioned in any chapter's prose.
 \end{itemize}
 
 The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
@@ -94,7 +94,7 @@ sudo udevadm trigger
 sudo usermod -aG plugdev "$USER"
 \end{shellcode}
 
-The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1,\footnote{TODO [nota 74]: footnote text was lost when the source was copy-pasted -- please supply it.} and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. The user still needs to be added to that group:
+The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. The user still needs to be added to that group:
 
 \begin{shellcode}
 sudo usermod -aG dialout "$USER"
@@ -105,7 +105,7 @@ Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group chan
 \subsection{Editor and debugger roles}
 \label{subsec:fpgasteel-editor-roles}
 
-\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}:\footnote{TODO [nota 75]: footnote text was lost when the source was copy-pasted -- please supply it.} it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under |hw/| and the \term{C/C++} sources under |sw/| are written in \term{Visual Studio Code}, with the following extensions:
+\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}: it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under |hw/| and the \term{C/C++} sources under |sw/| are written in \term{Visual Studio Code}, with the following extensions:
 
 {\footnotesize
 \begin{itemize}

@@ -51,6 +51,17 @@
 \newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review
 \newcommand{\unresolved}[1]{\textcolor{red}{#1}}   % marks citations NOT in the global bibliography (Appendix B); decide what to do with them on reread
 
+\newcommand{\longsection}[2]{%
+    \section[#1]{#1}%
+    \vspace{-2.6ex}%
+    {\large\itshape #2\par}%
+    \vspace{1ex}%
+}
+% Usage: \longsection{Short title}{Detail shown as a subtitle line below it}
+% For section titles too long for the running header (e.g. "Title (code_name)"
+% or "Title: detail") -- the short title alone goes in the header/TOC, the
+% detail is typeset as a subtitle right under the heading in the body.
+
 \usepackage[most]{tcolorbox}
 \newtcolorbox{warningbox}{
     colback=red!5!white,

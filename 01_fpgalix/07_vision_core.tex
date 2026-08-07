@@ -34,7 +34,7 @@ The input buffer and output buffer (|FrameBuffer|) sit between capture and proce
 \subsection{The FIFO mitigations}
 \label{subsec:fpgalix-vision-fifo-mitigations}
 
-During testing, frame loss appeared already under moderate \term{CPU} load, not only under extreme load. This loss originates entirely on the input side: when the \term{FPGA} fabric cannot drain a frame fast enough, |ov7670_data_interface| is backpressured on |st_ready|, drops the frame in progress, and closes it with a bare \term{EOP} once the backpressure lifts.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} It is the same premature \term{EOP} |camera_driver_2| was later made to detect and discard as a short frame.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} Addressing it took several rounds of tuning the \term{FPGA} data path, tracked in |hw/quartus/soc_system.qsys|:
+During testing, frame loss appeared already under moderate \term{CPU} load, not only under extreme load. This loss originates entirely on the input side: when the \term{FPGA} fabric cannot drain a frame fast enough, |ov7670_data_interface| is backpressured on |st_ready|, drops the frame in progress, and closes it with a bare \term{EOP} once the backpressure lifts.\footnote{See Section~\ref{sec:fpgalix-acquisition-core}.} It is the same premature \term{EOP} |camera_driver_2| was later made to detect and discard as a short frame.\footnote{See Chapter~\ref{chap:fpgalix-camera-driver-2}.} Addressing it took several rounds of tuning the \term{FPGA} data path, tracked in |hw/quartus/soc_system.qsys|:
 
 \begin{itemize}
     \item |dc_fifo_0|'s depth was increased repeatedly, from its original 32 entries up to 256, then 4096, and finally 65536, effectively as large as the \term{Quartus} fitter would allow.
@@ -71,16 +71,17 @@ cd sw/vision_core
 make arm
 \end{shellcode}
 
-This produces |bin/vision_core|, cross-compiled with the toolchain \term{Buildroot} builds as part of its own run,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} which must therefore already exist. A separate, native |make intel| target also exists, for exercising the pipeline on the host itself without the board.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+This produces |bin/vision_core|, cross-compiled with the toolchain \term{Buildroot} builds as part of its own run, which must therefore already exist. A separate, native |make intel| target also exists, for exercising the pipeline on the host itself without the board.
 
 \section{Usage}
 \label{sec:fpgalix-vision-usage}
 
-Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} The generic webcam source\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} exists for the native |make intel| build,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} exercising the pipeline on the host itself; on the board, only the \term{OV7670} applies.
+Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header. The generic webcam source exists for the native |make intel| build, exercising the pipeline on the host itself; on the board, only the \term{OV7670} applies.
 
 \begin{warningbox}
-    Do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods. A hardware bug in the adapter's line buffer can cause it to overheat and be permanently damaged.\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \subsection{Prerequisite: camera\_driver\_2 running}
 \label{subsec:fpgalix-vision-prereq}
@@ -128,7 +129,7 @@ cd vision_core
 Source [webcam/ov7670, default: webcam]: ov7670
 \end{shellcode}
 
-Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt,\footnote{TODO: footnote text was lost when the source was copy-pasted -- please supply it.} and the \term{RTSP} stream is live at |rtsp://<board-ip>:8554/stream|.
+Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt, and the \term{RTSP} stream is live at |rtsp://<board-ip>:8554/stream|.
 
 \subsection{Viewing the stream on a PC}
 \label{subsec:fpgalix-vision-viewing}

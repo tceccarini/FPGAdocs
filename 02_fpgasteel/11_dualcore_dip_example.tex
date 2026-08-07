@@ -4,31 +4,31 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-dip-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}),\footnote{TODO [nota 252]: footnote text was lost when the source was copy-pasted -- please supply it.} including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. Also applies to the \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Chapter~\ref{chap:fpgasteel-i2c-example}, Section~\ref{sec:fpgasteel-i2c-prerequisites}).\footnote{TODO [nota 253]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. Also applies to the \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \section{About this project}
 \label{sec:fpgasteel-dualcore-dip-about}
 
 Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: |dualcore_dip_example|, |dualcore_dip_example_no_neon|, and |dualcore_dip_example_no_neon_no_icache| (all under |sw/|). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
 
-All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})\footnote{TODO [nota 254]: footnote text was lost when the source was copy-pasted -- please supply it.} and replace the plain format conversion with a small computer-vision pipeline, |DualCoreDIP|: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
+All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) and replace the plain format conversion with a small computer-vision pipeline, |DualCoreDIP|: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
 
 \begin{enumerate}
-    \item converts the frame to grayscale (\term{RGB565} \cite{OV7670-DS} $\rightarrow$ \term{RGB24} + grayscale in the same pass, so both the display copy and the analysis copy are produced together);
-    \item thresholds it to a binary image (a pixel counts as ``object'' above a fixed brightness);
-    \item cleans the binary image up morphologically, an opening (erosion followed by dilation) to remove isolated noise pixels without changing the blob's overall size;
-    \item rejects the frame early if the cleaned blob touches the image border (it cannot be fully measured) or if too few pixels survived thresholding (nothing there);
-    \item extracts the blob's outline, bounding box, and centroid, and overlay all three on the \term{RGB24} frame the camera pipeline already produced.
+ \item converts the frame to grayscale (\term{RGB565} \cite{OV7670-DS} $\rightarrow$ \term{RGB24} + grayscale in the same pass, so both the display copy and the analysis copy are produced together);
+ \item thresholds it to a binary image (a pixel counts as ``object'' above a fixed brightness);
+ \item cleans the binary image up morphologically, an opening (erosion followed by dilation) to remove isolated noise pixels without changing the blob's overall size;
+ \item rejects the frame early if the cleaned blob touches the image border (it cannot be fully measured) or if too few pixels survived thresholding (nothing there);
+ \item extracts the blob's outline, bounding box, and centroid, and overlay all three on the \term{RGB24} frame the camera pipeline already produced.
 \end{enumerate}
 
-|main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})\footnote{TODO [nota 255]: footnote text was lost when the source was copy-pasted -- please supply it.} reports its own conversion time.
+|main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) reports its own conversion time.
 
-Every stage above runs split across both cores, using the exact same |Worker|/|Core1| dispatch mechanism documented in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}: nothing new had to be invented here, this project is simply that mechanism invoked several times instead of once. Section~\ref{sec:fpgasteel-dualcore-dip-operating-principles} covers the pipeline and its cache discipline; the rest of this chapter covers only the one genuinely new class, |DualCoreDIP|, since everything else (|Camera|, |Vga|, |CacheAwareFrame|/|CacheAwareFramePool|, |Core1|, |Worker|, |DualCoreJob|, |System|) is unchanged from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}).\footnote{TODO [nota 256]: footnote text was lost when the source was copy-pasted -- please supply it.}
+Every stage above runs split across both cores, using the exact same |Worker|/|Core1| dispatch mechanism documented in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}: nothing new had to be invented here, this project is simply that mechanism invoked several times instead of once. Section~\ref{sec:fpgasteel-dualcore-dip-operating-principles} covers the pipeline and its cache discipline; the rest of this chapter covers only the one genuinely new class, |DualCoreDIP|, since everything else (|Camera|, |Vga|, |CacheAwareFrame|/|CacheAwareFramePool|, |Core1|, |Worker|, |DualCoreJob|, |System|) is unchanged from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}).
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-dip-hardware}
 
-Unchanged.\footnote{TODO [nota 257]: footnote text was lost when the source was copy-pasted -- please supply it.} Unlike Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup})\footnote{TODO [nota 258]: footnote text was lost when the source was copy-pasted -- please supply it.} and Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}),\footnote{TODO [nota 259]: footnote text was lost when the source was copy-pasted -- please supply it.} this project actually drives the \term{LED} \term{PIO}: one bit per |DualCoreDIP::Result| value, read directly by |main0.cpp| after each processed frame.
+Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}) and Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), this project actually drives the \term{LED} \term{PIO}: one bit per |DualCoreDIP::Result| value, read directly by |main0.cpp| after each processed frame.
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-dip-operating-principles}
@@ -39,16 +39,16 @@ Unchanged.\footnote{TODO [nota 257]: footnote text was lost when the source was 
 |DualCoreDIP::process()| runs the nine parallel stages and two single-core stages from Section~\ref{sec:fpgasteel-dualcore-dip-about} in a fixed sequence, always in the same order, one synchronization point after another:
 
 \begin{figure}[htbp]
-    \centering
-    \includesvg[width=\linewidth]{FPGAsteelDipPipeline}
-    \caption{Every green stage is one \texttt{forkJoin()} (both cores), every blue stage runs on \term{CPU0} alone. The two early exits (\texttt{EMPTY}, \texttt{ON\_BORDER}) are what let an empty or unusable scene skip most of the pipeline instead of paying for all eleven stages every frame.}
-    \label{fig:fpgasteel-dualcore-dip-pipeline}
+ \centering
+ \includesvg[width=\linewidth]{FPGAsteelDipPipeline}
+ \caption{Every green stage is one \texttt{forkJoin()} (both cores), every blue stage runs on \term{CPU0} alone. The two early exits (\texttt{EMPTY}, \texttt{ON\_BORDER}) are what let an empty or unusable scene skip most of the pipeline instead of paying for all eleven stages every frame.}
+ \label{fig:fpgasteel-dualcore-dip-pipeline}
 \end{figure}
 
 \subsection{Reusing 08's fork/join mechanism, nine times}
 \label{subsec:fpgasteel-dualcore-dip-forkjoin}
 
-|DualCoreDIP::forkJoin()| is line-for-line the same sequence as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})'s\footnote{TODO [nota 260]: footnote text was lost when the source was copy-pasted -- please supply it.} |DualCoreFormatConverter::start()| + |awaitDone()|:\footnote{TODO [nota 261]: footnote text was lost when the source was copy-pasted -- please supply it.} dispatch |m\_worker1| to \term{CPU1}, run |m\_worker0| synchronously on \term{CPU0}, then busy-poll |m\_worker1.status| until it is |Completed| or |Error|. |process()| calls it nine times, reconfiguring |m\_worker0|/|m\_worker1| (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two |Worker|s are pointed at does.
+|DualCoreDIP::forkJoin()| is line-for-line the same sequence as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})'s |DualCoreFormatConverter::start()| + |awaitDone()|: dispatch |m\_worker1| to \term{CPU1}, run |m\_worker0| synchronously on \term{CPU0}, then busy-poll |m\_worker1.status| until it is |Completed| or |Error|. |process()| calls it nine times, reconfiguring |m\_worker0|/|m\_worker1| (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two |Worker|s are pointed at does.
 
 \subsection{The three build variants}
 \label{subsec:fpgasteel-dualcore-dip-build-variants}
@@ -56,23 +56,23 @@ Unchanged.\footnote{TODO [nota 257]: footnote text was lost when the source was 
 The three sibling projects differ in exactly two independent compile-time choices, applied to otherwise identical code (verified by diff: |main0.cpp| and every other class are byte-identical across all three; only |DualCoreDIP.{h,cpp}| and |Config.h|'s |ICACHE\_ENABLE| change):
 
 \begin{table}[htbp]
-    \centering
-    \begin{tabular}{@{}l l l@{}}
-        \hline
-        \textbf{Project} & \textbf{Step implementations} & \textbf{L1 instruction cache} \\
-        \hline
-        |dualcore_dip_example| & \term{ARM} \term{NEON} intrinsics & enabled \\
-        |dualcore_dip_example_no_neon| & plain scalar C++, same algorithm & enabled \\
-        |dualcore_dip_example_no_neon_no_icache| & plain scalar C++, same algorithm & disabled \\
-        \hline
-    \end{tabular}
-    \caption{The three build variants of this project.}
-    \label{tab:fpgasteel-dualcore-dip-build-variants}
+ \centering
+ \begin{tabular}{@{}l l l@{}}
+  \hline
+  \textbf{Project} & \textbf{Step implementations} & \textbf{L1 instruction cache} \\
+  \hline
+  |dualcore_dip_example| & \term{ARM} \term{NEON} intrinsics & enabled \\
+  |dualcore_dip_example_no_neon| & plain scalar C++, same algorithm & enabled \\
+  |dualcore_dip_example_no_neon_no_icache| & plain scalar C++, same algorithm & disabled \\
+  \hline
+ \end{tabular}
+ \caption{The three build variants of this project.}
+ \label{tab:fpgasteel-dualcore-dip-build-variants}
 \end{table}
 
-|dualcore_dip_example|'s |step01|, |step03|, |step04|, |step05|, |step07|, |step08|, and |step09| (Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline}'s seven \term{NEON}-eligible stages) use \unresolved{\texttt{arm\_neon.h}} intrinsics to process 8 or 16 pixels per instruction; the |_no_neon| variant replaces every one of them with a plain byte-at-a-time loop computing the exact same result, with no other change anywhere in the codebase. |_no_neon_no_icache| is that same scalar build with |ICACHE\_ENABLE| (|Config.h|) set to false instead of true, so |System::initCore()|\footnote{TODO [nota 262]: footnote text was lost when the source was copy-pasted -- please supply it.} skips enabling the \term{L1} instruction cache on either core.
+|dualcore_dip_example|'s |step01|, |step03|, |step04|, |step05|, |step07|, |step08|, and |step09| (Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline}'s seven \term{NEON}-eligible stages) use \unresolved{\texttt{arm\_neon.h}} intrinsics to process 8 or 16 pixels per instruction; the |_no_neon| variant replaces every one of them with a plain byte-at-a-time loop computing the exact same result, with no other change anywhere in the codebase. |_no_neon_no_icache| is that same scalar build with |ICACHE\_ENABLE| (|Config.h|) set to false instead of true, so |System::initCore()| skips enabling the \term{L1} instruction cache on either core.
 
-Since |main0.cpp| already reports per-frame processing time on the hex display,\footnote{TODO [nota 263]: footnote text was lost when the source was copy-pasted -- please supply it.} building and running all three side by side turns the family into a small, controlled benchmark: the same algorithm, on the same hardware, with \term{NEON} and the instruction cache each toggled independently, one variable at a time.
+Since |main0.cpp| already reports per-frame processing time on the hex display, building and running all three side by side turns the family into a small, controlled benchmark: the same algorithm, on the same hardware, with \term{NEON} and the instruction cache each toggled independently, one variable at a time.
 
 \section{How it works}
 \label{sec:fpgasteel-dualcore-dip-how-it-works}
@@ -84,11 +84,11 @@ sys->prepareCacheSubsystem();
 Core1 & core1 = Core1::getInstance();
 core1.start();
 while (core1.getStatus() != Core1::Status::Ready
-    && core1.getStatus() != Core1::Status::Error) {}
+ && core1.getStatus() != Core1::Status::Error) {}
 CacheAwareFramePool camPool(CAMERA_POOL_SIZE, FRAME_WIDTH, FRAME_HEIGHT,
-    CAMERA_COLOR_SCHEME);
+ CAMERA_COLOR_SCHEME);
 CacheAwareFramePool vgaPool(VGA_POOL_SIZE, FRAME_WIDTH, FRAME_HEIGHT,
-    Frame::ColorScheme::RGB24);
+ Frame::ColorScheme::RGB24);
 vga->init(vgaPool);
 pclkResetCtrl->deassertReset();
 sys->delay(1000);
@@ -96,18 +96,18 @@ camera->init(camPool);
 hex->showDashes();
 DualCoreDIP dip(FRAME_WIDTH, FRAME_HEIGHT);
 while (true) {
-    if (camPool.available() > 0) {
-        CacheAwareFrame * camFrame = camPool.pop(true);
-        CacheAwareFrame * vgaFrame = static_cast<CacheAwareFrame *>(vgaPool.borrow());
-        uint64_t t0 = sys->millis();
-        DualCoreDIP::Result res = dip.process(*camFrame, *vgaFrame);
-        uint64_t t1 = sys->millis();
-        camPool.giveBack(camFrame);
-        vgaPool.push(vgaFrame, true);
-        LED_PIO = static_cast<uint8_t>(res);
-        // LED0=OK, LED1=ON_BORDER, LED2=EMPTY
-        hex->showNumber(static_cast<uint32_t>(t1 - t0));
-    }
+ if (camPool.available() > 0) {
+  CacheAwareFrame * camFrame = camPool.pop(true);
+  CacheAwareFrame * vgaFrame = static_cast<CacheAwareFrame *>(vgaPool.borrow());
+  uint64_t t0 = sys->millis();
+  DualCoreDIP::Result res = dip.process(*camFrame, *vgaFrame);
+  uint64_t t1 = sys->millis();
+  camPool.giveBack(camFrame);
+  vgaPool.push(vgaFrame, true);
+  LED_PIO = static_cast<uint8_t>(res);
+  // LED0=OK, LED1=ON_BORDER, LED2=EMPTY
+  hex->showNumber(static_cast<uint32_t>(t1 - t0));
+ }
 }
 \end{lstlisting}
 
@@ -122,5 +122,5 @@ Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works
 \label{sec:fpgasteel-dualcore-dip-references}
 
 \begin{description}
-    \item \unresolved{\texttt{arm\_neon.h} (\term{ARM} \term{NEON} intrinsics header, part of the \texttt{arm-none-eabi-gcc} toolchain). Reference for the \term{SIMD} intrinsics used in \texttt{dualcore\_dip\_example}'s step implementations (used in Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants}).}
+ \item \unresolved{\texttt{arm\_neon.h} (\term{ARM} \term{NEON} intrinsics header, part of the \texttt{arm-none-eabi-gcc} toolchain). Reference for the \term{SIMD} intrinsics used in \texttt{dualcore\_dip\_example}'s step implementations (used in Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants}).}
 \end{description}

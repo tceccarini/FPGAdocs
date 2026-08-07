@@ -4,17 +4,17 @@
 \section{Prerequisites}
 \label{sec:fpgasteel-hello-prerequisites}
 
-The toolchain must already be set up as described in Chapter~\ref{chap:fpgasteel-board-bringup},\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} and the \term{SD card} prepared accordingly:
+The toolchain must already be set up as described in Chapter~\ref{chap:fpgasteel-board-bringup}, and the \term{SD card} prepared accordingly:
 
 \begin{itemize}
-    \item the bootloader (\term{SPL} + \term{U-Boot}) written to the raw \term{A2} partition;\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
-    \item the \term{FPGA} bitstream |soc_system.rbf| copied to the boot partition,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} with \term{MSEL[4:0]} on \term{SW10} set to 00000 so the \term{FPGA} is configured by the \term{HPS} via the \term{FPGA Manager};\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
-    \item |boot.script.jtag_debug| compiled to |u-boot.scr| and copied to the boot partition,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} not |multiboot.script|.
+    \item the bootloader (\term{SPL} + \term{U-Boot}) written to the raw \term{A2} partition;
+    \item the \term{FPGA} bitstream |soc_system.rbf| copied to the boot partition, with \term{MSEL[4:0]} on \term{SW10} set to 00000 so the \term{FPGA} is configured by the \term{HPS} via the \term{FPGA Manager};
+    \item |boot.script.jtag_debug| compiled to |u-boot.scr| and copied to the boot partition, not |multiboot.script|.
 \end{itemize}
 
-If the \term{SD card} was already used with a different boot script (e.g.\ |multiboot.script|), don't just swap the file: wipe the card and redo the whole \term{SD card} preparation from scratch (Board Bring-up,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} Section~\ref{sec:fpgasteel-preparing-sd-card}), this time compiling |boot.script.jtag_debug| in Section~\ref{sec:fpgasteel-hello-jtag-debug}. This guarantees the board ends up at the ``Ready for JTAG'' prompt this project needs.
+If the \term{SD card} was already used with a different boot script (e.g.\ |multiboot.script|), don't just swap the file: wipe the card and redo the whole \term{SD card} preparation from scratch (Board Bring-up, Section~\ref{sec:fpgasteel-preparing-sd-card}), this time compiling |boot.script.jtag_debug| in Section~\ref{sec:fpgasteel-hello-jtag-debug}. This guarantees the board ends up at the ``Ready for JTAG'' prompt this project needs.
 
-Two tools are needed on top of the ones from Board Bring-up,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} to debug over \term{JTAG} from an \term{IDE}:
+Two tools are needed on top of the ones from Board Bring-up, to debug over \term{JTAG} from an \term{IDE}:
 
 \begin{itemize}
     \item \term{Eclipse IDE for Embedded C/C++}
@@ -96,12 +96,12 @@ Serial::getInstance().flush();
 printf("GoodBye\n");
 \end{lstlisting}
 
-|ExceptionSystem|, |ExceptionSerial| and |ExceptionRingBuffer|\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} are caught around this block and reported back over |Serial|.
+|ExceptionSystem|, |ExceptionSerial| and |ExceptionRingBuffer| are caught around this block and reported back over |Serial|.
 
 \section{Building}
 \label{sec:fpgasteel-hello-building}
 
-The project is built with a |Makefile|, from the command line. \term{Visual Studio Code} is used only as a plain text editor, not as an \term{IDE}. \term{Eclipse}, in turn, is used only for debugging:\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} it is never used to compile the project, nor for any other \term{IDE}-specific feature.
+The project is built with a |Makefile|, from the command line. \term{Visual Studio Code} is used only as a plain text editor, not as an \term{IDE}. \term{Eclipse}, in turn, is used only for debugging: it is never used to compile the project, nor for any other \term{IDE}-specific feature.
 
 \begin{shellcode}
 cd sw/hello_word
@@ -129,7 +129,7 @@ picocom -b 115200 /dev/ttyUSB0
 \section{Debugging with Eclipse}
 \label{sec:fpgasteel-hello-jtag-debug}
 
-With the board wired up\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} and sitting at ``Ready for JTAG'',\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} the rest happens inside \term{Eclipse}: import the project, tell it how to reach the board over \term{JTAG}, then start the session.
+With the board wired up and sitting at ``Ready for JTAG'', the rest happens inside \term{Eclipse}: import the project, tell it how to reach the board over \term{JTAG}, then start the session.
 
 \subsection{Import the project}
 \label{subsec:fpgasteel-hello-import}
@@ -140,7 +140,7 @@ With the board wired up\footnote{TODO: footnote text was lost when the source wa
     \item |Finish|.
 \end{enumerate}
 
-The imported project is not built from \term{Eclipse}; building stays |make|'s job.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.}
+The imported project is not built from \term{Eclipse}; building stays |make|'s job.
 
 \subsection{Create the Debug Configuration}
 \label{subsec:fpgasteel-hello-debug-config}
@@ -151,7 +151,7 @@ The imported project is not built from \term{Eclipse}; building stays |make|'s j
 
 On the \term{Main} tab, set \term{Project} to |hello_world| and \term{C/C++ Application} to |bin/hello_word.elf|.
 
-Leave the build setting on ``Select Automatically'': building this project is |make|'s job,\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} so this never actually triggers a build from \term{Eclipse}.
+Leave the build setting on ``Select Automatically'': building this project is |make|'s job, so this never actually triggers a build from \term{Eclipse}.
 
 \begin{figure}[htbp]
     \centering
@@ -177,7 +177,7 @@ Under \term{GDB Client Setup}, point ``Start GDB session'' at the |arm-none-eabi
     \label{fig:fpgasteel-hello-debug-debugger}
 \end{figure}
 
-On the \term{Startup} tab, leave ``Initial Reset'' and ``Pre-run/Restart reset'' both unchecked: resetting the \term{HPS} here would lose the \term{DDR}/\term{FPGA}/bridge/cache-\term{MMU} state the \term{SD card} prepared.\footnote{TODO: footnote text was lost when the source was copy-pasted --- please supply it.} Check ``Enable \term{Arm} semihosting'' and set both ``Load symbols'' and ``Load executable'' to use the project's own |hello_word.elf|.
+On the \term{Startup} tab, leave ``Initial Reset'' and ``Pre-run/Restart reset'' both unchecked: resetting the \term{HPS} here would lose the \term{DDR}/\term{FPGA}/bridge/cache-\term{MMU} state the \term{SD card} prepared. Check ``Enable \term{Arm} semihosting'' and set both ``Load symbols'' and ``Load executable'' to use the project's own |hello_word.elf|.
 
 \begin{figure}[htbp]
     \centering

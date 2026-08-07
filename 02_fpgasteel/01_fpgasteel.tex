@@ -11,7 +11,7 @@ The prebuilt \term{SD card} image already contains the bootloader and some compi
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
-\footnotetext{See Appendix~\ref{app:camera-adapter-board} -- Camera Adapter Board: full analysis of the camera \term{RESET}/\term{POWER-DOWN} hardware bug and the two permanent fixes \cite{ADAPTER-WARN}.}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \subsection{Hardware needed}
 
@@ -54,11 +54,9 @@ Power on the board. A menu appears over the serial console, offering a choice of
     \item |dualcore_dip_example|: same, using \term{NEON}, with the instruction cache enabled.
 \end{enumerate}
 
-\section{Documentation}
-
-The full, numbered documentation starts at |00_PrepareDevEnvironment.md|\footnote{TODO [nota 66]: footnote text was lost when the source was copy-pasted -- please supply it.} and covers, in order, setting up the development environment, the hardware design, board bring-up, and every bare-metal example under |sw/|, up to the dual-core computer-vision example.
-
 \section{Repository layout}
+
+The \sysname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
 
 \begin{itemize}
     \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
