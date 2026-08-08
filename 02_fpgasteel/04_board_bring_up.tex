@@ -1,22 +1,50 @@
 \chapter{Board Bring-up}
 \label{chap:fpgasteel-board-bringup}
 
+\section{Introduction}
+
+This chapter brings up the \term{DE1-SoC} board. It builds the bootloader and the \term{FPGA} bitstream, and prepares the bootable \term{SD} card that the example programs of the following chapters are loaded from. The discussion begins with an overview of the board's boot chain, from reset to a running bare-metal application (Section~\ref{sec:fpgasteel-board-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Unlike \sysname{FPGAlix}, no \term{Linux} kernel or root filesystem is involved: \term{U-Boot} loads the compiled application directly, either as a |.bin| from the \term{SD} card at standalone boot or as an |.elf| pushed over \term{JTAG} for debugging. The chapter also covers generating the \term{FPGA} bitstream and the two boot scripts that select between these paths, before closing by assembling the bootloader, the bitstream and a boot script onto a bootable \term{SD} card, producing a working baseline ready for the examples developed in the remaining chapters.
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+\toprule
+\textbf{Component} & \textbf{Purpose} \\
+\midrule
+\term{U-Boot} & Boots the board: loads the \term{FPGA} bitstream, programs the fabric through the \term{FPGA Manager}, and loads the bare-metal application, either standalone from the \term{SD} card or over \term{JTAG} for debugging. \\
+\term{FPGA} bitstream & Configures the \term{FPGA} fabric with the custom hardware described in Chapter~\ref{chap:fpgasteel-hw-overview}. \\
+Boot script & Selects which of the two boot paths above \term{U-Boot} follows; see Table~\ref{tab:fpgasteel-boot-scripts}. \\
+\bottomrule
+\end{tabularx}
+\caption{Main components built in this chapter, and their purpose.}
+\label{tab:fpgasteel-board-bringup-components}
+\end{table}
+
 \section{Required software}
 \label{sec:fpgasteel-board-required-software}
 
 The following must be installed and available on the \term{PATH}:
 
-\begin{itemize}
-    \item Ubuntu Desktop x86\_64
-    \item \term{Quartus Prime}
-    \item \term{ARM} toolchain (xPack GNU Arm Embedded GCC, |arm-none-eabi-|)
-\end{itemize}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+\toprule
+\textbf{Software} & \textbf{Why it is needed} \\
+\midrule
+Ubuntu Desktop \term{x86\_64} & Host operating system the build steps in this chapter run on. \\
+\term{Quartus Prime} & Compiles the \term{FPGA} hardware project and converts it into the bitstream loaded by \term{U-Boot} (Section~\ref{sec:fpgasteel-generating-bitstream}). \\
+\term{ARM} toolchain (xPack Arm Embedded GCC) & Cross-compiles \term{U-Boot} and the bare-metal example applications for the \term{DE1-SoC}'s \term{ARM} \term{Cortex-A9} cores. \\
+\bottomrule
+\end{tabularx}
+\caption{Required host software for this chapter, and why each is needed.}
+\label{tab:fpgasteel-board-bringup-software}
+\end{table}
 
 See Paragraph~\ref{subsec:fpgasteel-install-paths} for versions and install paths.
 
 A number of \term{apt} packages are also required, for building the bootloader and the example software. See Paragraph~\ref{subsec:fpgasteel-apt-packages} for the full list and Paragraph~\ref{subsec:fpgasteel-env-vars} for setting the \term{PATH}.
 
-\section{Introduction}
+\section{Boot chain overview}
 \label{sec:fpgasteel-board-introduction}
 
 Even for a bare-metal application, the \term{HPS} cannot jump straight to user code out of reset: the \term{ARM} core has no working \term{DRAM}, clocks or pin muxing yet, and those can only be brought up by running code from on-chip \term{RAM} first. The bootloader (\term{SPL} + \term{U-Boot}) performs this early hardware init and then loads the bare-metal application into \term{DDR}; it is not tied to running \term{Linux}.

@@ -1,16 +1,6 @@
 \chapter{Simple Forwarding Example}
 \label{chap:fpgasteel-simple-forwarding}
 
-\section{Prerequisites}
-\label{sec:fpgasteel-simple-forwarding-prerequisites}
-
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
-
-\begin{warningbox}
-\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
-\end{warningbox}
-\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
-
 \section{About this project}
 \label{sec:fpgasteel-simple-forwarding-about}
 
@@ -32,6 +22,16 @@ Then, in the main loop, it:
 \end{itemize}
 
 The camera capture and \term{VGA} output run on two independent \term{mSGDMA} cores, each in a ping-pong descriptor pair.
+
+\section{Prerequisites}
+\label{sec:fpgasteel-simple-forwarding-prerequisites}
+
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-simple-forwarding-hardware}
@@ -247,7 +247,7 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
         0x3C & [31], [30], [29:0] & Control & |control| \\
         \hline
     \end{tabular}
-    \caption{Layout of the \texttt{Descriptor} struct, as fixed by the \term{mSGDMA} \term{IP} core (source: \cite[Table 305121]{EP-IPUG}; not original work).}
+    \caption{Extended descriptor format consumed by the \term{mSGDMA} prefetcher. Reproduced from \cite[Table 305121]{EP-IPUG}.}
     \label{tab:fpgasteel-descriptor-layout}
 \end{table}
 

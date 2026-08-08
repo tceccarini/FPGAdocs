@@ -1,16 +1,6 @@
 \chapter{I\textsuperscript{2}C Example}
 \label{chap:fpgasteel-i2c-example}
 
-\section{Prerequisites}
-\label{sec:fpgasteel-i2c-prerequisites}
-
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}). In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under |hw/camera_adapter|.
-
-\begin{warningbox}
-\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
-\end{warningbox}
-\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
-
 \section{About this project}
 \label{sec:fpgasteel-i2c-about}
 
@@ -24,6 +14,16 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
 \end{itemize}
 
 On a working setup, the serial console prints |OV7670 PID = 0x76|, the \term{OV7670}'s fixed product \term{ID} (\cite{OV7670-DS}, register 0x0A).
+
+\section{Prerequisites}
+\label{sec:fpgasteel-i2c-prerequisites}
+
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}). In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under |hw/camera_adapter|.
+
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-i2c-hardware}

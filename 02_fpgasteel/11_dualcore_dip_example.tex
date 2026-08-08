@@ -1,11 +1,6 @@
 \chapter{Dual-Core DIP Example}
 \label{chap:fpgasteel-dualcore-dip}
 
-\section{Prerequisites}
-\label{sec:fpgasteel-dualcore-dip-prerequisites}
-
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. Also applies to the \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
-
 \section{About this project}
 \label{sec:fpgasteel-dualcore-dip-about}
 
@@ -24,6 +19,11 @@ All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding 
 |main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) reports its own conversion time.
 
 Every stage above runs split across both cores, using the exact same |Worker|/|Core1| dispatch mechanism documented in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}: nothing new had to be invented here, this project is simply that mechanism invoked several times instead of once. Section~\ref{sec:fpgasteel-dualcore-dip-operating-principles} covers the pipeline and its cache discipline; the rest of this chapter covers only the one genuinely new class, |DualCoreDIP|, since everything else (|Camera|, |Vga|, |CacheAwareFrame|/|CacheAwareFramePool|, |Core1|, |Worker|, |DualCoreJob|, |System|) is unchanged from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}).
+
+\section{Prerequisites}
+\label{sec:fpgasteel-dualcore-dip-prerequisites}
+
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. Also applies to the \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-dip-hardware}
@@ -45,7 +45,7 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike Dua
  \label{fig:fpgasteel-dualcore-dip-pipeline}
 \end{figure}
 
-\subsection{Reusing 08's fork/join mechanism, nine times}
+\subsection{The fork/join mechanism, reapplied}
 \label{subsec:fpgasteel-dualcore-dip-forkjoin}
 
 |DualCoreDIP::forkJoin()| is line-for-line the same sequence as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})'s |DualCoreFormatConverter::start()| + |awaitDone()|: dispatch |m\_worker1| to \term{CPU1}, run |m\_worker0| synchronously on \term{CPU0}, then busy-poll |m\_worker1.status| until it is |Completed| or |Error|. |process()| calls it nine times, reconfiguring |m\_worker0|/|m\_worker1| (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two |Worker|s are pointed at does.

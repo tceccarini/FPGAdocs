@@ -1,6 +1,20 @@
 \chapter{Hello World}
 \label{chap:fpgasteel-hello-world}
 
+\section{About this project}
+\label{sec:fpgasteel-hello-about}
+
+|hello_word| (under |sw/hello_word|) is the first application in \sysname{FPGAsteel}, and it sets the pattern every later example follows: hardware is wrapped in a small set of classes, each initialized with |init()| before use and torn down with |deInit()| afterwards. It:
+
+\begin{itemize}
+    \item brings up the interrupt controller;
+    \item brings up \term{UART0};
+    \item prints ``Hello, World!'' followed by ``GoodBye'';
+    \item spins forever.
+\end{itemize}
+
+The purpose of this program is to check that the whole chain works end to end: |make| producing an |.elf| with the \term{ARM} toolchain, \term{OpenOCD} loading it over \term{JTAG}, and the \term{HPS} running it with interrupts enabled and talking over the serial console. Everything built afterwards assumes this chain works.
+
 \section{Prerequisites}
 \label{sec:fpgasteel-hello-prerequisites}
 
@@ -22,20 +36,6 @@ Two tools are needed on top of the ones from Board Bring-up, to debug over \term
 \end{itemize}
 
 See Paragraph~\ref{subsec:fpgasteel-install-paths} for versions and install paths.
-
-\section{About this project}
-\label{sec:fpgasteel-hello-about}
-
-|hello_word| (under |sw/hello_word|) is the first application in \sysname{FPGAsteel}. It:
-
-\begin{itemize}
-    \item brings up the interrupt controller;
-    \item brings up \term{UART0};
-    \item prints ``Hello, World!'' followed by ``GoodBye'';
-    \item spins forever.
-\end{itemize}
-
-The purpose of this program is to check that the whole chain works end to end: |make| producing an |.elf| with the \term{ARM} toolchain, \term{OpenOCD} loading it over \term{JTAG}, and the \term{HPS} running it with interrupts enabled and talking over the serial console. Everything built afterwards assumes this chain works.
 
 \section{Code structure}
 \label{sec:fpgasteel-hello-code-structure}
@@ -84,9 +84,7 @@ Internally, |Serial| uses two instances of |StaticRingBuffer<char, N>| (|src/Sta
 \section{How it works}
 \label{sec:fpgasteel-hello-how-it-works}
 
-The |hello_word| project introduces the pattern followed by every \sysname{FPGAsteel} example introduced later on: classes in charge of talking to hardware are singletons, whose instance must be initialized with |init()| before use and torn down with |deInit()| afterwards.
-
-The following snippet is taken from |main.cpp|:
+The following snippet, from |main.cpp|, shows \term{System} and \term{Serial} used together, following the |init()|/|deInit()| pattern from Section~\ref{sec:fpgasteel-hello-code-structure}:
 
 \begin{lstlisting}
 System::getInstance().init();   // interrupt controller

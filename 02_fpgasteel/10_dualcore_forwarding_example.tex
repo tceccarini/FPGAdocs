@@ -1,7 +1,21 @@
 \chapter{Dual-Core Forwarding Example}
 \label{chap:fpgasteel-dualcore-forwarding}
 
-\section{Prerequisites} 
+\section{About this project}
+\label{sec:fpgasteel-dualcore-forwarding-about}
+
+|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}), and the \term{CPU1} bring-up mechanism from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}). What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).
+
+At startup, in addition to what Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}) already does, this project:
+
+\begin{itemize}
+ \item brings up the shared \term{MMU} page table, the \term{SCU}, and the \term{L2} cache once, from \term{CPU0} (|System::prepareCacheSubsystem()|), then enables the \term{MMU} and \term{L1} data cache on each core individually (|System::initCore()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}); unlike Cache Forwarding Example, |initCore()| can also enable the \term{L1} instruction cache on each core, controlled by a single compile-time flag;
+ \item boots \term{CPU1} (|Core1::start()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}), using the same reset/trampoline/cache-clean/release sequence as Dual-Core Bring-up Test, and waits for it to report itself ready before doing anything else.
+\end{itemize}
+
+Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}); Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
+
+\section{Prerequisites}
 \label{sec:fpgasteel-dualcore-forwarding-prerequisites}
 
 Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}). The boot script is the same |boot.script.jtag_debug| used by every other example; this project brings its own caches and \term{MMU} up entirely through |System::prepareCacheSubsystem()|/|initCore()|, which does not depend on whatever cache state the boot script left behind.
@@ -18,20 +32,6 @@ Two additional requirements, inherited from Dual-Core Bring-up Test (Section~\re
  \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled, for the same reason as Dual-Core Bring-up Test: a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up.
 \end{itemize}
 
-\section{About this project}
-\label{sec:fpgasteel-dualcore-forwarding-about}
-
-|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}), and the \term{CPU1} bring-up mechanism from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}). What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).
-
-At startup, in addition to what Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}) already does, this project:
-
-\begin{itemize}
- \item brings up the shared \term{MMU} page table, the \term{SCU}, and the \term{L2} cache once, from \term{CPU0} (|System::prepareCacheSubsystem()|), then enables the \term{MMU} and \term{L1} data cache on each core individually (|System::initCore()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}); unlike Cache Forwarding Example, |initCore()| can also enable the \term{L1} instruction cache on each core, controlled by a single compile-time flag;
- \item boots \term{CPU1} (|Core1::start()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}), using the same reset/trampoline/cache-clean/release sequence as Dual-Core Bring-up Test, and waits for it to report itself ready before doing anything else.
-\end{itemize}
-
-Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}); Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
-
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-forwarding-hardware}
 
@@ -47,7 +47,7 @@ The mechanism is exactly the one described in Dual-Core Bring-up Test (Section~\
 
 \begin{itemize}
  \item registers are written through \unresolved{\term{HWLib}'s} \term{socal} accessors (|alt\_setbits\_word(ALT\_RSTMGR\_MPUMODRST\_ADDR, ...)|, |alt\_write\_word(ALT\_SYSMGR\_ROMCODE\_CPU1STARTADDR\_ADDR, ...)|) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
- \item an |sev| (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test. This is carried over unconditionally from \term{Linux}'s own \unresolved{\texttt{platsmp.c}} sequence, the same source Dual-Core Bring-up Test credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop, which never waits in |wfe|.
+ \item an |sev| (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test. This is carried over unconditionally from \term{Linux}'s own \unresolved{\texttt{platsmp.c}} sequence, the same source Dual-Core Bring-up Test credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop, which never waits in |wfe| (wait for event).
 \end{itemize}
 
 \term{CPU1} lands in |_start_core1| (|startup_core1.S|, identical to Dual-Core Bring-up Test's own copy), which sets up its stack and calls |main1()|, defined in |Core1.cpp| as a thin wrapper around |Core1::run()|.
@@ -213,7 +213,7 @@ Singleton owning everything about \term{CPU1}: bringing it up and dispatching wo
 \subsection{DualCoreFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-dualcore-format-converter}
 
-Concrete |DualCoreJob| that splits one |SimpleFormatConverter|-style conversion into a top half and a bottom half, one per core, protected inheritance from |SimpleFormatConverter| since it reuses its per-format conversion helpers but does not expose |convert()|'s single-core meaning directly. Source: |DualCoreFormatConverter.{h,cpp}|.
+Implements |DualCoreJob| and extends |SimpleFormatConverter| (protected inheritance, reusing its per-format conversion helpers without exposing |convert()|'s single-core meaning directly), splitting one conversion into a top half and a bottom half, one per core. Source: |DualCoreFormatConverter.{h,cpp}|.
 
 \begin{itemize}
  \item |setFrames(src, dst)|: computes the split point (|height / 2|, rounded down to an even row, so a |Mosaic8| source's 2$\times$2 \term{Bayer} pattern is never cut through the middle of a block) and configures both internal |HalfFrameWorker|s' source/destination pointers and dimensions accordingly.

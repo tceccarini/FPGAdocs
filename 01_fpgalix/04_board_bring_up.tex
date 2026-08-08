@@ -1,19 +1,48 @@
 \chapter{Board Bring-Up}
 \label{chap:fpgalix-board-bring-up}
 
+\section{Introduction}
+
+This chapter brings up the \term{DE1-SoC} board and builds every component the programs of the following chapters depend on. The discussion begins with an overview of the board's boot chain, from reset to a running \term{U-Boot} (Section~\ref{sec:fpgalix-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Once \term{U-Boot} is built, the chapter covers the configuration and the building of the \term{Linux} kernel. \term{U-Boot} loads and boots this kernel, which in turn provides the driver support and core OS services, such as process scheduling, memory management, and the \term{V4L2} subsystem later used by the camera driver. The \term{Buildroot} root filesystem is built next: a complete embedded \term{Linux} userspace, from the \term{C} library and the \term{BusyBox}-provided |init| system and shell utilities, to the user space programs and libraries, \term{OpenCV} and \term{GStreamer} among them, needed to build and run |camera_driver_2| and |vision_core|. The chapter closes by assembling the bootloader, the kernel, the root filesystem and the \term{FPGA} bitstream onto a bootable \term{SD} card, producing a working baseline system ready for the examples developed in the remaining chapters.
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+\toprule
+\textbf{Component} & \textbf{Purpose} \\
+\midrule
+\term{U-Boot} & Boots the board: loads the \term{FPGA} bitstream, brings up the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and starts the \term{Linux} kernel. \\
+\term{Linux} kernel & Provides driver support and core OS services, such as process scheduling, memory management and the \term{V4L2} subsystem, that the software built in later chapters relies on. \\
+\term{Buildroot} root filesystem & Provides the embedded \term{Linux} userspace: the \term{init} system, shell utilities, and libraries such as \term{OpenCV} and \term{GStreamer}, needed to build and run \texttt{camera\_driver\_2} and \texttt{vision\_core}. \\
+\term{FPGA} bitstream & Configures the \term{FPGA} fabric with the custom hardware described in Chapter~\ref{chap:fpgalix-hw-overview}. \\
+\bottomrule
+\end{tabularx}
+\caption{Main components built in this chapter, and their purpose.}
+\label{tab:fpgalix-board-bringup-components}
+\end{table}
+
 \section{Required software}
 
 The following components must be installed and available on the \term{PATH}:
 
-\begin{itemize}
-    \item \term{Ubuntu 22.04 LTS} \term{x86\_64}
-    \item \term{Quartus Prime} 22.1
-    \item \term{ARM GNU} toolchain (\texttt{arm-gnu-toolchain-12.3.rel1-x86\_64-arm-none-linux-gnueabihf}, \texttt{arm-none-linux-gnueabihf-})
-\end{itemize}
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X @{}}
+\toprule
+\textbf{Software} & \textbf{Why it is needed} \\
+\midrule
+\term{Ubuntu 22.04 LTS} \term{x86\_64} & Host operating system the build steps in this chapter run on. \\
+\term{Quartus Prime} 22.1 & Compiles the \term{FPGA} hardware project and converts it into the bitstream loaded by \term{U-Boot} (Section~\ref{sec:fpgalix-bitstream}). \\
+\term{ARM GNU} toolchain & Cross-compiles \term{U-Boot} and the \term{Linux} kernel for the \term{DE1-SoC}'s \term{ARM} \term{Cortex-A9} cores. \\
+\bottomrule
+\end{tabularx}
+\caption{Required host software for this chapter, and why each is needed.}
+\label{tab:fpgalix-board-bringup-software}
+\end{table}
 
-See Chapter~\ref{chap:fpgalix-devenv} for the installation and configuration of the above, including the full \term{apt} package list required by the kernel, \term{U-Boot}, \term{Buildroot}, and the programs discussed later in this chapter.
+See Chapter~\ref{chap:fpgalix-devenv} for the installation and configuration of the above, including exact versions, install paths, and the full \term{apt} package list required by the kernel, \term{U-Boot}, \term{Buildroot}, and the programs discussed later in this chapter.
 
-\section{Introduction}
+\section{Boot chain overview}
 \label{sec:fpgalix-introduction}
 
 On reset, the fixed-function \term{Boot ROM} samples the \term{BSEL[2:0]} pins to select the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback). On the \term{DE1-SoC}, these pins are hardwired on the \term{PCB} to boot from \term{SD/MMC} \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type \term{A2}) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands control to \term{SPL}, which brings up clocks, pin muxing and \term{DDR} \cite{CV-TRM}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}.
@@ -140,7 +169,7 @@ The base kernel configuration required by this project is as follows:
     \end{itemize}
 \end{itemize}
 \subsubsection{Configuration required by camera\_driver\_2}
-The following options are required specifically by |sw/camera_driver_2| (its own |README| documents the rationale for each; they are consolidated here so that the kernel need only be built once):
+The following options are required specifically by |sw/camera_driver_2|:\footnote{Its own \texttt{README} documents the rationale for each; they are consolidated here so that the kernel need only be built once.}
 
 \begin{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{Multimedia support}
@@ -316,7 +345,7 @@ This last setting is not selected automatically: enabling ``Enable VFP extension
 
 \subsubsection{Configuration required by camera\_driver\_2 and vision\_core}
 
-The following packages, in addition to those already listed, are required specifically by |sw/camera_driver_2| and |sw/vision_core|, per their respective |README|s (|camera_driver_2|, |vision_core|), which document the rationale for each. They are consolidated here so that a single build suffices:
+The following packages, in addition to those already listed, are required specifically by |sw/camera_driver_2| and |sw/vision_core|:\footnote{Their respective \texttt{README}s document the rationale for each; they are consolidated here so that a single build suffices.}
 
 \begin{itemize}
     \item \texttt{Target packages} $\rightarrow$ \texttt{Libraries} $\rightarrow$ \texttt{Hardware handling}

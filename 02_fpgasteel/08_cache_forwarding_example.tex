@@ -1,16 +1,6 @@
 \chapter{Cache Forwarding Example}
 \label{chap:fpgasteel-cache-forwarding}
 
-\section{Prerequisites}
-\label{sec:fpgasteel-cache-forwarding-prerequisites}
-
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
-
-\begin{warningbox}
-\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
-\end{warningbox}
-\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
-
 \section{About this project}
 \label{sec:fpgasteel-cache-forwarding-about}
 
@@ -21,6 +11,16 @@ Compared to Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwar
 Everything else at startup, and in the main loop, is structurally the same as Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): |Camera| and |Vga| still run the same descriptor/prefetcher pipelines, and |SimpleFilters| still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through |CacheAwareFrame|/|CacheAwareFramePool| (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain |Frame|/|FramePool| from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.
 
 The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()| and |Vga::onTransferComplete()|, are unaltered: comparing this project's |Camera.cpp|/|Vga.cpp| against Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})'s shows no logic difference at all.
+
+\section{Prerequisites}
+\label{sec:fpgasteel-cache-forwarding-prerequisites}
+
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-cache-forwarding-hardware}

@@ -8,11 +8,6 @@
 
 The prebuilt SD card image already contains the bootloader, kernel, root filesystem and \term{FPGA} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
 
-\begin{warningbox}
-\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
-\end{warningbox}
-\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
-
 \subsection{Hardware needed}
 
 \begin{itemize}
@@ -40,7 +35,14 @@ Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the unde
 
 \subsection{Booting and logging in}
 
-Connect the \term{Ethernet} cable, insert the SD card, and power on the board. The board's IP address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
+
+Connect the \term{OV7670} camera to the \term{DE1-SoC} board's \term{GPIO\_0} header via the camera adapter,\footnote{See Part~\ref{part:appendices}, Chapter~\ref{app:camera-adapter-board}.} connect the \term{Ethernet} cable, insert the SD card, and power on the board.
+
+The board's IP address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
 
 Two ways to log in, default password |1q2w3e4r| for both accounts:
 
