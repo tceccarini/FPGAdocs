@@ -115,7 +115,7 @@ Setting the descriptor's bit |OWNED_BY_HW| is the only way a descriptor becomes 
 
 \begin{figure}[htbp]
     \centering
-    \includesvg[width=0.9\linewidth]{FPGAsteelDescriptorPingPong}
+    \includesvg[width=\linewidth]{FPGAsteelDescriptorPingPong}
     \caption{\texttt{desc0} and \texttt{desc1} alternate between running and waiting; each transfer completion flips the two.}
     \label{fig:fpgasteel-descriptor-ping-pong}
 \end{figure}
@@ -124,7 +124,7 @@ The instant a running descriptor's transfer finishes, hardware itself clears its
 
 \begin{figure}[htbp]
     \centering
-    \includesvg[width=0.9\linewidth]{FPGAsteelDescriptorPrefetcher}
+    \includesvg[width=\linewidth]{FPGAsteelDescriptorPrefetcher}
     \caption[simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output.]{simplified view of the descriptor/prefetcher mechanism shared by camera capture and \term{VGA} output. This diagram is approximate, meant to convey the idea; for the exact register-level behavior, see \cite{EP-IPUG}.}
     \label{fig:fpgasteel-descriptor-prefetcher}
 \end{figure}
@@ -191,7 +191,7 @@ Each of the |count| active slots moves through the same cycle of four states, on
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includesvg[width=\textwidth,height=\textheight,keepaspectratio]{FPGAsteelFramepoolStates}
+    \includesvg[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelFramepoolStates}
     \caption{borrow()/push() are always called by the producer, pop()/giveBack() by the consumer; which side is the \term{ISR} and which is the main loop depends on the caller, and Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works} shows both arrangements in use.}
     \label{fig:fpgasteel-framepool-states}
 \end{figure}
@@ -227,27 +227,40 @@ None of these calls ever copy pixel data: |FramePool| only ever exchanges a poin
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l p{5.5cm} l@{}}
-        \hline
+    \begin{tabular}{@{}p{1.6cm} p{2cm} p{5.5cm} l@{}}
+        \toprule
         \textbf{Offset} & \textbf{Bits} & \textbf{Field} & \textbf{Descriptor member} \\
-        \hline
+        \midrule
         0x00 & [31:0] & Read Address & |readAddress| \\
+        \lightmidrule
         0x04 & [31:0] & Write Address & |writeAddress| \\
+        \lightmidrule
         0x08 & [31:0] & Length & |length| \\
+        \lightmidrule
         0x0C & [31:0] & Next Descriptor Pointer & |nextDescPtrLow| \\
+        \lightmidrule
         0x10 & [31:0] & Actual Bytes Transferred (written by hardware) & |bytesTransferred| \\
-        0x14 & [31:16] / [15:0] & Reserved / Status (written by hardware) & |status| \\
+        \lightmidrule
+        0x14 & [31:16]\newline{}[15:0] & Reserved\newline{}Status (written by hardware) & |status| \\
+        \lightmidrule
         0x18 & [31:0] & Reserved & |_reserved0| \\
-        0x1C & [31:24] / [23:16] / [15:0] & Write Burst Count / Read Burst Count / Sequence Number & |sequenceBurst| \\
-        0x20 & [31:16] / [15:0] & Write Stride / Read Stride & |stride| \\
+        \lightmidrule
+        0x1C & [31:24]\newline{}[23:16]\newline{}[15:0] & Write Burst Count\newline{}Read Burst Count\newline{}Sequence Number & |sequenceBurst| \\
+        \lightmidrule
+        0x20 & [31:16]\newline{}[15:0] & Write Stride\newline{}Read Stride & |stride| \\
+        \lightmidrule
         0x24 & [31:0] & Read Address, upper 32 bits & |readAddressHigh| \\
+        \lightmidrule
         0x28 & [31:0] & Write Address, upper 32 bits & |writeAddressHigh| \\
+        \lightmidrule
         0x2C & [31:0] & Next Descriptor Pointer, upper 32 bits & |nextDescPtrHigh| \\
+        \lightmidrule
         0x30, 0x34, 0x38 & [31:0] each & Reserved & |_reserved1[3]| \\
+        \lightmidrule
         0x3C & [31], [30], [29:0] & Control & |control| \\
-        \hline
+        \bottomrule
     \end{tabular}
-    \caption{Extended descriptor format consumed by the \term{mSGDMA} prefetcher. Reproduced from \cite[Table 305121]{EP-IPUG}.}
+    \caption{Extended descriptor format consumed by the \term{mSGDMA} prefetcher. Reproduced from \cite[Table 305]{EP-IPUG}.}
     \label{tab:fpgasteel-descriptor-layout}
 \end{table}
 

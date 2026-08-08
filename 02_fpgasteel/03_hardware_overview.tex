@@ -22,20 +22,26 @@ Every \term{Platform Designer} instance on the capture path was renamed; the und
 
 \begin{table}[H]
 \centering
-\begin{tabularx}{\textwidth}{@{} X X X @{}}
+\begin{tabularx}{\textwidth}{@{} X X @{}}
 \toprule
-\textbf{FPGAlix instance} & \textbf{FPGAsteel instance} & \textbf{Kind (unchanged)} \\
+\textbf{FPGAlix instance} & \textbf{FPGAsteel instance} \\
 \midrule
-\texttt{\seqsplit{ov7670\_data\_interface\_0}} & \texttt{\seqsplit{ov7670\_video\_interface}} & \texttt{\seqsplit{ov7670\_data\_interface}} \\
-\texttt{\seqsplit{pclk\_reset\_controller\_0}} & \texttt{\seqsplit{ov7670\_PCLK\_reset\_controller}} & \texttt{\seqsplit{pclk\_reset\_controller}} \\
-\texttt{\seqsplit{mm\_clock\_crossing\_bridge\_0}} & \texttt{\seqsplit{ov7670\_AvalonMM\_clock\_bridge}} & \texttt{\seqsplit{altera\_avalon\_mm\_clock\_crossing\_bridge}} \\
-\texttt{\seqsplit{dc\_fifo\_0}} & \texttt{\seqsplit{ov\_7670\_video\_dc\_fifo}} & \texttt{\seqsplit{altera\_avalon\_dc\_fifo}} \\
-\texttt{\seqsplit{st\_adapter\_0}} & \texttt{\seqsplit{ov7670\_st\_adapter}} & \texttt{\seqsplit{altera\_avalon\_st\_adapter}} \\
+\texttt{\seqsplit{ov7670\_data\_interface\_0}} & \texttt{\seqsplit{ov7670\_video\_interface}} \\
+\lightmidrule
+\texttt{\seqsplit{pclk\_reset\_controller\_0}} & \texttt{\seqsplit{ov7670\_PCLK\_reset\_controller}} \\
+\lightmidrule
+\texttt{\seqsplit{mm\_clock\_crossing\_bridge\_0}} & \texttt{\seqsplit{ov7670\_AvalonMM\_clock\_bridge}} \\
+\lightmidrule
+\texttt{\seqsplit{dc\_fifo\_0}} & \texttt{\seqsplit{ov\_7670\_video\_dc\_fifo}} \\
+\lightmidrule
+\texttt{\seqsplit{st\_adapter\_0}} & \texttt{\seqsplit{ov7670\_st\_adapter}} \\
 \bottomrule
 \end{tabularx}
 \caption{Renamed \term{Platform Designer} instances on the camera capture path.}
 \label{tab:fpgasteel-renamed-instances}
 \end{table}
+
+The underlying \term{IP} is unchanged in every case: the first two rows are this project's own custom cores (|ov7670_data_interface|, |pclk_reset_controller|); the remaining three are stock \term{Altera}/\term{Intel} \term{IP} (|altera_avalon_mm_clock_crossing_bridge|, |altera_avalon_dc_fifo|, |altera_avalon_st_adapter|, in the same order).
 
 |ov7670_data_interface| gained a new register, |frame_size|. The hardware behavior is backward compatible with \sysname{FPGAlix}'s version. The |FRAME_SIZE| \term{VHDL} generic still exists, but it no longer fixes the frame size at synthesis time: it now only sets |frame_size|'s value on reset, as a default. From that point on, software can overwrite the register with a different byte count at run time, and the acquisition \term{FSM} uses whatever value the register currently holds. This is what lets the capture path switch between the \term{OV7670}'s 1-byte-per-pixel (\term{RAW}/processed \term{Bayer}) and 2-byte-per-pixel (\term{RGB565}/\term{RGB555}/\term{RGB444}/\term{YUV422}) output formats without recompiling the hardware.
 
@@ -82,7 +88,7 @@ Clock generation is not drawn: |vga_pll| and |vga_reset_syncronizer| carry no da
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includesvg[width=\textwidth,height=\textheight,keepaspectratio]{FPGAsteelQSysDiagram}
+    \includesvg[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelQSysDiagram}
     \caption{\texttt{soc\_system.qsys} block diagram, redrawn from PART~I -- \sysname{FPGAlix}, Figure~\ref{fig:fpgalix-system-overview} with the changes from Section~\ref{sec:fpgasteel-camera-capture} and Section~\ref{sec:fpgasteel-vga-output} applied.}
     \label{fig:fpgasteel-system-overview}
 \end{figure}

@@ -111,13 +111,14 @@ Identical to the single-core project template (the same one Simple Forwarding Ex
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l p{5.5cm}@{}}
-        \hline
+    \begin{tabular}{@{}l p{4.5cm} p{5.5cm}@{}}
+        \toprule
         & \textbf{Single-core template} & \textbf{This project} \\
-        \hline
-        \term{CPU0} stack & |.stack| at 0x80000, 512 KB, symbol |_stack| & |.stack0| at 0x1000000, 16 MB, symbol |_stack0| \\
-        \term{CPU1} stack & (none) & |.stack1| at 0x2000000, 16 MB, symbol |_stack1| \\
-        \hline
+        \midrule
+        \term{CPU0} stack & |.stack| at 0x80000\newline{}512 KB\newline{}symbol |_stack| & |.stack0| at 0x1000000\newline{}16 MB\newline{}symbol |_stack0| \\
+        \lightmidrule
+        \term{CPU1} stack & (none) & |.stack1| at 0x2000000\newline{}16 MB\newline{}symbol |_stack1| \\
+        \bottomrule
     \end{tabular}
     \caption{Stack layout: single-core template vs.\ this project.}
     \label{tab:fpgasteel-dualcore-stack-layout}

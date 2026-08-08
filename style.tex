@@ -19,7 +19,7 @@
 % below) doesn't quite fit at the end of it. Purely a safety valve: it only
 % engages when the normal stretch budget is exhausted, so ordinary paragraphs
 % are unaffected.
-\emergencystretch=3em
+\emergencystretch=1in
 
 \usepackage{graphicx}
 \graphicspath{{img/}}          % \includegraphics{filename} looks inside img/
@@ -40,6 +40,12 @@
 \svgpath{img/}
 
 \usepackage{booktabs}          % \toprule/\midrule/\bottomrule for clean tables
+\usepackage{colortbl}          % \arrayrulecolor, for \lightmidrule below
+\newcommand{\lightmidrule}{\arrayrulecolor{black!40}\midrule\arrayrulecolor{black}}
+% Usage: \lightmidrule -- a lighter separator between the rows of a table,
+% for tables whose cells wrap onto multiple lines, where a full-weight
+% \midrule on every row looks too much like a spreadsheet grid. Leaves
+% \toprule/\bottomrule (the table's own outer frame) solid black.
 \usepackage{tabularx}          % X columns auto-wrap long content (e.g. file paths)
 \usepackage{seqsplit}          % breaks long unbroken strings (paths, tokens) that don't wrap on their own
 \usepackage{float}             % [H] placement: keep floats exactly where they are defined

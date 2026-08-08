@@ -46,7 +46,7 @@ This project (unlike |dualcore_forwarding_example|) only runs on one core, so th
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.9\linewidth]{img/FPGAsteelHpsTrm.png}
+    \includegraphics[width=\linewidth]{img/FPGAsteelHpsTrm.png}
     \caption[Cortex-A9 MPU Subsystem Block Diagram]{Cortex-A9 MPU Subsystem Block Diagram, reproduced from \cite[Figure 10-2, p.~176]{CV-TRM}. Reported here for reference; not original work.}
     \label{fig:fpgasteel-cortex-a9-mpu-subsystem}
 \end{figure}
@@ -70,14 +70,16 @@ The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} al
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l l l l p{4.5cm}@{}}
-        \hline
-        \textbf{Base address} & \textbf{Size} & \textbf{Attribute} & \textbf{Shareable} & \textbf{Execute} & \textbf{Contents} \\
-        \hline
-        0x00000000 & 1024 MB & Cacheable, write-back write-allocate & Shareable & Enabled & \term{DDR}: code, stack, heap, frame buffers \\
-        0xC0000000 & 960 MB & Non-cacheable & Non-shareable & Never (\term{XN}) & \term{HPS}-\term{FPGA} bridge: \term{mSGDMA} descriptor memories, \term{Avalon-MM} peripherals \\
-        0xFC000000 & 64 MB & Device & Non-shareable & Never (\term{XN}) & \term{HPS} peripherals (\term{UART}, \term{GIC}, timers, \ldots) \\
-        \hline
+    \begin{tabular}{@{}l l p{4.6cm} p{6cm}@{}}
+        \toprule
+        \textbf{Base address} & \textbf{Size} & \textbf{Attribute} & \textbf{Contents} \\
+        \midrule
+        0x00000000 & 1024 MB & Cacheable\newline{}write-back write-allocate & \term{DDR}: code, stack, heap, frame buffers \\
+        \lightmidrule
+        0xC0000000 & 960 MB & Non-cacheable & \term{HPS}-\term{FPGA} bridge: \term{mSGDMA} descriptor memories, \term{Avalon-MM} peripherals \\
+        \lightmidrule
+        0xFC000000 & 64 MB & Device & \term{HPS} peripherals (\term{UART}, \term{GIC}, timers, \ldots) \\
+        \bottomrule
     \end{tabular}
     \caption[MMU section mapping built by System::enableCache()]{\term{MMU} section mapping built by System::enableCache().}
     \label{tab:fpgasteel-mmu-section-mapping}

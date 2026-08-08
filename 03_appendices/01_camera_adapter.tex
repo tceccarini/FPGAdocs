@@ -10,13 +10,20 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
     \label{fig:camera-adapter-assembled}
 \end{figure}
 
+\section{Hardware bug: camera \term{RESET} and \term{POWER-DOWN}}
+\label{sec:camera-adapter-reset-powerdown}
+
+Do not keep the \term{OV7670} in \term{RESET} or \term{POWER-DOWN} for extended periods: it can overheat the line buffer on the transmitter board and damage it permanently.
+
+While the camera is held in \term{RESET} or in \term{POWER-DOWN}\footnote{The overheating has been observed with the camera held in \term{RESET}. \term{POWER-DOWN} is expected to behave the same way, since the camera stops driving the bus in that state as well, but this has not yet been verified experimentally.} it stops driving its data and timing lines, \term{D0}--\term{D7}, \term{PCLK}, \term{HREF} and \term{VSYNC}. Those lines are left floating at the inputs of the line buffer on the transmitter board, which is then driven into an unstable state, oscillating around its switching threshold, and overheats. Keep \term{RESET} and \term{POWER-DOWN} as brief transients.
+
 \section{Schematics}
 \label{sec:camera-adapter-schematics}
 
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{SchTxBoard}
+    \includegraphics[width=\linewidth,height=\dimexpr\textwidth-40pt\relax,keepaspectratio]{SchTxBoard}
     \caption{Transmitter board (camera side) --- schematic.}
     \label{fig:camera-adapter-tx-schematic}
 \end{figure}
@@ -25,7 +32,7 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{SchRxBoard}
+    \includegraphics[width=\linewidth,height=\dimexpr\textwidth-40pt\relax,keepaspectratio]{SchRxBoard}
     \caption{Receiver board (\term{FPGA} side) --- schematic.}
     \label{fig:camera-adapter-rx-schematic}
 \end{figure}
@@ -33,22 +40,32 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
 
 \section{Bill of materials}
 
+\begin{landscape}
+
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l l l p{4.5cm} l@{}}
-        \hline
+    \begin{tabular}{@{}p{4cm} l p{3cm} l p{5cm} l@{}}
+        \toprule
         \textbf{Designator} & \textbf{Qty} & \textbf{Manufacturer} & \textbf{Mfg part no.} & \textbf{Description / value} & \textbf{Package} \\
-        \hline
+        \midrule
         C1, C2, C3, C4, C5 & 5 & Samsung Electro-Mechanics & CL21B104KBCNNNC & Ceramic capacitor, 0.1 $\mu$F 50 V X7R & 0805, SMD \\
+        \lightmidrule
         C6, C7, C8, C9 & 4 & Samsung Electro-Mechanics & CL21A106KOQNNNE & Ceramic capacitor, 10 $\mu$F 16 V X5R & 0805, SMD \\
+        \lightmidrule
         JP1 & 1 & Sullins Connector Solutions & SBH11-PBPC-D20-ST-BK & Pin header, vertical, 40 positions, 2.54 mm & THT \\
+        \lightmidrule
         JP2 & 1 & Sullins Connector Solutions & PPPC092LFBN-RC & Socket header, 18 positions, 0.1 in, gold & THT \\
+        \lightmidrule
         R1, R2, R3, R6, R7, R8, R9, R10, R11, R13, R15, R26 & 12 & YAGEO & RC0805FR-0710KL & Resistor, 10 k$\Omega$, 1\%, 1/8 W & 0805, SMD \\
+        \lightmidrule
         R12, R14, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25 & 12 & YAGEO & RC0805FR-0733RL & Resistor, 33 $\Omega$, 1\%, 1/8 W & 0805, SMD \\
+        \lightmidrule
         R4, R5 & 2 & YAGEO & RC0805FR-104K7L & Resistor, 4.7 k$\Omega$, 1\%, 1/8 W & 0805, SMD \\
+        \lightmidrule
         U1 & 1 & Texas Instruments & SN74ALVC16244ADGGR & 16-bit buffer/line driver, 1.65--3.6 V & 48-TSSOP, SMD \\
+        \lightmidrule
         Y1 & 1 & ECS Inc. & ECS-7050MV-240-BN-TR & Crystal oscillator, 24 MHz, HCMOS & 4-SMD 7$\times$5 mm, SMD \\
-        \hline
+        \bottomrule
     \end{tabular}
     \caption{Transmitter board (camera side). \term{BOM}.}
     \label{tab:camera-adapter-tx-bom}
@@ -56,18 +73,24 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l l l p{4.5cm} l@{}}
-        \hline
+    \begin{tabular}{@{}p{4cm} l p{3cm} l p{5cm} l@{}}
+        \toprule
         \textbf{Designator} & \textbf{Qty} & \textbf{Manufacturer} & \textbf{Mfg part no.} & \textbf{Description / value} & \textbf{Package} \\
-        \hline
+        \midrule
         C1, C2 & 2 & Samsung Electro-Mechanics & CL21B104KBCNNNC & Ceramic capacitor, 0.1 $\mu$F 50 V X7R & 0805, SMD \\
+        \lightmidrule
         C3, C4 & 2 & Samsung Electro-Mechanics & CL21A106KOQNNNE & Ceramic capacitor, 10 $\mu$F 16 V X5R & 0805, SMD \\
+        \lightmidrule
         JP1 & 1 & Sullins Connector Solutions & SBH11-PBPC-D20-ST-BK & Pin header, vertical, 40 positions, 2.54 mm & THT \\
-        JP2 & 1 & Sullins Connector Solutions & SFH11-PBPC-D20-ST-BK & --- & THT \\
+        \lightmidrule
+        JP2 & 1 & Sullins Connector Solutions & SFH11-PBPC-D20-ST-BK & Socket header, vertical, 40 positions, 2.54 mm & THT \\
+        \lightmidrule
         JP3 & 1 & METZ CONNECT USA Inc. & PR20203VBDN & Pin header, THR, dual row, 0.1 in & THT \\
+        \lightmidrule
         R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22 & 22 & YAGEO & RC0805FR-07220RL & Resistor, 220 $\Omega$, 1\%, 1/8 W & 0805, SMD \\
+        \lightmidrule
         R23, R24 & 2 & YAGEO & RC0805FR-104K7L & Resistor, 4.7 k$\Omega$, 1\%, 1/8 W & 0805, SMD \\
-        \hline
+        \bottomrule
     \end{tabular}
     \caption{Receiver board (\term{FPGA} side).}
     \label{tab:camera-adapter-rx-bom}
@@ -75,22 +98,19 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{@{}l l l p{5cm}@{}}
-        \hline
+    \begin{tabular}{@{}l p{3cm} l p{5cm}@{}}
+        \toprule
         \textbf{Qty} & \textbf{Manufacturer} & \textbf{Mfg part no.} & \textbf{Description / value} \\
-        \hline
+        \midrule
         1 & Sullins Connector Solutions & QPC02SXGN-RC & Shorting jumper, 0.1 in, gold \\
+        \lightmidrule
         1 & Adafruit Industries LLC & 1988 & 40-way \term{GPIO} ribbon cable \\
+        \lightmidrule
         1 & Chip Quik Inc. & SMD291AXT4 & Solder paste, no-clean, 63Sn/37Pb \\
-        \hline
+        \bottomrule
     \end{tabular}
     \caption{Miscellaneous.}
     \label{tab:camera-adapter-misc}
 \end{table}
 
-\section{Hardware bug: camera \term{RESET} and \term{POWER-DOWN}}
-\label{sec:camera-adapter-reset-powerdown}
-
-Do not keep the \term{OV7670} in \term{RESET} or \term{POWER-DOWN} for extended periods: it can overheat the line buffer on the transmitter board and damage it permanently.
-
-While the camera is held in \term{RESET} or in \term{POWER-DOWN}\footnote{The overheating has been observed with the camera held in \term{RESET}. \term{POWER-DOWN} is expected to behave the same way, since the camera stops driving the bus in that state as well, but this has not yet been verified experimentally.} it stops driving its data and timing lines, \term{D0}--\term{D7}, \term{PCLK}, \term{HREF} and \term{VSYNC}. Those lines are left floating at the inputs of the line buffer on the transmitter board, which is then driven into an unstable state, oscillating around its switching threshold, and overheats. Keep \term{RESET} and \term{POWER-DOWN} as brief transients.
+\end{landscape}

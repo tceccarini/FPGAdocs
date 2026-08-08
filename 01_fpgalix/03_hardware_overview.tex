@@ -52,7 +52,7 @@ The two figures from the data-sheet \cite{OV7670-DS} below describe how the vide
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\linewidth]{OV7670_HTiming}
+    \includegraphics[width=\linewidth]{OV7670_HTiming}
     \caption{OV7670 horizontal timing (source: \cite{OV7670-DS}).}
     \label{fig:ov7670-htiming}
 \end{figure}
@@ -66,7 +66,7 @@ Byte ordering and bit layout within each format are given in the data-sheet \cit
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\linewidth]{OV7670_VGAFrameTiming}
+    \includegraphics[width=\linewidth]{OV7670_VGAFrameTiming}
     \caption{OV7670 VGA frame timing (source: \cite{OV7670-DS}).}
     \label{fig:ov7670-vtiming}
 \end{figure}
@@ -84,7 +84,7 @@ Unlike \term{sys\_clk} (|clk_0|, 50 MHz, free-running from the board oscillator)
 
 \begin{figure}[htbp]
     \centering
-    \includesvg[width=0.85\linewidth]{PCLKDistribution}
+    \includesvg[width=\linewidth]{PCLKDistribution}
     \caption{Distribution of \term{PCLK} and its reset, from the camera to every \term{pclk}-domain block.}
     \label{fig:pclk-distribution}
 \end{figure}
@@ -129,7 +129,7 @@ This behavior is implemented as a three-state machine, built directly on the \te
 
 \begin{figure}[htbp]
     \centering
-    \includesvg[width=0.9\linewidth]{CameraDataInterfaceFSM}
+    \includesvg[width=\linewidth]{CameraDataInterfaceFSM}
     \caption{State machine of \term{ov7670\_data\_interface}.}
     \label{fig:ov7670-data-interface-fsm}
 \end{figure}
@@ -172,7 +172,7 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\linewidth]{HPSRamCtrlSubsycFromIntelManual}
+    \includegraphics[width=\linewidth]{HPSRamCtrlSubsycFromIntelManual}
     \caption{\term{SDRAM} Controller Subsystem high-level block diagram (source: \cite[Figure 12-1, p.~12-2]{CV-TRM}).}
     \label{fig:fpgalix-hps-sdram}
 \end{figure}
@@ -181,7 +181,7 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\linewidth]{HPSL3InterconnectIntelManual}
+    \includegraphics[width=\linewidth]{HPSL3InterconnectIntelManual}
     \caption{\term{L3} Interconnect and \term{L4} buses (source: \cite[Figure 8-1, p.~8-2]{CV-TRM}); it shows the \term{MPFE}'s default ports (\term{CPU}, \term{L3}, \term{L4}) only, omitting the \term{FPGA}-to-\term{HPS} bridge ports \texttt{msgdma\_0} actually uses, aggregated instead in Figure~\ref{fig:fpgalix-hps-sdram}. It does show the \term{L2} Cache's two masters, one into the \term{L3} Interconnect and one directly into the \term{SDRAM} Controller Subsystem: \texttt{msgdma\_0}'s own dedicated port bypasses both in the same way, so it reads and writes \term{DDR3} without the \term{CPU} cache system ever becoming aware of it.}
     \label{fig:fpgalix-l3-interconnect}
 \end{figure}
@@ -223,7 +223,7 @@ Several blocks shown here are not covered by a dedicated chapter: the \term{LED}
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \includesvg[width=\textwidth,height=\textheight,keepaspectratio]{FPGAlixQsysDiagram}
+    \includesvg[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAlixQsysDiagram}
     \caption{\texttt{soc\_system.qsys} block diagram.}
     \label{fig:fpgalix-system-overview}
 \end{figure}

@@ -5,6 +5,8 @@
     </marker>
   </defs>
 
+  <rect x="0" y="0" width="1450" height="600" fill="#ffffff"/>
+
   <!-- Camera + driver, feeding the capture thread from above -->
   <rect x="10" y="15" width="170" height="50" rx="8" fill="#fafafa" stroke="#888"/>
   <text x="95" y="45" text-anchor="middle" font-size="14">Camera</text>

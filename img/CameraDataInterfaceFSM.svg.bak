@@ -8,6 +8,8 @@
     </marker>
   </defs>
 
+  <rect x="0" y="0" width="1100" height="860" fill="#ffffff"/>
+
   <!-- reset / initial state marker -->
   <circle cx="550" cy="25" r="6" fill="#212529"/>
   <line x1="550" y1="31" x2="550" y2="68" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
