@@ -103,7 +103,7 @@ These are the concrete commands behind Figure~\ref{fig:fpgasteel-bootloader-gene
 \subsection{Generate the BSP headers from the Quartus handoff}
 \label{subsec:fpgasteel-bsp-headers}
 
-Compiling the hardware project makes \term{Quartus} export the \term{HPS} configuration as \term{XML} under the handoff folder placed at |hw/quartus/hps_isw_handoff/soc_system_hps_0/|. Now we get to converting it into the \term{C} headers \term{U-Boot} needs, by running:
+Compiling the hardware project makes \term{Quartus} export the \term{HPS} configuration as \term{XML} under the handoff folder placed at |hw/quartus/hps_isw_handoff/soc_system_hps_0/|. Convert this into the \term{C} headers \term{U-Boot} needs by running:
 
 \begin{shellcode}
 python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py \
@@ -212,16 +212,16 @@ mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d multiboot.scrip
 ../sdcard/boot_partition/u-boot.scr
 \end{shellcode}
 
-Replace |multiboot.script| with |boot.script.jtag_debug| to switch boot mode. This step must be repeated every time the chosen script changes, or to switch to a different one.
+Replace |multiboot.script| with |boot.script.jtag_debug| to switch boot mode. This step must be repeated every time you switch to a different script.
 
 \section{Preparing the SD card}
 \label{sec:fpgasteel-preparing-sd-card}
 
 \begin{warningbox}
-    This section involves low-level disk operations. A wrong device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on your machine. Always double-check every device path (|/dev/sdX|, |/dev/loopN|) before pressing \term{Enter}. When in doubt, stop and verify.
+    This section involves low-level disk operations. A wrong device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on your machine. Always double-check every device path (|/dev/sdX|, |/dev/loopN|) before pressing Enter. When in doubt, stop and verify.
 \end{warningbox}
 
-Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under |sdcard/|. Here we build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing |sdcard/images/sdcard.img| with the \term{SD} card device (e.g.\ |/dev/sdX|), skipping the image creation step and the final |dd|/\term{Etcher} write.
+Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under |sdcard/|. Build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing |sdcard/images/sdcard.img| with the \term{SD} card device (e.g.\ |/dev/sdX|), skipping the image creation step and the final |dd|/\term{Etcher} write.
 
 To write the final image to the \term{SD} card, use:
 
@@ -255,7 +255,7 @@ Two partitions are needed: a \term{FAT32} boot partition (number 1) and a raw \t
 fdisk images/sdcard.img
 \end{shellcode}
 
-Within |fdisk|, the following commands are entered in order:
+Within |fdisk|, enter the following commands in order:
 
 \begin{shellcode}
 o       # new MBR partition table
@@ -269,7 +269,7 @@ c       # set type to W95 FAT32 LBA (partition 1, FAT32 boot, 500 MiB)
 p       # print disk info, note "Sectors" and "Sector size"
 \end{shellcode}
 
-Prior to creating partition 3, its first sector must be calculated:
+Prior to creating partition 3, calculate its first sector:
 
 \[
 \text{first\_sector}_{p3} = \text{total\_sectors} - \left\lceil \frac{10 \times 1024 \times 1024}{\text{sector\_size}} \right\rceil
@@ -285,7 +285,7 @@ Example, assuming 512-byte sectors and a 7400 \term{MiB} image (total sectors = 
 \end{aligned}
 \]
 
-Partition 3 is then created at that position:
+Create partition 3 at that position:
 
 \begin{shellcode}
 n               # partition 3, raw A2, U-Boot SPL (10 MiB)
@@ -361,4 +361,4 @@ sudo dd if=images/sdcard.img of=/dev/sdX bs=4M status=progress
 sync
 \end{shellcode}
 
-Replace |/dev/sdX| with the actual \term{SD} card device. Double-check the target device before running, this command will overwrite it completely.
+Replace |/dev/sdX| with the actual \term{SD} card device. Double-check the target device before running: this command will overwrite it completely.

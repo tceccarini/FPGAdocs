@@ -1,7 +1,7 @@
 \chapter{\sysname{FPGAsteel}}
 \label{chap:fpgasteel-intro}
 
-The goal of this project is a tutorial on interfacing an \term{OV7670} camera module with a \term{Cyclone V} \term{HPS} through custom \term{FPGA} hardware using \term{DMA} (\term{Direct Memory Access}), so that transferring the video stream into memory requires no \term{CPU} involvement at all. It also documents, step by step, the full toolchain and development environment needed to build and run it.
+\sysname{FPGAsteel} interfaces an \term{OV7670} camera module with a \term{Cyclone V} \term{HPS} through custom \term{FPGA} hardware derived from \sysname{FPGAlix}'s own acquisition core, and moves the video stream into memory over \term{DMA} (\term{Direct Memory Access}) with no \term{CPU} involvement. Unlike \sysname{FPGAlix}, it runs no operating system: the \term{Cortex-A9} drives the hardware directly, and the software is entirely different, purpose-built bare-metal examples rather than a \term{Linux} video pipeline. It also documents, step by step, the full toolchain and development environment needed to build and run it.
 
 \section{Quick Start}
 \label{sec:fpgasteel-quick-start}

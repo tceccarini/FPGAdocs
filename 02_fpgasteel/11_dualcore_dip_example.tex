@@ -13,7 +13,7 @@ All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding 
  \item thresholds it to a binary image (a pixel counts as ``object'' above a fixed brightness);
  \item cleans the binary image up morphologically, an opening (erosion followed by dilation) to remove isolated noise pixels without changing the blob's overall size;
  \item rejects the frame early if the cleaned blob touches the image border (it cannot be fully measured) or if too few pixels survived thresholding (nothing there);
- \item extracts the blob's outline, bounding box, and centroid, and overlay all three on the \term{RGB24} frame the camera pipeline already produced.
+ \item extracts the blob's outline, bounding box, and centroid, and overlays all three on the \term{RGB24} frame the camera pipeline already produced.
 \end{enumerate}
 
 |main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) reports its own conversion time.
@@ -23,7 +23,7 @@ Every stage above runs split across both cores, using the exact same |Worker|/|C
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-dip-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. Also applies to the \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. The \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}) applies here too.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-dip-hardware}

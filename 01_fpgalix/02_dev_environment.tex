@@ -3,9 +3,9 @@
 
 \section{Introduction}
 
-The board boots a full \term{Linux} OS and is reachable over \term{Ethernet}, so no \term{JTAG}-based source debugger is needed on the host to debug software: |gdbserver|, installed on the board, can be attached remotely from the host with |gdb|, over the network so no in-circuit debugging is involved.
+The board boots a full \term{Linux} OS and is reachable over \term{Ethernet}, so no \term{JTAG}-based debugger is needed on the host: |gdbserver|, installed on the board, is attached remotely from the host with |gdb|, entirely over the network.
 
-\term{JTAG} is still needed for one thing this can't replace: debugging the \term{FPGA} fabric itself, with \term{SignalTap}'s in-system logic analyzer, from \term{Quartus}. For that, a physical PC is necessary, not a Virtual Machine. Forwarding the \term{USB-Blaster} from host to guest through an hypervisor's own USB redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures on timing-sensitive \term{JTAG} traffic: corrupted transfers, chains that fail to enumerate. Everything else in this chapter, writing \term{VHDL}, compiling the \term{Quartus} project, building \term{U-Boot}, the kernel, and \term{Buildroot}, works fine in a VM; only the \term{SignalTap} session needs the \term{USB-Blaster} to be truly local.
+\term{JTAG} is still needed for one thing this can't replace: debugging the \term{FPGA} fabric itself, with \term{SignalTap}'s in-system logic analyzer, from \term{Quartus}. For that, a physical PC is necessary, not a \term{VM}. Forwarding the \term{USB-Blaster} from host to guest through a hypervisor's own USB redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures on timing-sensitive \term{JTAG} traffic: corrupted transfers, chains that fail to enumerate. Everything else in this chapter, writing \term{VHDL}, compiling the \term{Quartus} project, building \term{U-Boot}, the kernel, and \term{Buildroot}, works fine in a \term{VM}; only the \term{SignalTap} session needs the \term{USB-Blaster} to be truly local.
 
 This chapter covers the required |apt| packages, where each piece of software lives on disk, the environment variables needed to reach them, \term{USB-Blaster} and serial console access, and the editor used to write \term{VHDL} and application code.
 
@@ -69,7 +69,6 @@ Add to |~/.bashrc|, matching the install paths from Section~\ref{subsec:fpgalix-
 export QUARTUS_ROOTDIR="$HOME/Programs/Altera/22.1/quartus/"
 export QSYS_ROOTDIR="${QUARTUS_ROOTDIR}/sopc_builder/bin"
 export PATH="${QUARTUS_ROOTDIR}/bin:$PATH"
-export PATH="$HOME/Programs/Altera/22.1/quartus/sopc_builder/bin/:$PATH"
 export PATH="$HOME/Programs/Arm/toolchain/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-linux-gnueabihf/bin:$PATH"
 export PATH="${QSYS_ROOTDIR}:$PATH"
 \end{shellcodepath}

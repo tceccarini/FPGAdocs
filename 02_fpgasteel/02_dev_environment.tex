@@ -5,7 +5,7 @@
 
 \sysname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
 
-Developing inside a virtual machine is discouraged. Forwarding the \term{USB-Blaster II} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
+Developing inside a \term{VM} is discouraged. Forwarding the \term{USB-Blaster II} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
 
 The one setup known to avoid this reliably is \term{PCI(e)} passthrough (\term{VT-d}/\term{AMD-Vi} with \term{IOMMU}): assigning the entire \term{USB} controller, not just the \term{USB-Blaster} device, directly to the guest, bypassing the host's \term{USB} stack entirely. It is not a simple option, though: it needs \term{IOMMU} support enabled in the host's firmware and kernel, not every \term{USB} controller's \term{IOMMU} grouping supports it, and it depends on the host \term{OS}. On \term{Linux}, it is supported directly: the kernel's \term{VFIO} framework, together with \term{QEMU}, can assign the \term{USB} controller straight to a \term{QEMU}/\term{KVM} guest. On \term{Windows}, this is \term{Hyper-V}'s \term{Discrete Device Assignment} (\term{DDA}), documented for \term{Windows Server} editions, not for \term{Windows 11}'s client \term{Hyper-V}. \term{macOS} has no path to this at all: \term{Quartus} is only distributed for \term{Windows} and \term{Linux}, and \term{Apple Silicon} Macs are \term{ARM}, not \term{x86\_64}, so even a \term{Linux} \term{VM} on one would need to emulate the target architecture, moot anyway since \term{Quartus} does not run on that architecture either way.
 
@@ -97,7 +97,7 @@ sudo udevadm trigger
 sudo usermod -aG plugdev "$USER"
 \end{shellcode}
 
-The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. The user still needs to be added to that group:
+The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. Add the user to that group too:
 
 \begin{shellcode}
 sudo usermod -aG dialout "$USER"

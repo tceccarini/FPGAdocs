@@ -29,7 +29,7 @@ This driver uses \term{MMAP}, backed by \term{vb2}'s \term{DMA}-contiguous alloc
 
 The \term{Avalon-ST} pipeline feeding the \term{mSGDMA} marks the end of every frame with an \term{EOP} (\term{End-Of-Packet}) marker. If \term{EOP} arrives before the buffer \term{mSGDMA} was writing to is full, the result is a short frame, and the \term{Altera} \term{mSGDMA} driver already present in the \term{Linux} kernel (|drivers/dma/altera-msgdma.c|), written independently of this project, gave |camera_driver_2| no way to detect this.
 
-This problem was found empirically, through trial and error: streaming from the \term{VHDL} test pattern generators under |hw/my_vhdl/qsys_components/| showed frames coming out wrong. Tracing it to its root cause was then done by setting \term{Claude Code} to analyse the driver's source directly, over considerable iteration, several analysis passes rather than a single one, before the fault was narrowed down to three compounding problems: the \term{DMA} descriptors were not even configured to react to an early \term{EOP} in the first place; once that was corrected, the completion information the hardware did report for each transfer was still being read and then discarded, rather than passed up to |camera_driver_2|; and the first check used to detect this, once it was passed up, proved unreliable on some \term{mSGDMA} hardware revisions and had to be made more robust. All three were fixed.
+This problem was found empirically, through trial and error: streaming from the \term{VHDL} test pattern generators under |hw/my_vhdl/qsys_components/| showed frames coming out wrong. The root cause was then traced by directing \term{Claude Code} to analyse the driver's source directly, over several analysis passes rather than a single one, before the fault was narrowed down to three compounding problems: the \term{DMA} descriptors were not even configured to react to an early \term{EOP} in the first place; once that was corrected, the completion information the hardware did report for each transfer was still being read and then discarded, rather than passed up to |camera_driver_2|; and the first check used to detect this, once it was passed up, proved unreliable on some \term{mSGDMA} hardware revisions and had to be made more robust. All three were fixed.
 
 With this in place, |camera_driver_2| can tell a complete frame from a short one, and, as intended, logs and discards the latter rather than passing it to \term{userspace} as valid.
 
@@ -54,7 +54,7 @@ Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera mo
 \end{warningbox}
 \footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
-Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over |scp|; any other transfer method works just as well. If transferring over \term{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: |root| has no working \term{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs |root|, since loading a kernel module and accessing hardware registers directly both require it, reached one of two ways:
+Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over |scp|; any other transfer method works just as well. If transferring over \term{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: |root| has no working \term{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs |root|, since loading a kernel module and accessing hardware registers directly both require it; root access can be reached one of two ways:
 
 \begin{itemize}
     \item from that same \term{SSH} session, with |su| (the regular user's own password does not work here: it is the |root| password set in Subparagraph~\ref{subsec:fpgalix-buildroot-base});
@@ -64,7 +64,7 @@ Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the file
 \subsection{Deploying the module and utilities}
 \label{subsec:fpgalix-camera-transfer}
 
-The compiled module and the debug scripts used in the following steps are copied onto the board together, over |scp|, into a dedicated |camera_driver_2/| folder in the regular user's home directory:
+Copy the compiled module and the debug scripts used in the following steps onto the board together, over |scp|, into a dedicated |camera_driver_2/| folder in the regular user's home directory:
 
 \begin{shellcode}
 cd sw/camera_driver_2
@@ -73,7 +73,7 @@ scp -p bin/fpgalix_camera.ko utils/debug/resetCtrl.sh utils/debug/ov7670_ctrlif_
 utils/debug/ov7670_dataif_ctrl.sh <username>@<board-ip>:camera_driver_2/
 \end{shellcode}
 
-On the board, |cd| into that folder, then |su| switches to |root| for the remaining steps, keeping the same working directory:
+On the board, |cd| into that folder, then run |su| to switch to |root| for the remaining steps, keeping the same working directory:
 
 \begin{shellcode}
 cd camera_driver_2
@@ -87,7 +87,7 @@ su
 ./resetCtrl.sh
 \end{shellcode}
 
-Option 2, ``Deassert reset'', is selected. This releases |pclk_reset_controller|'s |sw_release| bit, a prerequisite for the camera to respond over \term{I\textsuperscript{2}C} at all.
+Select option 2, ``Deassert reset''. This releases |pclk_reset_controller|'s |sw_release| bit, a prerequisite for the camera to respond over \term{I\textsuperscript{2}C} at all.
 
 \subsection{Configuring the OV7670 over I2C}
 \label{subsec:fpgalix-camera-i2c-config}
@@ -96,7 +96,7 @@ Option 2, ``Deassert reset'', is selected. This releases |pclk_reset_controller|
 ./ov7670_ctrlif_set.sh
 \end{shellcode}
 
-The \term{Bayer} mode is selected (1 for \term{Raw}, 2 for \term{Processed}). Registers are written and then read back automatically, confirming the camera answered correctly.
+Select the \term{Bayer} mode (1 for \term{Raw}, 2 for \term{Processed}). Registers are written and then read back automatically, confirming the camera answered correctly.
 
 \subsection{Enabling frame acquisition}
 \label{subsec:fpgalix-camera-frame-acq}
@@ -105,7 +105,7 @@ The \term{Bayer} mode is selected (1 for \term{Raw}, 2 for \term{Processed}). Re
 ./ov7670_dataif_ctrl.sh
 \end{shellcode}
 
-Option 1, ``Enable frame acquisition'', is selected.
+Select option 1, ``Enable frame acquisition''.
 
 \subsection{Loading the driver}
 \label{subsec:fpgalix-camera-load}

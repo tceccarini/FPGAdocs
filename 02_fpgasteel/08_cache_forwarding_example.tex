@@ -184,7 +184,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
     \item |CacheAwareFrame(width, height, colorScheme)| (overloaded constructor, form 1): allocates a new buffer via |memalign()|, aligned to |ALT_CACHE_LINE_SIZE|, owned by this object and released by the destructor. Throws |ExceptionFrame| if the allocation fails.
     \item |CacheAwareFrame(buffer, bufferSize, width, height, colorScheme)| (overloaded constructor, form 2): wraps an existing buffer, exactly like |Frame|'s equivalent constructor; the caller is responsible for making sure that buffer is itself cache-line aligned.
     \item |~CacheAwareFrame()| (destructor): frees the buffer, but only if it was allocated by form 1 above.
-    \item |cacheFlush()|: cleans this frame's buffer from the \term{CPU} caches to \term{DDR} (|alt_cache_system_clean()|). Call this after the \term{CPU} has written the buffer and before a \term{DMA} master reads it.
+    \item |cacheFlush()|: cleans this frame's buffer's cache lines, writing them back to \term{DDR} (|alt_cache_system_clean()|). Call this after the \term{CPU} has written the buffer and before a \term{DMA} master reads it.
     \item |cacheInvalidate()|: invalidates this frame's buffer in the \term{CPU} caches (|alt_cache_system_invalidate()|). Call this after a \term{DMA} master has written the buffer and before the \term{CPU} reads it.
 \end{itemize}
 

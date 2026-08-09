@@ -41,10 +41,10 @@ Software communicates with the camera over \term{SCCB} through two modules place
 \subsection{AvalonI2C}
 \label{subsec:fpgasteel-i2c-avaloni2c}
 
-|AvalonI2C| class (|src/AvalonI2C.{h,cpp}|) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (|altera_avalon_i2c|), master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike |System|/|Serial| it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
+The |AvalonI2C| class (|src/AvalonI2C.{h,cpp}|) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (|altera_avalon_i2c|), master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike |System|/|Serial| it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
 
 \begin{itemize}
-    \item \textbf{\texttt{init(speed)}:} |speed| selects the bus speed mode, |Speed::Standard| (100 \term{kHz}) or |Speed::Fast| (400 \term{kHz}). Disables the core (|CTRL|), masks interrupts (|ISER|, this driver polls, it doesn't use them), clears pending status bits (|ISR|), programs the |SCL_HIGH|/|SCL_LOW|/|SDA_HOLD| bus-timing registers for the requested speed, then reconfigures |CTRL| with the bus speed and \term{FIFO} thresholds and enables the core.
+    \item \textbf{\texttt{init(speed)}:} |speed| selects the bus speed mode, |Speed::Standard| (100 \term{kHz}) or |Speed::Fast| (400 \term{kHz}). Disables the core (|CTRL|), masks interrupts (|ISER|; this driver polls, it doesn't use them), clears pending status bits (|ISR|), programs the |SCL_HIGH|/|SCL_LOW|/|SDA_HOLD| bus-timing registers for the requested speed, then reconfigures |CTRL| with the bus speed and \term{FIFO} thresholds and enables the core.
     \item \textbf{\texttt{deInit()}:} waits for the core to go idle, then disables it.
     \item \textbf{\texttt{write(devAddress, regAddress, regVal)}:} |devAddress| is the 7-bit \term{I\textsuperscript{2}C} slave address, |regAddress| the register to write within that slave, |regVal| the value to write. Runs the common \term{I\textsuperscript{2}C} ``device address, register address, value'' sequence (\term{START}, dev address+W, register address, value, \term{STOP}).
     \item \textbf{\texttt{read(devAddress, regAddress)}:} |devAddress| is the 7-bit \term{I\textsuperscript{2}C} slave address, |regAddress| the register to read; returns the value read. Writes the register address on the \term{I\textsuperscript{2}C} bus, then a repeated \term{START} into a read (\term{START}, dev address+W, register address, \term{RESTART}, dev address+R, value, \term{STOP}): standard \term{I\textsuperscript{2}C} register read.
@@ -56,12 +56,12 @@ Internally, both |write()| and |read()| throw |ExceptionI2C104| on a \term{NACK}
 \subsection{AvalonSCCB}
 \label{subsec:fpgasteel-i2c-avalonsccb}
 
-|AvalonSCCB| class (|src/AvalonSCCB.{h,cpp}|) derives from |AvalonI2C| and only overrides |read()|. \term{SCCB} differs from \term{I\textsuperscript{2}C} in exactly this: instead of one transaction with a repeated \term{START}, \term{SCCB} requires two separate \term{START}\ldots\term{STOP} transactions: (1) \term{START}, dev address+W, register address, \term{STOP}; (2) \term{START}, dev address+R, value, \term{STOP}. |write()| is unchanged, since \term{SCCB} and \term{I\textsuperscript{2}C} writes are identical, so it's inherited as-is from |AvalonI2C|.
+The |AvalonSCCB| class (|src/AvalonSCCB.{h,cpp}|) derives from |AvalonI2C| and only overrides |read()|. \term{SCCB} differs from \term{I\textsuperscript{2}C} in exactly this: instead of one transaction with a repeated \term{START}, \term{SCCB} requires two separate \term{START}\ldots\term{STOP} transactions: (1) \term{START}, dev address+W, register address, \term{STOP}; (2) \term{START}, dev address+R, value, \term{STOP}. |write()| is unchanged, since \term{SCCB} and \term{I\textsuperscript{2}C} writes are identical, so it's inherited as-is from |AvalonI2C|.
 
 \subsection{PclkResetController}
 \label{subsec:fpgasteel-i2c-pclkresetcontroller}
 
-|PclkResetController| class (|src/PclkResetController.{h,cpp}|) is a singleton (there's only one on the board) wrapping the |pclk_reset_controller| core's single control register:
+The |PclkResetController| class (|src/PclkResetController.{h,cpp}|) is a singleton (there's only one on the board) wrapping the |pclk_reset_controller| core's single control register:
 
 \begin{itemize}
     \item \textbf{\texttt{assertReset()}:} holds the |ov7670_pclk| domain and the camera in reset (|sw_release| = 0).
@@ -71,7 +71,7 @@ Internally, both |write()| and |read()| throw |ExceptionI2C104| on a \term{NACK}
 \subsection{ExceptionI2C}
 \label{subsec:fpgasteel-i2c-exceptioni2c}
 
-|ExceptionI2C| class (|src/Exceptions/ExceptionI2C.h|) follows the same pattern as |ExceptionSystem|/|ExceptionSerial| (Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an |ErrorType| instead of an |ALT_STATUS_CODE|: |Nack|, |ArbitrationLost|, |Timeout|, or |NotInitialized| (a call made before |init()|).
+The |ExceptionI2C| class (|src/Exceptions/ExceptionI2C.h|) follows the same pattern as |ExceptionSystem|/|ExceptionSerial| (Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an |ErrorType| instead of an |ALT_STATUS_CODE|: |Nack|, |ArbitrationLost|, |Timeout|, or |NotInitialized| (a call made before |init()|).
 
 \section{How it works}
 \label{sec:fpgasteel-i2c-how-it-works}

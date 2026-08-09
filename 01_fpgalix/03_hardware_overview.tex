@@ -60,7 +60,7 @@ The two figures from the data-sheet \cite{OV7670-DS} below describe how the vide
 Within a frame, \term{HREF}'s rising edge marks the start of a line and its falling edge marks the end. \term{D[7:0]} changes around \term{PCLK}'s falling edge and is valid to be sampled on the following rising edge, one byte per \term{PCLK} cycle for as long as \term{HREF} stays high.
 
 
-The number of bytes per pixel depends on the output format configured over \term{SCCB}. \term{RGB565}, \term{RGB555}, \term{RGB444}, and \term{YUV422} transmit each pixel as 2 bytes over 2 \term{PCLK} cycles. \term{RAW Bayer} and processed Bayer transmit each pixel as a single byte, and to compensate the camera halves \term{PCLK}'s frequency in that mode, so the pixel period (and with it, line and frame timing, Figure~\ref{fig:ov7670-vtiming} below) stays the same regardless of format.
+The number of bytes per pixel depends on the output format configured over \term{SCCB}. \term{RGB565}, \term{RGB555}, \term{RGB444}, and \term{YUV422} transmit each pixel as 2 bytes over 2 \term{PCLK} cycles. \term{RAW Bayer} and processed Bayer transmit each pixel as a single byte, and, to compensate, the camera halves \term{PCLK}'s frequency in that mode, so the pixel period (and with it, line and frame timing, Figure~\ref{fig:ov7670-vtiming} below) stays the same regardless of format.
 
 Byte ordering and bit layout within each format are given in the data-sheet \cite{OV7670-DS}, not reproduced here.
 
@@ -71,7 +71,7 @@ Byte ordering and bit layout within each format are given in the data-sheet \cit
     \label{fig:ov7670-vtiming}
 \end{figure}
 
-Figure~\ref{fig:ov7670-vtiming} gives the same picture at the scale of a whole frame. A frame begins on \term{VSYNC}'s falling edge; after a blanking gap, the first line begins at the first \term{HREF} rising edge (row 0). The last active row (row 479) ends on its \term{HREF} falling edge, and after a further blanking gap \term{VSYNC}'s next rising edge signals that the frame is complete. Over a full frame this amounts to 480 active rows of 640 pixels each.
+Figure~\ref{fig:ov7670-vtiming} gives the same picture at the scale of a whole frame. A frame begins on \term{VSYNC}'s falling edge; after a blanking gap, the first line begins at the first \term{HREF} rising edge (row 0). The last active row (row 479) ends on its \term{HREF} falling edge, and after a further blanking gap, \term{VSYNC}'s next rising edge signals that the frame is complete. Over a full frame this amounts to 480 active rows of 640 pixels each.
 
 \term{HSYNC} appears in Figure~\ref{fig:ov7670-vtiming} for reference only: it is not a physical output pin on the \term{OV7670}. Only \term{PCLK}, \term{HREF}, and \term{VSYNC} are, and they are what the custom acquisition \term{IP} core actually uses to delimit frames and lines.
 
@@ -123,7 +123,7 @@ The dependency above dictates the order software has to follow:
 
 Because this register interface resides in the \term{PCLK} domain rather than \term{sys\_clk}, software cannot reach it directly from the \term{LW HPS} bridge: |mm_clock_crossing_bridge_0| sits between the two domains for exactly this purpose, translating an \term{Avalon-MM} access from \term{sys\_clk} into \term{PCLK} and back. It exists solely to give |ov7670_data_interface_0|'s register file a path from software; no other component in the design needs it.
 
-Functionally, the core forwards each active pixel byte onto the \term{Avalon-ST} bus as it arrives from the camera, treating an entire camera frame as a single \term{Avalon-ST} packet: |st_sop| marks its first byte, |st_eop| its last. As long as the downstream side keeps accepting data, this packet runs uninterrupted for the whole frame. If backpressure event arrives instead, that is, the downstream side stops accepting data before the frame is complete, the core does not wait for it to recover: it abandons the frame in progress (drop), and inserts the \term{EOP} at the first opportunity, once the downstream side accepts data again, in place of the remaining pixel data. \term{mSGDMA} then terminates that transfer early, and software can tell the frame is incomplete from the number of bytes actually transferred, rather than being handed truncated pixel data as if it were a valid frame.
+Functionally, the core forwards each active pixel byte onto the \term{Avalon-ST} bus as it arrives from the camera, treating an entire camera frame as a single \term{Avalon-ST} packet: |st_sop| marks its first byte, |st_eop| its last. As long as the downstream side keeps accepting data, this packet runs uninterrupted for the whole frame. If a backpressure event arrives instead, that is, the downstream side stops accepting data before the frame is complete, the core does not wait for it to recover: it abandons the frame in progress (drop), and inserts the \term{EOP} at the first opportunity, once the downstream side accepts data again, in place of the remaining pixel data. \term{mSGDMA} then terminates that transfer early, and software can tell the frame is incomplete from the number of bytes actually transferred, rather than being handed truncated pixel data as if it were a valid frame.
 
 This behavior is implemented as a three-state machine, built directly on the \term{HREF}/\term{VSYNC} signaling described above:
 
@@ -136,7 +136,7 @@ This behavior is implemented as a three-state machine, built directly on the \te
 
 \begin{itemize}
     \item \textbf{WAIT\_SYNC}: the reset and idle state. It waits for |cam_vsync|'s falling edge, the frame-start marker from Figure~\ref{fig:ov7670-vtiming}, with acquisition enabled (|ctrl_enabled| = 1), and moves to ACQUIRE.
-    \item \textbf{ACQUIRE}: for every \term{PCLK} cycle with |cam_href = 1|, one byte of |cam_data| is transferred onto the \term{Avalon-ST} bus. |st_sop| is raised on the very first byte and |st_eop| on the |FRAME_SIZE|-th, (|FRAME_SIZE| being a count of bytes, not pixels, see Figure~\ref{fig:ov7670-vtiming} and Figure~\ref{fig:ov7670-htiming}) closing the frame and returning to WAIT\_SYNC: the byte count, not the next \term{VSYNC} edge, is what ends the packet. If the downstream side deasserts |st_ready| at any point (backpressure), the core does not stall; it counts the frame as dropped and moves to WAIT\_READY instead.
+    \item \textbf{ACQUIRE}: for every \term{PCLK} cycle with |cam_href = 1|, one byte of |cam_data| is transferred onto the \term{Avalon-ST} bus. |st_sop| is raised on the very first byte and |st_eop| on the |FRAME_SIZE|-th byte (|FRAME_SIZE| being a count of bytes, not pixels, see Figure~\ref{fig:ov7670-vtiming} and Figure~\ref{fig:ov7670-htiming}), closing the frame and returning to WAIT\_SYNC: the byte count, not the next \term{VSYNC} edge, is what ends the packet. If the downstream side deasserts |st_ready| at any point (backpressure), the core does not stall; it counts the frame as dropped and moves to WAIT\_READY instead.
     \item \textbf{WAIT\_READY}: reached after a drop. The core waits for |st_ready| to return, then emits a bare |st_eop|, so the downstream FIFO can discard the incomplete packet cleanly, and goes back to WAIT\_SYNC. Each further \term{VSYNC} falling edge seen while still waiting counts as another dropped frame, so a downstream stall spanning several frames is reported accurately rather than silently
 swallowed.
 \end{itemize}
@@ -168,7 +168,7 @@ A single-clock, 128-bit buffer \term{FIFO}, 8192 entries deep, is placed entirel
 \subsection{Why a dedicated \term{SDRAM} port: bypassing the \term{L3} interconnect}
 \label{sec:fpgalix-sdram-port}
 
-The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\term{MPFE}) with ten independent command ports arbitrating for a single-port memory controller \cite{CV-TRM}: up to six of these ports are exposed directly to the \term{FPGA} fabric as the \term{FPGA}-to-\term{HPS} \term{SDRAM} interface, two are wired to the \term{L3} interconnect, and two to the \term{MPU}, the \term{ARM} cores. Each port has its own buffering into the \term{MPFE}; a programmable arbiter then selects, by the set priority configuration, which port's pending transaction is forwarded to the memory controller.
+The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\term{MPFE}) with ten independent command ports arbitrating for a single-port memory controller \cite{CV-TRM}: up to six of these ports are exposed directly to the \term{FPGA} fabric as the \term{FPGA}-to-\term{HPS} \term{SDRAM} interface, two are wired to the \term{L3} interconnect, and two to the \term{MPU} (i.e. the \term{ARM} cores). Each port has its own buffering into the \term{MPFE}; a programmable arbiter then selects, by the set priority configuration, which port's pending transaction is forwarded to the memory controller.
 
 \begin{figure}[htbp]
     \centering
