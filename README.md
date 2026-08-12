@@ -35,4 +35,4 @@ The compiled PDF is produced at `build/thesis.pdf`.
 
 ## License
 
-Released under [CC BY 4.0](LICENCE).
+Released under [CC BY 4.0](LICENCE).  
