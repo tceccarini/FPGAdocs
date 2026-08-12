@@ -61,19 +61,12 @@ The \sysname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \te
 \begin{itemize}
     \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
     \begin{itemize}
-        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header.
+        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}).
         \item |my_vhdl/|: custom \term{Platform Designer} \term{VHDL} components written for this project.
         \item |quartus/|: \term{Quartus} project, |soc_system.qsys|, top-level \term{VHDL}, pin assignments.
     \end{itemize}
     \item |sw/|: bare-metal example applications (\term{C++}), one folder per example.
-    \item |docs/|: reference manuals and this project's own documentation.
-    \begin{itemize}
-        \item |Altera/|: \term{Intel}/\term{Altera} manuals (\term{Avalon} interface specs, Embedded Peripherals IP User Guide, Cyclone V HPS Technical Reference Manual).
-        \item |FPGAsteel/|: this project's own numbered documentation (this file included).
-        \item |Misc/|: miscellaneous reference material (bootloader generation flow).
-        \item |OV7670_CameraModule/|: \term{OV7670} datasheet, implementation guide, and camera module schematic.
-        \item |Terasic_DE1-SoC/|: \term{DE1-SoC} schematic, \term{GHRD} archive, and \term{Terasic}'s own user manuals.
-    \end{itemize}
+    \item |docs/|: pointer to the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}), where the reference manuals used throughout this work are kept.
     \item |repos/|: git submodules (\term{U-Boot}, \term{GHRD}, \term{HPS} hwlib, \term{FPGA} top-level files).
     \item |sdcard/|: \term{SD card} boot partition contents and bootloader image, used to build the flashable image (Quick Start).
     \item |WARNING.md|: camera hardware bug note (symlink to |hw/camera_adapter/WARNING.md|).

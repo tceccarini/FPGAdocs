@@ -19,9 +19,15 @@ The thesis documents two sibling projects built around the same custom FPGA vide
 
 ## Downloads
 
-The thesis PDF, third-party reference documentation, the installers for the software used throughout the tutorial, and the ready-to-use SD card images are available in this shared folder:
+This shared folder mirrors everything needed to follow the tutorial without hunting down each piece separately:
 
 [**Shared folder (Google Drive)**](https://drive.google.com/drive/folders/1E9_TK0q58tYiPStDuGA1JgQQHmZVmjKi?usp=sharing)
+
+- the compiled thesis PDF
+- the camera adapter board documentation (schematics, bill of materials, PCB layouts)
+- third-party reference documentation (datasheets and manuals cited throughout the thesis)
+- installers for the software used throughout the tutorial (Quartus Prime, toolchains, OpenOCD, Eclipse, Ubuntu image, ...)
+- ready-to-use SD card images
 
 ## Building
 

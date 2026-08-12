@@ -100,7 +100,7 @@ The \sysname{FPGAlix} repository \cite{FPGALIX-REPO}, which is hosted on \term{G
 \begin{itemize}
     \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
     \begin{itemize}
-        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header.
+        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}).
         \item |my_vhdl/|: custom \term{Platform Designer} \term{VHDL} components written for this project.
         \item |quartus/|: \term{Quartus} project, |soc_system.qsys|, top-level \term{VHDL}, pin assignments.
     \end{itemize}
@@ -112,14 +112,7 @@ The \sysname{FPGAlix} repository \cite{FPGALIX-REPO}, which is hosted on \term{G
     \end{itemize}
     \item |repos/|: git submodules (\term{U-Boot}, \term{Linux} kernel, \term{Buildroot}, \term{GHRD}, |sopc2dts|, \term{Altera} \term{FPGA} top-level files).
     \item |sdcard/|: SD card boot partition contents and root filesystem overlay, used to assemble the flashable image.
-    \item |docs/|: reference manuals and this project's own documentation.
-    \begin{itemize}
-        \item |Altera/|: \term{Intel}/\term{Altera} manuals (\term{Avalon} interface specs, Embedded Peripherals IP User Guide, Cyclone V HPS Technical Reference Manual).
-        \item |FPGAlix/|: this project's own numbered documentation (this file included).
-        \item |Misc/|: miscellaneous reference material (bootloader generation flow).
-        \item |OV7670_CameraModule/|: \term{OV7670} datasheet, implementation guide, and camera module schematic.
-        \item |Terasic_DE1-SoC/|: \term{DE1-SoC} schematic, \term{GHRD} archive, and \term{Terasic}'s own user manuals.
-    \end{itemize}
+    \item |docs/|: pointer to the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}), where the reference manuals used throughout this work are kept.
     \item |WARNING.md|: camera hardware bug note (symlink to |hw/camera_adapter/WARNING.md|).
     \item |LICENSE|: MIT
 \end{itemize}
