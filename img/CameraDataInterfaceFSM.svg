@@ -1,78 +1,457 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 860" font-family="Helvetica, Arial, sans-serif">
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#212529"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 1035 790"
+   font-family="Helvetica, Arial, sans-serif"
+   version="1.1"
+   id="svg96"
+   sodipodi:docname="CameraDataInterfaceFSM.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   width="1035"
+   height="790"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview98"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="1.4355912"
+     inkscape:cx="837.28571"
+     inkscape:cy="675.67982"
+     inkscape:window-width="2560"
+     inkscape:window-height="1403"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g94"
+     width="1099px" />
+  <defs
+     id="defs8">
+    <marker
+       id="arrow"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         fill="#212529"
+         id="path2" />
     </marker>
-    <marker id="arrowST" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#7048e8"/>
+    <marker
+       id="arrowST"
+       viewBox="0 0 10 10"
+       refX="9"
+       refY="5"
+       markerWidth="7"
+       markerHeight="7"
+       orient="auto-start-reverse">
+      <path
+         d="M 0,0 10,5 0,10 Z"
+         fill="#7048e8"
+         id="path5" />
     </marker>
   </defs>
-
   <!-- reset / initial state marker -->
-  <circle cx="550" cy="25" r="6" fill="#212529"/>
-  <line x1="550" y1="31" x2="550" y2="68" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="562" y="52" font-size="12" fill="#495057">reset_n = 0</text>
-
+  <circle
+     cx="525.81573"
+     cy="22.017778"
+     r="6"
+     fill="#212529"
+     id="circle10" />
+  <line
+     x1="525.81573"
+     y1="28.017778"
+     x2="525.81573"
+     y2="65.017776"
+     stroke="#212529"
+     stroke-width="2"
+     marker-end="url(#arrow)"
+     id="line12" />
+  <text
+     x="536.88245"
+     y="39.684734"
+     font-size="12px"
+     fill="#495057"
+     id="text14"
+     style="font-size:14.6667px">reset_n = 0</text>
   <!-- ================= WAIT_SYNC ================= -->
-  <rect x="420" y="70" width="260" height="95" rx="8" fill="#fff3e0" stroke="#e8590c" stroke-width="1.8"/>
-  <text x="550" y="104" font-size="16" font-weight="bold" fill="#8a3800" text-anchor="middle">WAIT_SYNC</text>
-  <text x="550" y="126" font-size="11.5" fill="#8a3800" text-anchor="middle">idle · stat_byte_cnt held at 0</text>
-  <text x="550" y="143" font-size="11.5" fill="#8a3800" text-anchor="middle">st_valid / st_sop / st_eop = 0</text>
-
+  <rect
+     x="395.8157"
+     y="67.017776"
+     width="260"
+     height="95"
+     rx="8"
+     fill="#fff3e0"
+     stroke="#e8590c"
+     stroke-width="1.8"
+     id="rect16" />
+  <text
+     x="525.81573"
+     y="101.01778"
+     font-size="16"
+     font-weight="bold"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text18"
+     style="font-size:18.6667px">WAIT_SYNC</text>
+  <text
+     x="525.81573"
+     y="123.01778"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text20"
+     style="font-size:12px">idle · stat_byte_cnt held at 0</text>
+  <text
+     x="525.81573"
+     y="140.01778"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text22"
+     style="font-size:12px">st_valid / st_sop / st_eop = 0</text>
   <!-- ================= WAIT_READY (left) ================= -->
-  <rect x="110" y="440" width="290" height="100" rx="8" fill="#fff3e0" stroke="#e8590c" stroke-width="1.8"/>
-  <text x="255" y="474" font-size="16" font-weight="bold" fill="#8a3800" text-anchor="middle">WAIT_READY</text>
-  <text x="255" y="496" font-size="11.5" fill="#8a3800" text-anchor="middle">frame already dropped</text>
-  <text x="255" y="513" font-size="11.5" fill="#8a3800" text-anchor="middle">holds until downstream recovers</text>
-
+  <rect
+     x="85.815712"
+     y="437.01779"
+     width="290"
+     height="100"
+     rx="8"
+     fill="#fff3e0"
+     stroke="#e8590c"
+     stroke-width="1.8"
+     id="rect24" />
+  <text
+     x="230.81572"
+     y="471.01779"
+     font-size="16"
+     font-weight="bold"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text26"
+     style="font-size:18.6667px">WAIT_READY</text>
+  <text
+     x="230.81572"
+     y="493.01779"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text28"
+     style="font-size:12px">frame already dropped</text>
+  <text
+     x="230.81572"
+     y="510.01779"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text30"
+     style="font-size:12px">holds until downstream recovers</text>
   <!-- ================= ACQUIRE (right) ================= -->
-  <rect x="700" y="440" width="290" height="100" rx="8" fill="#fff3e0" stroke="#e8590c" stroke-width="1.8"/>
-  <text x="845" y="474" font-size="16" font-weight="bold" fill="#8a3800" text-anchor="middle">ACQUIRE</text>
-  <text x="845" y="496" font-size="11.5" fill="#8a3800" text-anchor="middle">drives st_data from cam_data</text>
-  <text x="845" y="513" font-size="11.5" fill="#8a3800" text-anchor="middle">one byte per cam_href='1' cycle</text>
-
+  <rect
+     x="675.81573"
+     y="437.01779"
+     width="290"
+     height="100"
+     rx="8"
+     fill="#fff3e0"
+     stroke="#e8590c"
+     stroke-width="1.8"
+     id="rect32" />
+  <text
+     x="820.81573"
+     y="471.01779"
+     font-size="16"
+     font-weight="bold"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text34"
+     style="font-size:18.6667px">ACQUIRE</text>
+  <text
+     x="820.81573"
+     y="493.01779"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text36"
+     style="font-size:12px">drives st_data from cam_data</text>
+  <text
+     x="820.81573"
+     y="510.01779"
+     font-size="11.5"
+     fill="#8a3800"
+     text-anchor="middle"
+     id="text38"
+     style="font-size:11.8667px">one byte per cam_href='1' cycle</text>
   <!-- ============ WAIT_SYNC -> ACQUIRE ============ -->
-  <path d="M625,165 C 750,250 850,320 900,438" fill="none" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="950" y="270" font-size="12.5" fill="#212529" text-anchor="end">cam_vsync falling edge</text>
-  <text x="950" y="287" font-size="12.5" fill="#212529" text-anchor="end">&amp; ctrl_enabled = 1</text>
-
+  <path
+     d="m 600.81809,162.08695 c 142.02217,84.957 255.63991,154.92159 312.44878,272.8619"
+     fill="none"
+     stroke="#212529"
+     stroke-width="2.13129"
+     marker-end="url(#arrow)"
+     id="path40" />
+  <text
+     x="637.79199"
+     y="308.4968"
+     font-size="12.5"
+     fill="#212529"
+     text-anchor="end"
+     id="text42"
+     style="font-size:13.3333px"><tspan
+       sodipodi:role="line"
+       id="tspan158014"
+       x="637.79199"
+       y="308.4968"
+       style="text-align:start;text-anchor:start">if (cam_vsync falling edge &amp;</tspan><tspan
+       sodipodi:role="line"
+       x="637.79199"
+       y="325.16342"
+       style="text-align:start;text-anchor:start"
+       id="tspan164182">__ctrl_enabled = 1)</tspan></text>
   <!-- ============ ACQUIRE -> WAIT_SYNC (frame complete) ============ -->
-  <path d="M770,438 C 640,340 540,240 495,163" fill="none" stroke="#7048e8" stroke-width="2" marker-end="url(#arrowST)"/>
-  <text x="695" y="205" font-size="12.5" fill="#5f3dc4" text-anchor="end">stat_byte_cnt = FRAME_SIZE−1 (bytes, not pixels)</text>
-  <text x="695" y="222" font-size="12.5" fill="#5f3dc4" text-anchor="end">&amp; cam_href = 1 &amp; st_ready = 1:</text>
-  <text x="695" y="239" font-size="12.5" fill="#5f3dc4" text-anchor="end">st_eop = 1, frame complete</text>
-
+  <path
+     d="m 745.81571,435.01778 c -130,-98 -230,-198 -275,-275"
+     fill="none"
+     stroke="#7048e8"
+     stroke-width="2"
+     marker-end="url(#arrowST)"
+     id="path46" />
+  <text
+     x="355.61035"
+     y="308.94235"
+     font-size="12.5"
+     fill="#5f3dc4"
+     text-anchor="end"
+     id="text48"
+     style="font-size:13.3333px;text-align:start;text-anchor:start"><tspan
+       sodipodi:role="line"
+       id="tspan110012"
+       x="355.61035"
+       y="308.94235"
+       style="text-align:start;text-anchor:start">if( stat_byte_cnt == FRAME_SIZE−<tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial"
+   id="tspan150766">1 &amp;</tspan></tspan><tspan
+       sodipodi:role="line"
+       x="355.61035"
+       y="326.23236"
+       id="tspan114820"
+       style="text-align:start;text-anchor:start"><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial"
+   id="tspan150768">__cam</tspan>_href == 1 &amp;</tspan><tspan
+       sodipodi:role="line"
+       x="355.61035"
+       y="342.89899"
+       id="tspan114822"
+       style="text-align:start;text-anchor:start">__st_ready = 1) ==&gt;</tspan><tspan
+       sodipodi:role="line"
+       id="tspan110014"
+       x="355.61035"
+       y="359.56561"
+       style="text-align:start;text-anchor:start">st_eop = 1, frame complete</tspan></text>
   <!-- ============ ACQUIRE -> WAIT_READY ============ -->
-  <path d="M700,480 C 600,450 500,450 402,480" fill="none" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="550" y="445" font-size="12.5" fill="#212529" text-anchor="middle">st_ready = 0: stat_dropped_cnt++</text>
-  <text x="550" y="462" font-size="12.5" fill="#212529" text-anchor="middle">(mid-frame backpressure)</text>
-
+  <path
+     d="m 675.81571,477.01778 c -100,-30 -200,-30 -298,0"
+     fill="none"
+     stroke="#212529"
+     stroke-width="2"
+     marker-end="url(#arrow)"
+     id="path54" />
+  <text
+     x="465.7822"
+     y="487.93472"
+     font-size="12.5px"
+     fill="#212529"
+     text-anchor="middle"
+     id="text56"><tspan
+       sodipodi:role="line"
+       id="tspan169554"
+       x="465.7822"
+       y="487.93472"
+       style="text-align:start;text-anchor:start">if (st_ready = 0)</tspan><tspan
+       sodipodi:role="line"
+       x="465.7822"
+       y="503.55972"
+       id="tspan170986"
+       style="text-align:start;text-anchor:start">==&gt; stat_dropped_cnt++</tspan><tspan
+       sodipodi:role="line"
+       id="tspan169556"
+       x="465.7822"
+       y="519.18469"
+       style="text-align:start;text-anchor:start">(mid-frame backpressure)</tspan></text>
+  <text
+     x="551.3714"
+     y="517.64728"
+     font-size="12.5px"
+     fill="#212529"
+     text-anchor="middle"
+     id="text58" />
   <!-- ============ WAIT_READY -> WAIT_SYNC ============ -->
-  <path d="M290,438 C 350,320 400,250 465,163" fill="none" stroke="#7048e8" stroke-width="2" marker-end="url(#arrowST)"/>
-  <text x="395" y="240" font-size="12.5" fill="#5f3dc4" text-anchor="start">st_ready = 1:</text>
-  <text x="395" y="257" font-size="12.5" fill="#5f3dc4" text-anchor="start">st_eop = 1 (closes the</text>
-  <text x="395" y="274" font-size="12.5" fill="#5f3dc4" text-anchor="start">dropped packet), resync</text>
-
+  <path
+     d="m 229.70451,435.01778 c 72.38098,-118 132.69847,-188 211.1112,-275"
+     fill="none"
+     stroke="#7048e8"
+     stroke-width="2.19668"
+     marker-end="url(#arrowST)"
+     id="path60" />
+  <text
+     x="26.907963"
+     y="294.68048"
+     font-size="12.5"
+     fill="#5f3dc4"
+     text-anchor="start"
+     id="text64"
+     style="font-size:13.3333px"><tspan
+       sodipodi:role="line"
+       id="tspan82456"
+       x="26.907963"
+       y="294.68048">if (st_ready == 1) ==&gt;</tspan><tspan
+       sodipodi:role="line"
+       x="26.907963"
+       y="311.34711"
+       id="tspan90834">st_eop = 1 (closes the dropped packet), resync</tspan></text>
   <!-- ============ WAIT_READY self-loop ============ -->
-  <path d="M315,540 C 345,600 190,600 210,542" fill="none" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="255" y="622" font-size="12" fill="#212529" text-anchor="middle">cam_vsync falling edge,</text>
-  <text x="255" y="639" font-size="12" fill="#212529" text-anchor="middle">still st_ready = 0: stat_dropped_cnt++</text>
-
+  <path
+     d="m 290.81571,537.01778 c 30,60 -125,60 -105,2"
+     fill="none"
+     stroke="#212529"
+     stroke-width="2"
+     marker-end="url(#arrow)"
+     id="path68" />
+  <text
+     x="173.96577"
+     y="602.04956"
+     font-size="12"
+     fill="#212529"
+     text-anchor="middle"
+     id="text70"
+     style="font-size:13.3333px"><tspan
+       sodipodi:role="line"
+       id="tspan186364"
+       x="173.96577"
+       y="602.04956"
+       style="text-align:start;text-anchor:start">if (cam_vsync falling edge ||</tspan><tspan
+       sodipodi:role="line"
+       x="173.96577"
+       y="618.71619"
+       style="text-align:start;text-anchor:start"
+       id="tspan193354">__still st_ready = 0) ==&gt;</tspan><tspan
+       sodipodi:role="line"
+       x="173.96577"
+       y="635.38281"
+       style="text-align:start;text-anchor:start"
+       id="tspan193358">stat_dropped_cnt++</tspan></text>
+  <text
+     x="255"
+     y="639"
+     font-size="12"
+     fill="#212529"
+     text-anchor="middle"
+     id="text72"
+     style="font-size:13.3333px" />
   <!-- ============ ACQUIRE self-loop ============ -->
-  <path d="M905,540 C 935,600 780,600 800,542" fill="none" stroke="#7048e8" stroke-width="2" marker-end="url(#arrowST)"/>
-  <text x="845" y="622" font-size="12" fill="#5f3dc4" text-anchor="middle">cam_href = 1 &amp; st_ready = 1:</text>
-  <text x="845" y="639" font-size="12" fill="#5f3dc4" text-anchor="middle">transfer byte, st_sop = 1 on byte 0</text>
-
+  <path
+     d="m 880.81571,537.01778 c 30,60 -125,60 -105,2"
+     fill="none"
+     stroke="#7048e8"
+     stroke-width="2"
+     marker-end="url(#arrowST)"
+     id="path74" />
+  <text
+     x="789.20856"
+     y="603.67944"
+     font-size="12"
+     fill="#5f3dc4"
+     text-anchor="middle"
+     id="text76"
+     style="font-size:13.3333px;text-align:start;text-anchor:start"><tspan
+       sodipodi:role="line"
+       id="tspan176202"
+       x="789.20856"
+       y="603.67944">if (cam_href = 1 &amp;</tspan><tspan
+       sodipodi:role="line"
+       id="tspan176204"
+       x="789.20856"
+       y="620.34607">__st_ready = 1) ==&gt;</tspan><tspan
+       sodipodi:role="line"
+       x="789.20856"
+       y="637.0127"
+       id="tspan178830">forward_incoming_byte, st_sop = 1</tspan></text>
+  <text
+     x="845"
+     y="639"
+     font-size="12"
+     fill="#5f3dc4"
+     text-anchor="middle"
+     id="text78"
+     style="font-size:13.3333px" />
   <!-- ================= Legend ================= -->
-  <g transform="translate(70,700)">
-    <rect x="0" y="0" width="960" height="80" rx="8" fill="#ffffff" stroke="#dee2e6" stroke-width="1.2"/>
-    <line x1="16" y1="24" x2="46" y2="24" stroke="#212529" stroke-width="2" marker-end="url(#arrow)"/>
-    <text x="54" y="28" font-size="12" fill="#212529">Guard condition (registers / FSM control)</text>
-
-    <line x1="16" y1="48" x2="46" y2="48" stroke="#7048e8" stroke-width="2" marker-end="url(#arrowST)"/>
-    <text x="54" y="52" font-size="12" fill="#212529">Guard condition with an Avalon-ST side effect (st_sop / st_eop)</text>
-
-    <text x="520" y="28" font-size="12" fill="#495057">FSM entirely in the pclk domain (camera pixel clock)</text>
-    <text x="520" y="52" font-size="12" fill="#495057">Source: hw/my_vhdl/qsys_components/ov7670_data_interface.vhd</text>
+  <g
+     transform="translate(45.815713,697.01778)"
+     id="g94">
+    <rect
+       x="0"
+       y="0"
+       width="960"
+       height="80"
+       rx="8"
+       fill="#ffffff"
+       stroke="#dee2e6"
+       stroke-width="1.2"
+       id="rect80" />
+    <line
+       x1="16"
+       y1="24"
+       x2="46"
+       y2="24"
+       stroke="#212529"
+       stroke-width="2"
+       marker-end="url(#arrow)"
+       id="line82" />
+    <text
+       x="54"
+       y="28"
+       font-size="12px"
+       fill="#212529"
+       id="text84"
+       style="font-size:13.3333px">Guard condition (registers / FSM control)</text>
+    <line
+       x1="16"
+       y1="48"
+       x2="46"
+       y2="48"
+       stroke="#7048e8"
+       stroke-width="2"
+       marker-end="url(#arrowST)"
+       id="line86" />
+    <text
+       x="54"
+       y="52"
+       font-size="12px"
+       fill="#212529"
+       id="text88"
+       style="font-size:13.3333px">Guard condition with an Avalon-ST side effect (st_sop / st_eop)</text>
+    <text
+       x="520"
+       y="28"
+       font-size="12px"
+       fill="#495057"
+       id="text90"
+       style="font-size:13.3333px">FSM entirely in the pclk domain (camera pixel clock)</text>
+    <text
+       x="520"
+       y="52"
+       font-size="12px"
+       fill="#495057"
+       id="text92"
+       style="font-size:13.3333px">Source: hw/my_vhdl/qsys_components/ov7670_data_interface.vhd</text>
   </g>
 </svg>

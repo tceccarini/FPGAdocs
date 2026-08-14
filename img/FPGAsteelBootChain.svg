@@ -4,7 +4,7 @@
    font-family="Segoe UI, Arial, sans-serif"
    version="1.1"
    id="svg440"
-   sodipodi:docname="02_hps-boot-chain.svg"
+   sodipodi:docname="FPGAsteelBootChain.svg"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -20,11 +20,11 @@
      inkscape:pagecheckerboard="0"
      showgrid="false"
      inkscape:zoom="1.4583109"
-     inkscape:cx="551.66561"
-     inkscape:cy="436.12098"
+     inkscape:cx="336.69089"
+     inkscape:cy="326.40502"
      inkscape:window-width="2560"
      inkscape:window-height="1403"
-     inkscape:window-x="2560"
+     inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="g424" />
@@ -65,12 +65,14 @@
        id="text364"><tspan
          x="100"
          dy="0"
-         id="tspan360">Reset</tspan><tspan
+         id="tspan360"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'">Reset</tspan><tspan
          x="100"
          dy="20"
-         font-size="12"
-         fill="#555"
-         id="tspan362">BSEL[2:0] sampled</tspan></text>
+         font-size="12px"
+         fill="#555555"
+         id="tspan362"
+         style="font-size:13.3333px">BSEL[2:0] sampled</tspan></text>
     <!-- 2. Boot ROM -->
     <rect
        x="220"
@@ -84,20 +86,33 @@
     <text
        x="310"
        y="138"
-       id="text374"><tspan
+       id="text374"
+       style="line-height:0"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;line-height:0.1;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'"
+         sodipodi:role="line"
+         id="tspan19727">Boot ROM</tspan><tspan
+         sodipodi:role="line"
+         id="tspan12896"
          x="310"
-         dy="0"
-         id="tspan368">Boot ROM</tspan><tspan
+         y="146.39796"
+         style="font-size:13.3333px;line-height:1.25"><tspan
+           x="310"
+           dy="20"
+           font-size="12px"
+           fill="#555555"
+           id="tspan12898"
+           style="font-size:13.3333px">fixed, on-chip</tspan></tspan><tspan
+         sodipodi:role="line"
          x="310"
-         dy="20"
-         font-size="12"
-         fill="#555"
-         id="tspan370">fixed, on-chip</tspan><tspan
-         x="310"
-         dy="16"
-         font-size="12"
-         fill="#555"
-         id="tspan372">reads boot source</tspan></text>
+         y="163.06458"
+         id="tspan14574"
+         style="font-size:13.3333px;line-height:1.25"><tspan
+           x="310"
+           dy="16"
+           font-size="12px"
+           fill="#555555"
+           id="tspan14576"
+           style="font-size:13.3333px">reads boot source</tspan></tspan></text>
     <!-- 3. SD card partition 3 -->
     <rect
        x="430"
@@ -111,20 +126,35 @@
     <text
        x="530"
        y="128"
-       id="text384"><tspan
+       id="text384"
+       style="line-height:0"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;line-height:0.1;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'"
+         sodipodi:role="line"
+         id="tspan28288"
          x="530"
-         dy="0"
-         id="tspan378">SD Card</tspan><tspan
+         y="128">SD Card</tspan><tspan
+         sodipodi:role="line"
+         id="tspan22272"
          x="530"
-         dy="18"
-         font-size="12"
-         fill="#555"
-         id="tspan380">Partition 3 (A2, raw)</tspan><tspan
+         y="136.39799"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;line-height:1.25;font-family:'Segoe UI', Arial, sans-serif, Norm10al;-inkscape-font-specification:'Segoe UI, Arial, sans-serif, Norm10al'"><tspan
+           x="530"
+           dy="18"
+           font-size="12px"
+           fill="#555555"
+           id="tspan22274"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:'Segoe UI', Arial, sans-serif, Norm10al;-inkscape-font-specification:'Segoe UI, Arial, sans-serif, Norm10al'">Partition 3 (A2, raw)</tspan></tspan><tspan
+         sodipodi:role="line"
          x="530"
-         dy="18"
-         font-size="12"
-         fill="#555"
-         id="tspan382">u-boot-with-spl.sfp</tspan></text>
+         y="153.06465"
+         id="tspan24527"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;line-height:1.25;font-family:'Segoe UI', Arial, sans-serif, Norm10al;-inkscape-font-specification:'Segoe UI, Arial, sans-serif, Norm10al'"><tspan
+           x="530"
+           dy="18"
+           font-size="12px"
+           fill="#555555"
+           id="tspan24529"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:'Segoe UI', Arial, sans-serif, Norm10al;-inkscape-font-specification:'Segoe UI, Arial, sans-serif, Norm10al'">u-boot-with-spl.sfp</tspan></tspan></text>
     <!-- 4. SPL -->
     <rect
        x="660"
@@ -138,19 +168,32 @@
     <text
        x="760"
        y="128"
-       fill="#fff"
-       id="text394"><tspan
+       fill="#ffffff"
+       id="text394"
+       style="line-height:0"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;line-height:0.1;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'"
+         sodipodi:role="line"
+         id="tspan52895">SPL</tspan><tspan
+         sodipodi:role="line"
          x="760"
-         dy="0"
-         id="tspan388">SPL</tspan><tspan
+         y="137.89925"
+         id="tspan47964"
+         style="line-height:1.25"><tspan
+           x="760"
+           dy="18"
+           font-size="12px"
+           style="font-size:13.3333px"
+           id="tspan47966">on-chip RAM</tspan></tspan><tspan
+         sodipodi:role="line"
          x="760"
-         dy="18"
-         font-size="12"
-         id="tspan390">on-chip RAM</tspan><tspan
-         x="760"
-         dy="16"
-         font-size="12"
-         id="tspan392">clocks · pinmux · DDR init</tspan></text>
+         y="155.14796"
+         id="tspan38714"
+         style="font-size:13.3333px;line-height:1.25"><tspan
+           x="760"
+           dy="16"
+           font-size="12px"
+           id="tspan38716"
+           style="font-size:13.3333px">clocks · pinmux · DDR init</tspan></tspan></text>
     <!-- 5. U-Boot -->
     <rect
        x="672.9436"
@@ -168,11 +211,13 @@
        id="text402"><tspan
          x="762.9436"
          dy="0"
-         id="tspan398">U-Boot</tspan><tspan
+         id="tspan398"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'">U-Boot</tspan><tspan
          x="762.9436"
          dy="20"
          font-size="12px"
-         id="tspan400">runs in DDR</tspan></text>
+         id="tspan400"
+         style="font-size:13.3333px">runs in DDR</tspan></text>
     <!-- 6a. Debug branch: .elf via JTAG -->
     <rect
        x="433.9621"
@@ -186,20 +231,35 @@
     <text
        x="528.9621"
        y="316.5061"
-       id="text412"><tspan
+       id="text412"
+       style="line-height:0"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;line-height:0.1;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'"
+         sodipodi:role="line"
+         id="tspan62986"
          x="528.9621"
-         dy="0"
-         id="tspan406">Debug: .elf</tspan><tspan
+         y="316.5061">Debug: .elf</tspan><tspan
+         sodipodi:role="line"
+         id="tspan56362"
          x="528.9621"
-         dy="18"
-         font-size="12px"
-         fill="#555555"
-         id="tspan408">pushed over JTAG</tspan><tspan
+         y="324.90405"
+         style="font-size:13.3333px;line-height:1.25"><tspan
+           x="528.9621"
+           dy="18"
+           font-size="12px"
+           fill="#555555"
+           id="tspan56364"
+           style="font-size:13.3333px;line-height:1.25">pushed over JTAG</tspan></tspan><tspan
+         sodipodi:role="line"
          x="528.9621"
-         dy="16"
-         font-size="12px"
-         fill="#555555"
-         id="tspan410">by GDB / OpenOCD</tspan></text>
+         y="341.57068"
+         id="tspan58223"
+         style="font-size:13.3333px;line-height:1.25"><tspan
+           x="528.9621"
+           dy="16"
+           font-size="12px"
+           fill="#555555"
+           id="tspan58225"
+           style="font-size:13.3333px;line-height:1.25">by GDB / OpenOCD</tspan></tspan></text>
     <!-- 6b. Standalone branch: .bin from SD -->
     <rect
        x="433.9621"
@@ -213,29 +273,40 @@
     <text
        x="528.9621"
        y="470.16388"
-       id="text422"><tspan
-         x="528.9621"
-         dy="0"
-         id="tspan416">Standalone: .bin</tspan><tspan
+       id="text422"
+       style="line-height:0"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;line-height:0.4;font-family:'Segoe UI', Arial, sans-serif;-inkscape-font-specification:'Segoe UI, Arial, sans-serif Bold'"
+         sodipodi:role="line"
+         id="tspan97582">Standalone: .bin</tspan><tspan
          x="528.9621"
          dy="18"
          font-size="12px"
          fill="#555555"
-         id="tspan418">read from SD card</tspan><tspan
+         id="tspan80648"
+         style="font-size:13.3333px;line-height:1.1"
+         sodipodi:role="line"
+         y="479.96185">read from SD card</tspan><tspan
          x="528.9621"
-         dy="16"
-         font-size="12px"
-         fill="#555555"
-         id="tspan420">boot partition</tspan></text>
+         y="493.96179"
+         id="tspan82984"
+         style="font-size:13.3333px;line-height:1"
+         sodipodi:role="line"><tspan
+           x="528.9621"
+           dy="16"
+           font-size="12px"
+           fill="#555555"
+           id="tspan82986"
+           style="font-size:13.3333px">boot partition</tspan></tspan></text>
     <!-- OR label between Debug and Standalone -->
     <text
-       x="528.9621"
-       y="413.33499"
+       x="627.90204"
+       y="410.82782"
        font-size="15"
        font-weight="bold"
        fill="#000000"
        text-anchor="middle"
-       id="text_or">OR</text>
+       id="text_or"
+       style="font-size:18.6667px">OR</text>
   </g>
   <!-- arrows -->
   <g

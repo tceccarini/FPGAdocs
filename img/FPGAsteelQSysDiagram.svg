@@ -4,7 +4,7 @@
    font-family="Helvetica, Arial, sans-serif"
    version="1.1"
    id="svg376"
-   sodipodi:docname="01_qsys_block_diagram.svg"
+   sodipodi:docname="FPGAsteelQSysDiagram.svg"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -19,12 +19,12 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      showgrid="false"
-     inkscape:zoom="0.99841344"
-     inkscape:cx="1392.7096"
-     inkscape:cy="383.60862"
+     inkscape:zoom="0.49920672"
+     inkscape:cx="833.32212"
+     inkscape:cy="406.64517"
      inkscape:window-width="2560"
      inkscape:window-height="1403"
-     inkscape:window-x="2560"
+     inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="g322" />
@@ -878,18 +878,34 @@
        marker-end="url(#arrowGray)"
        id="line179" />
     <text
-       x="1156"
-       y="550"
+       x="814.76331"
+       y="674.33008"
        font-size="11px"
        fill="#495057"
-       id="text181">prefetcher_csr / response / csr</text>
+       id="text181"><tspan
+         sodipodi:role="line"
+         id="tspan5538"
+         x="814.76331"
+         y="674.33008">prefetcher_csr /</tspan><tspan
+         sodipodi:role="line"
+         id="tspan5540"
+         x="814.76331"
+         y="688.08008">response / csr</tspan></text>
     <text
-       x="1454"
-       y="470"
+       x="1295.702"
+       y="582.0097"
        font-size="11px"
        fill="#495057"
        text-anchor="end"
-       id="text180">prefetcher_csr / response / csr</text>
+       id="text180"><tspan
+         sodipodi:role="line"
+         id="tspan1802"
+         x="1295.702"
+         y="582.0097">prefetcher_csr /</tspan><tspan
+         sodipodi:role="line"
+         id="tspan1804"
+         x="1295.702"
+         y="595.7597">response / csr</tspan></text>
     <!-- mSGDMA -> F2H(64): mSGDMA is the write master, pushing frame data out to HPS SDRAM (Avalon-MM) -->
     <path
        d="M 1209.7489,656.88226 H 1195 V 528.06049 H 555"
@@ -1550,8 +1566,8 @@
        id="line416" />
     <!-- dedicated F2H port for the VGA read path (third dedicated SDRAM port, alongside f2h_sdram1 used by ov7670_video_msgdma) -->
     <text
-       x="509.79733"
-       y="602"
+       x="560.11542"
+       y="596.30347"
        font-size="9px"
        fill="#495057"
        text-anchor="middle"
