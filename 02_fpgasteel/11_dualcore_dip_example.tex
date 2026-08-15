@@ -73,7 +73,7 @@ The three sibling projects differ in exactly two independent compile-time choice
 \end{table}
 \footnotetext{All three share the \texttt{dualcore\_dip\_example} prefix; only the distinguishing suffix is shown here.}
 
-|dualcore_dip_example|'s |step01|, |step03|, |step04|, |step05|, |step07|, |step08|, and |step09| (Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline}'s seven \term{NEON}-eligible stages) use \unresolved{\texttt{arm\_neon.h}} intrinsics to process 8 or 16 pixels per instruction; the |_no_neon| variant replaces every one of them with a plain byte-at-a-time loop computing the exact same result, with no other change anywhere in the codebase. |_no_neon_no_icache| is that same scalar build with |ICACHE\_ENABLE| (|Config.h|) set to false instead of true, so |System::initCore()| skips enabling the \term{L1} instruction cache on either core.
+|dualcore_dip_example|'s |step01|, |step03|, |step04|, |step05|, |step07|, |step08|, and |step09| (Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline}'s seven \term{NEON}-eligible stages) use \texttt{arm\_neon.h}\footnote{Header shipped with the \term{ARM} toolchain (Paragraph~\ref{subsec:fpgasteel-install-paths}), not a separate download.} intrinsics to process 8 or 16 pixels per instruction; the |_no_neon| variant replaces every one of them with a plain byte-at-a-time loop computing the exact same result, with no other change anywhere in the codebase. |_no_neon_no_icache| is that same scalar build with |ICACHE\_ENABLE| (|Config.h|) set to false instead of true, so |System::initCore()| skips enabling the \term{L1} instruction cache on either core.
 
 Since |main0.cpp| already reports per-frame processing time on the hex display, building and running all three side by side turns the family into a small, controlled benchmark: the same algorithm, on the same hardware, with \term{NEON} and the instruction cache each toggled independently, one variable at a time.
 
@@ -119,11 +119,4 @@ Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-dip-debug-tooling}
 
-|debugTools/view_frame.py|, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships |debugTools/linux_dualcore_emulator|, a small host-side (\term{Linux}, x86/\term{ARM}) build of |DualCoreDIP|'s pipeline logic against stub \term{HWLib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.
-
-\section{References}
-\label{sec:fpgasteel-dualcore-dip-references}
-
-\begin{description}
- \item \unresolved{\texttt{arm\_neon.h} (\term{ARM} \term{NEON} intrinsics header, part of the \texttt{arm-none-eabi-gcc} toolchain). Reference for the \term{SIMD} intrinsics used in \texttt{dualcore\_dip\_example}'s step implementations (used in Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants}).}
-\end{description}
+|debugTools/view_frame.py|, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships |debugTools/linux_dualcore_emulator|, a small host-side (\term{Linux}, x86/\term{ARM}) build of |DualCoreDIP|'s pipeline logic against stub \term{hwlib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.

@@ -6,7 +6,7 @@
 
 |dualcore_bringup_test| (under |sw/dualcore_bringup_test|) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at once: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. |dualcore_forwarding_example| builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
 
-The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \unresolved{\term{HWLib}}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence \term{Linux} itself uses to bring up its second core, implemented in \unresolved{\texttt{arch/arm/mach-socfpga/platsmp.c}}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
+The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \term{hwlib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence the \term{Linux} kernel uses to bring up its second core, implemented in \texttt{arch/arm/mach-socfpga/platsmp.c}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in |main.c| was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-prerequisites}
@@ -75,7 +75,7 @@ This only works because address 0x0 is not, on this board at this moment, what i
 
 Before releasing \term{CPU1}, |main()| explicitly cleans the two trampoline words from the \term{CPU}'s own caches back to \term{DDR}: the \term{L1} data cache via the |DCCMVAC| coprocessor operation (|mcr p15, 0, Rd, c7, c10, 1|, once per word), then the shared \term{PL310} \term{L2} controller via its ``Clean Line by PA'' and ``Cache Sync'' registers (0xFFFEF7B0, 0xFFFEF730). Both are followed by a |dsb| to guarantee the writes have actually completed before reset is deasserted.
 
-This project's own boot script (|boot.script.jtag_debug|, Section~\ref{sec:fpgasteel-dualcore-prerequisites}) leaves the caches disabled by the time |main()| runs, which would make this cleaning step a no-op here: cleaning an address that was never cached has nothing to write back. The sequence is included anyway because it is copied unconditionally from \term{Linux}'s \unresolved{\texttt{platsmp.c}}, where it runs with the primary core's caches fully enabled and is not optional; keeping the same steps here, rather than trimming what looks redundant in this particular context, is what makes the sequence a faithful, directly-comparable copy of the mechanism \term{Linux} itself relies on.
+This project's own boot script (|boot.script.jtag_debug|, Section~\ref{sec:fpgasteel-dualcore-prerequisites}) leaves the caches disabled by the time |main()| runs, which would make this cleaning step a no-op here: cleaning an address that was never cached has nothing to write back. The sequence is included anyway because it is copied unconditionally from \term{Linux}'s \texttt{platsmp.c}, where it runs with the primary core's caches fully enabled and is not optional; keeping the same steps here, rather than trimming what looks redundant in this particular context, is what makes the sequence a faithful, directly-comparable copy of the mechanism \term{Linux} itself relies on.
 
 \subsection{Releasing CPU1}
 \label{subsec:fpgasteel-dualcore-releasing-cpu1}
@@ -140,11 +140,3 @@ The full sequence, \term{CPU0}'s and \term{CPU1}'s sides together:
 \end{enumerate}
 
 If the hex display shows 123, both cores are confirmed running independently, which is the entire point of this test.
-
-\section{References}
-\label{sec:fpgasteel-dualcore-references}
-
-\begin{itemize}
-    \item \unresolved{\term{Linux} kernel, \texttt{arch/arm/mach-socfpga/platsmp.c}. Source of the reset/trampoline/cache-clean/release sequence this project reimplements in bare metal (used in Section~\ref{sec:fpgasteel-dualcore-about}); not vendored in this repository, analysed with the assistance of \term{Claude Code}.}
-    \item \unresolved{\texttt{dualcore\_forwarding\_example}: the same bring-up sequence, extended with cache, \term{SCU}, and \term{MMU} configuration and real work dispatched to \term{CPU1}.}
-\end{itemize}

@@ -66,7 +66,7 @@ The fix is the same operation in both cases, just named differently depending on
 \subsubsection{Enabling the MMU}
 \label{subsubsec:fpgasteel-enabling-mmu}
 
-The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} also being on: cacheability and shareability are per-region attributes carried by the \term{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to |alt_mmu_va_space_create()| (\unresolved{\texttt{HWLib}}), which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
+The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} also being on: cacheability and shareability are per-region attributes carried by the \term{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to |alt_mmu_va_space_create()| (\term{hwlib}), which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
 
 \begin{table}[htbp]
     \centering
@@ -87,10 +87,10 @@ The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} al
 
 The \term{DDR} region is the only one marked cacheable; the other two are left non-cacheable/device on purpose, since caching either register accesses or the descriptor memory the prefetcher polls would make software see stale values there too.
 
-\subsubsection{HWLib performs the work}
+\subsubsection{hwlib performs the work}
 \label{subsubsec:fpgasteel-hwlib-performs-work}
 
-None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \term{SCU} and setting the \term{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \unresolved{\term{HWLib}} has no wrapper for that specific step. Everything else, building the section table, switching the \term{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \unresolved{\term{HWLib}} (|intel-socfpga-hwlib|):
+None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \term{SCU} and setting the \term{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \term{hwlib} has no wrapper for that specific step. Everything else, building the section table, switching the \term{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \term{hwlib} (|intel-socfpga-hwlib|):
 
 |alt_mmu_va_space_create()|/|alt_mmu_va_space_enable()|, |alt_cache_l1_data_enable()|, |alt_cache_l2_init()|/|alt_cache_l2_enable()|, and later |alt_cache_system_clean()|/|alt_cache_system_invalidate()|. Paragraph~\ref{subsec:fpgasteel-cache-system-class} walks through |System::enableCache()|, which is where all of these calls are made, in the order they must run.
 
@@ -252,11 +252,3 @@ Neither |borrow()| nor |giveBack()| needs a cache operation of its own: both onl
 \label{sec:fpgasteel-cache-forwarding-debug-tooling}
 
 |debugTools/view_frame.py|, same tool as in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), works unchanged here. One caveat specific to this project: a raw memory dump (e.g.\ via \term{GDB} |dump memory|) reads \term{DDR} directly, not through the \term{CPU}'s caches, so a buffer whose cache lines have not been flushed yet may still show stale data in the dump. When inspecting a \term{CPU}-written buffer with this tool, dump it after the corresponding |cacheFlush()|, i.e.\ after |push(frame, true)| has run.
-
-\section{References}
-\label{sec:fpgasteel-cache-forwarding-references}
-
-\begin{itemize}
-    \item \unresolved{\textbf{HWLib headers} (\texttt{alt\_cache.h}, \texttt{alt\_mmu.h}), from \texttt{intel-socfpga-hwlib}. Cache/\term{MMU} function reference behind \texttt{System::enableCache()} (used in Paragraph~\ref{subsec:fpgasteel-cache-system-class}) and \texttt{CacheAwareFrame}/\texttt{CacheAwareFramePool} (used in Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, used in Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}).}
-    \item \unresolved{\textbf{Quartus 22.1 HAL headers} (\texttt{altera\_msgdma\_csr\_regs.h}, \texttt{altera\_msgdma\_prefetcher\_regs.h}, \texttt{altera\_msgdma\_descriptor\_regs.h}, \texttt{altera\_msgdma\_response\_regs.h}). Register/bit definitions behind \texttt{PrefetchedMSGDMA} and \texttt{PrefetcherExtendedDescriptor}.}
-\end{itemize}
