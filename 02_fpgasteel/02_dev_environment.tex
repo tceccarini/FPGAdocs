@@ -1,17 +1,21 @@
 \chapter{Prepare Your Dev Environment}
 \label{chap:fpgasteel-devenv}
 
+\section{Introduction}
+
+This chapter covers how to set up the host used throughout this part of the work. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \term{USB-Blaster II} and serial console access.
+
+Unlike \sysname{FPGAlix}, which can debug most of its software remotely over the network, \sysname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface. This is why the \term{VM} caveat below matters more here than it did for \sysname{FPGAlix}, where only one specific task had no alternative to a reliable \term{JTAG} connection: on \sysname{FPGAsteel}, every debug session has none.
+
 \section{Host requirements}
 
 \sysname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
 
-Developing inside a \term{VM} is discouraged. Forwarding the \term{USB-Blaster II} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
+Developing inside a \term{VM} is discouraged. Forwarding the \term{USB-Blaster II}\footnote{I.e., the \term{JTAG} debug interface mentioned in the Introduction.} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
 
 The one setup known to avoid this reliably is \term{PCI(e)} passthrough (\term{VT-d}/\term{AMD-Vi} with \term{IOMMU}): assigning the entire \term{USB} controller, not just the \term{USB-Blaster} device, directly to the guest, bypassing the host's \term{USB} stack entirely. It is not a simple option, though: it needs \term{IOMMU} support enabled in the host's firmware and kernel, not every \term{USB} controller's \term{IOMMU} grouping supports it, and it depends on the host \term{OS}. On \term{Linux}, it is supported directly: the kernel's \term{VFIO} framework, together with \term{QEMU}, can assign the \term{USB} controller straight to a \term{QEMU}/\term{KVM} guest. On \term{Windows}, this is \term{Hyper-V}'s \term{Discrete Device Assignment} (\term{DDA}), documented for \term{Windows Server} editions, not for \term{Windows 11}'s client \term{Hyper-V}. \term{macOS} has no path to this at all: \term{Quartus} is only distributed for \term{Windows} and \term{Linux}, and \term{Apple Silicon} Macs are \term{ARM}, not \term{x86\_64}, so even a \term{Linux} \term{VM} on one would need to emulate the target architecture, moot anyway since \term{Quartus} does not run on that architecture either way.
 
 Given all this, developing directly on physical \term{Ubuntu 22.04} hardware, not inside a \term{VM}, is what is documented and known to work.
-
-This chapter covers where each piece of software lives on disk, its |apt| package requirements, and the editor used to write \term{VHDL} and application code.
 
 \section{Required software}
 

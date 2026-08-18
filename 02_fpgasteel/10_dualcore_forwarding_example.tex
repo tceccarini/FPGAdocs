@@ -4,28 +4,28 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-forwarding-about}
 
-|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}), and the \term{CPU1} bring-up mechanism from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}). What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}).
+|dualcore_forwarding_example| (under |sw/dualcore_forwarding_example|) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from \nameref{chap:fpgasteel-cache-forwarding}, and the \term{CPU1} bring-up mechanism from \nameref{chap:fpgasteel-dualcore-bringup}. What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from \nameref{chap:fpgasteel-dualcore-bringup}.
 
-At startup, in addition to what Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}) already does, this project:
+At startup, in addition to what \nameref{chap:fpgasteel-cache-forwarding} already does, this project:
 
 \begin{itemize}
  \item brings up the shared \term{MMU} page table, the \term{SCU}, and the \term{L2} cache once, from \term{CPU0} (|System::prepareCacheSubsystem()|), then enables the \term{MMU} and \term{L1} data cache on each core individually (|System::initCore()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}); unlike Cache Forwarding Example, |initCore()| can also enable the \term{L1} instruction cache on each core, controlled by a single compile-time flag;
  \item boots \term{CPU1} (|Core1::start()|, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}), using the same reset/trampoline/cache-clean/release sequence as Dual-Core Bring-up Test, and waits for it to report itself ready before doing anything else.
 \end{itemize}
 
-Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from Cache Forwarding Example (Chapter~\ref{chap:fpgasteel-cache-forwarding}); Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
+Everything else, the descriptor/prefetcher mechanism, the camera and \term{VGA} ISRs, |CacheAwareFrame|/|CacheAwareFramePool|, is unchanged from \nameref{chap:fpgasteel-cache-forwarding}; Section~\ref{sec:fpgasteel-dualcore-forwarding-code-structure} covers each class by reference, only writing new text where something actually differs.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}). The boot script is the same |boot.script.jtag_debug| used by every other example; this project brings its own caches and \term{MMU} up entirely through |System::prepareCacheSubsystem()|/|initCore()|, which does not depend on whatever cache state the boot script left behind.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}). The boot script is the same |boot.script.jtag_debug| used by every other example; this project brings its own caches and \term{MMU} up entirely through |System::prepareCacheSubsystem()|/|initCore()|, which does not depend on whatever cache state the boot script left behind.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
 \footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
-Two additional requirements, inherited from Dual-Core Bring-up Test (Section~\ref{sec:fpgasteel-dualcore-prerequisites}), and equally necessary here since \term{CPU1} is brought up the same way:
+Two additional requirements, inherited from \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-prerequisites}), and equally necessary here since \term{CPU1} is brought up the same way:
 
 \begin{itemize}
  \item \term{OpenOCD} must only ever attach to \term{CPU0} (|CHIPCORES=1|, not 2).
@@ -43,7 +43,7 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardwa
 \subsection{Bringing CPU1 up}
 \label{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}
 
-The mechanism is exactly the one described in Dual-Core Bring-up Test (Section~\ref{sec:fpgasteel-dualcore-operating-principles}): assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write |cpu1startaddr| for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. |Core1::start()| (|Core1.cpp|) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
+The mechanism is exactly the one described in \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}): assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write |cpu1startaddr| for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. |Core1::start()| (|Core1.cpp|) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
 
 \begin{itemize}
  \item registers are written through \term{hwlib}'s \term{socal} accessors (|alt\_setbits\_word(ALT\_RSTMGR\_MPUMODRST\_ADDR, ...)|, |alt\_write\_word(ALT\_SYSMGR\_ROMCODE\_CPU1STARTADDR\_ADDR, ...)|) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.

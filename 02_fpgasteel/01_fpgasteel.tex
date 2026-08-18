@@ -1,12 +1,24 @@
 \chapter{\sysname{FPGAsteel}}
 \label{chap:fpgasteel-intro}
 
-\sysname{FPGAsteel} interfaces an \term{OV7670} camera module with a \term{Cyclone V} \term{HPS} through custom \term{FPGA} hardware derived from \sysname{FPGAlix}'s own acquisition core, and moves the video stream into memory over \term{DMA} (\term{Direct Memory Access}) with no \term{CPU} involvement. Unlike \sysname{FPGAlix}, it runs no operating system: the \term{Cortex-A9} drives the hardware directly, and the software is entirely different, purpose-built bare-metal examples rather than a \term{Linux} video pipeline. It also documents, step by step, the full toolchain and development environment needed to build and run it.
+This part covers the realization of \sysname{FPGAsteel}, the bare-metal variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. Unlike \sysname{FPGAlix}, \sysname{FPGAsteel} runs no operating system: the \term{Cortex-A9} drives the hardware directly, and its software is a set of purpose-built bare-metal examples rather than a \term{Linux} video pipeline.
+
+The chapters that follow proceed in the order the work itself was carried out: setting up the development environment on the host \term{PC}, building the hardware side of the system, and bringing the board up. The part then closes with a progression of bare-metal examples, each one building on the last:
+
+\begin{enumerate}
+    \item \nameref{chap:fpgasteel-hello-world}: prints a message on the serial console.
+    \item \nameref{chap:fpgasteel-i2c-example}: establishes an \term{I\textsuperscript{2}C} communication for configuring the camera.
+    \item \nameref{chap:fpgasteel-simple-forwarding}: forwards the incoming video stream from the camera to \term{VGA} output.
+    \item \nameref{chap:fpgasteel-cache-forwarding}: tests the same path with the \term{CPU} caches enabled.
+    \item \nameref{chap:fpgasteel-dualcore-bringup}: brings up the second core.
+    \item \nameref{chap:fpgasteel-dualcore-forwarding}: splits the camera-to-\term{VGA} format conversion across both cores.
+    \item \nameref{chap:fpgasteel-dualcore-dip}: implements an image-processing chain, running on both cores, that locates the boundaries and outline of a bright object against a dark background.
+\end{enumerate}
 
 \section{Quick Start}
 \label{sec:fpgasteel-quick-start}
 
-The prebuilt \term{SD card} image already contains the bootloader and some compiled examples, letting the \term{DE1-SoC} boot straight into a working example, without building anything from source.
+Readers who want a working example running immediately, without going through every step described in this part, can start here instead. The prebuilt \term{SD card} image already contains the bootloader and some compiled examples, letting the \term{DE1-SoC} boot straight into a working example, without building anything from source.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark

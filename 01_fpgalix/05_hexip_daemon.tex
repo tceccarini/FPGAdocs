@@ -3,17 +3,11 @@
 
 \section{Introduction}
 
-|sw/hexip_daemon| is a small daemon that displays the board's \term{IPv4} address on the \term{DE1-SoC}'s \term{7-segment} hex displays, through the |hex_display_controller| \term{Platform Designer} component, reached over the \term{LW} \term{HPS}-to-\term{FPGA} bridge.
+This chapter builds and deploys the software that lights up the \term{DE1-SoC}'s 7-segment hex displays with the board's \term{IP} address.\footnote{\texttt{sw/hexip\_daemon} in the repository.} |vision_core| (Chapter~\ref{chap:fpgalix-vision-core}) relies on the network connection to stream video, and that address, obtained dynamically over \term{DHCP}, is not known in advance; showing it on the displays makes it available at a glance, without hooking up a serial console every time the board boots just to find the address from the command line before switching over to the network connection.
 
-Every 3 seconds, the \term{IPv4} address of a given network interface (|eth0| by default, overridable as the first command-line argument) is re-read with |getifaddrs()|. Once an address is found, its four octets are displayed in sequence, one second each, separated by a brief blank and followed by a trailing dash, and the cycle repeats. Until an address is found (interface down, no \term{DHCP} lease yet), the display blinks a single dash instead, once a second, so that the daemon's own state remains visible even without an address to show.
+The program drives the displays through the |hex_display_controller| hardware component (Section~\ref{sec:fpgalix-hex-display}) whose configuration register is reachable through the \term{LW} \term{HPS}-to-\term{FPGA} bridge. The program accesses it directly by mapping that bridge's address range into its own memory with the |mmap()| function on |/dev/mem|, a special \term{Linux} device file that exposes the machine's physical address space to user space. The register layout is the one described in Section~\ref{sec:fpgalix-hex-register}.
 
-The display's control register is written to directly, via |mmap()| on |/dev/mem|:
-
-\begin{itemize}
-    \item bit 31 enables the display
-    \item bits [19:0] hold the decimal value shown
-    \item any value above 999999 forces a dash
-\end{itemize}
+The \term{IP} address needs to be known as soon as the board finishes booting, so the program is configured to run as a daemon: started automatically at boot, and left running unattended in the background afterward. It re-reads the address of a given network interface\footnote{\texttt{eth0} by default, overridable as the first command-line argument.} every three seconds, using the C library function |getifaddrs()|. Once an \term{IP} address is found, its four octets are displayed in sequence, one second each, separated by a brief blank and followed by a trailing dash, and the cycle repeats. Until an \term{IP} address is found (interface down, no \term{DHCP} lease yet), the display blinks a single dash instead, once a second, so that the daemon's own state remains visible even without an address to show.
 
 \term{SIGTERM}/\term{SIGINT} are handled by turning the display off and releasing the mapping before the process exits.
 

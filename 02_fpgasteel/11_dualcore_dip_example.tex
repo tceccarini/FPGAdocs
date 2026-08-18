@@ -6,7 +6,7 @@
 
 Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: |dualcore_dip_example|, |dualcore_dip_example_no_neon|, and |dualcore_dip_example_no_neon_no_icache| (all under |sw/|). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
 
-All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) and replace the plain format conversion with a small computer-vision pipeline, |DualCoreDIP|: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
+All three take the same camera-to-\term{VGA} pipeline from \nameref{chap:fpgasteel-dualcore-forwarding} and replace the plain format conversion with a small computer-vision pipeline, |DualCoreDIP|: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
 
 \begin{enumerate}
  \item converts the frame to grayscale (\term{RGB565} \cite{OV7670-DS} $\rightarrow$ \term{RGB24} + grayscale in the same pass, so both the display copy and the analysis copy are produced together);
@@ -16,19 +16,19 @@ All three take the same camera-to-\term{VGA} pipeline from Dual-Core Forwarding 
  \item extracts the blob's outline, bounding box, and centroid, and overlays all three on the \term{RGB24} frame the camera pipeline already produced.
 \end{enumerate}
 
-|main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}) reports its own conversion time.
+|main0.cpp| reports the outcome on the \term{LED}s (\term{LED0} = object found, \term{LED1} = touching the border, \term{LED2} = empty) and the per-frame processing time on the hex display, exactly as \nameref{chap:fpgasteel-dualcore-forwarding} reports its own conversion time.
 
-Every stage above runs split across both cores, using the exact same |Worker|/|Core1| dispatch mechanism documented in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}: nothing new had to be invented here, this project is simply that mechanism invoked several times instead of once. Section~\ref{sec:fpgasteel-dualcore-dip-operating-principles} covers the pipeline and its cache discipline; the rest of this chapter covers only the one genuinely new class, |DualCoreDIP|, since everything else (|Camera|, |Vga|, |CacheAwareFrame|/|CacheAwareFramePool|, |Core1|, |Worker|, |DualCoreJob|, |System|) is unchanged from Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}).
+Every stage above runs split across both cores, using the exact same |Worker|/|Core1| dispatch mechanism documented in Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}: nothing new had to be invented here, this project is simply that mechanism invoked several times instead of once. Section~\ref{sec:fpgasteel-dualcore-dip-operating-principles} covers the pipeline and its cache discipline; the rest of this chapter covers only the one genuinely new class, |DualCoreDIP|, since everything else (|Camera|, |Vga|, |CacheAwareFrame|/|CacheAwareFramePool|, |Core1|, |Worker|, |DualCoreJob|, |System|) is unchanged from \nameref{chap:fpgasteel-dualcore-forwarding}.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-dip-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. The \term{OV7670} camera adapter board caveat from I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}) applies here too.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-dualcore-forwarding}, including the plain |boot.script.jtag_debug| script and the same two \term{CPU1}-related debug-configuration requirements. The \term{OV7670} camera adapter board caveat from \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}) applies here too.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-dip-hardware}
 
-Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike Dual-Core Bring-up Test (Chapter~\ref{chap:fpgasteel-dualcore-bringup}) and Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding}), this project actually drives the \term{LED} \term{PIO}: one bit per |DualCoreDIP::Result| value, read directly by |main0.cpp| after each processed frame.
+Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike \nameref{chap:fpgasteel-dualcore-bringup} and \nameref{chap:fpgasteel-dualcore-forwarding}, this project actually drives the \term{LED} \term{PIO}: one bit per |DualCoreDIP::Result| value, read directly by |main0.cpp| after each processed frame.
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-dip-operating-principles}
@@ -48,7 +48,7 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike Dua
 \subsection{The fork/join mechanism, reapplied}
 \label{subsec:fpgasteel-dualcore-dip-forkjoin}
 
-|DualCoreDIP::forkJoin()| is line-for-line the same sequence as Dual-Core Forwarding Example (Chapter~\ref{chap:fpgasteel-dualcore-forwarding})'s |DualCoreFormatConverter::start()| + |awaitDone()|: dispatch |m\_worker1| to \term{CPU1}, run |m\_worker0| synchronously on \term{CPU0}, then busy-poll |m\_worker1.status| until it is |Completed| or |Error|. |process()| calls it nine times, reconfiguring |m\_worker0|/|m\_worker1| (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two |Worker|s are pointed at does.
+|DualCoreDIP::forkJoin()| is line-for-line the same sequence as \nameref{chap:fpgasteel-dualcore-forwarding}'s |DualCoreFormatConverter::start()| + |awaitDone()|: dispatch |m\_worker1| to \term{CPU1}, run |m\_worker0| synchronously on \term{CPU0}, then busy-poll |m\_worker1.status| until it is |Completed| or |Error|. |process()| calls it nine times, reconfiguring |m\_worker0|/|m\_worker1| (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two |Worker|s are pointed at does.
 
 \subsection{The three build variants}
 \label{subsec:fpgasteel-dualcore-dip-build-variants}

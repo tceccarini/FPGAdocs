@@ -4,18 +4,16 @@
 \section{About this project}
 \label{sec:fpgasteel-cache-forwarding-about}
 
-|cache_forwarding_example| (under |sw/cache_forwarding_example|) runs the exact same camera-to-\term{VGA} forwarding pipeline as |simple_forwarding_example|, over the same \term{FPGA} hardware, unchanged, but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (|SimpleFilters::convert()|, in particular) but introduces a new problem absent from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): the two \term{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \term{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
+|cache_forwarding_example| (under |sw/cache_forwarding_example|) runs the exact same camera-to-\term{VGA} forwarding pipeline as |simple_forwarding_example|, over the same \term{FPGA} hardware, unchanged, but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (|SimpleFilters::convert()|, in particular) but introduces a new problem absent from \nameref{chap:fpgasteel-simple-forwarding}: the two \term{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \term{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
 
-Compared to Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, |System::enableCache()| enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \term{MMU} mapping.
+Compared to \nameref{chap:fpgasteel-simple-forwarding}, this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, |System::enableCache()| enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \term{MMU} mapping. Everything else at startup, and in the main loop, is structurally the same: |Camera| and |Vga| still run the same descriptor/prefetcher pipelines, and |SimpleFilters| still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through |CacheAwareFrame|/|CacheAwareFramePool| (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain |Frame|/|FramePool| used before, so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.
 
-Everything else at startup, and in the main loop, is structurally the same as Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}): |Camera| and |Vga| still run the same descriptor/prefetcher pipelines, and |SimpleFilters| still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through |CacheAwareFrame|/|CacheAwareFramePool| (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain |Frame|/|FramePool| from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.
-
-The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()| and |Vga::onTransferComplete()|, are unaltered: comparing this project's |Camera.cpp|/|Vga.cpp| against Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding})'s shows no logic difference at all.
+The camera and \term{VGA} \term{ISR}s themselves, |Camera::onTransferComplete()| and |Vga::onTransferComplete()|, are unaltered: comparing this project's |Camera.cpp|/|Vga.cpp| against \nameref{chap:fpgasteel-simple-forwarding}'s shows no logic difference at all.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-cache-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -112,7 +110,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-vga-output-interrupt}. |Vga::onTran
 \section{Code structure}
 \label{sec:fpgasteel-cache-code-structure}
 
-Only the classes that differ from Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) are documented in full here; everything else is covered by reference. Paragraphs~\ref{subsec:fpgasteel-cache-system-class}--\ref{subsec:fpgasteel-cache-aware-framepool} are entirely new in this project.
+Only the classes that differ from \nameref{chap:fpgasteel-simple-forwarding} are documented in full here; everything else is covered by reference. Paragraphs~\ref{subsec:fpgasteel-cache-system-class}--\ref{subsec:fpgasteel-cache-aware-framepool} are entirely new in this project.
 
 \subsection{Frame class}
 \label{subsec:fpgasteel-cache-frame-class}
@@ -142,7 +140,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-prefetched-msgdma}.
 \subsection{Camera class}
 \label{subsec:fpgasteel-cache-camera-class}
 
-Unchanged: see Section~\ref{subsec:fpgasteel-camera-class}. |onTransferComplete()| is functionally identical to Simple Forwarding Example (Section~\ref{sec:fpgasteel-cache-forwarding-about} above).
+Unchanged: see Section~\ref{subsec:fpgasteel-camera-class}. |onTransferComplete()| is functionally identical to Simple Forwarding Example.
 
 \subsection{Vga class}
 \label{subsec:fpgasteel-cache-vga-class}
@@ -162,7 +160,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
 \subsection{System class}
 \label{subsec:fpgasteel-cache-system-class}
 
-|System| is the same singleton used in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}) (|init()|, |micros()|, |millis()|, |delay()|, |delayMicroseconds()|, |deInit()|, all identical), plus one new method this project actually relies on: |enableCache()|. Source: |src/System.{h,cpp}|.
+|System| is the same singleton used in \nameref{chap:fpgasteel-simple-forwarding} (|init()|, |micros()|, |millis()|, |delay()|, |delayMicroseconds()|, |deInit()|, all identical), plus one new method this project actually relies on: |enableCache()|. Source: |src/System.{h,cpp}|.
 
 \begin{itemize}
     \item |enableCache()|: enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 \term{MMU} mapping discussed in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}. Must be called after |init()|. It performs the following actions in order:
@@ -251,4 +249,4 @@ Neither |borrow()| nor |giveBack()| needs a cache operation of its own: both onl
 \section{Debug tooling}
 \label{sec:fpgasteel-cache-forwarding-debug-tooling}
 
-|debugTools/view_frame.py|, same tool as in Simple Forwarding Example (Chapter~\ref{chap:fpgasteel-simple-forwarding}), works unchanged here. One caveat specific to this project: a raw memory dump (e.g.\ via \term{GDB} |dump memory|) reads \term{DDR} directly, not through the \term{CPU}'s caches, so a buffer whose cache lines have not been flushed yet may still show stale data in the dump. When inspecting a \term{CPU}-written buffer with this tool, dump it after the corresponding |cacheFlush()|, i.e.\ after |push(frame, true)| has run.
+|debugTools/view_frame.py|, same tool as in \nameref{chap:fpgasteel-simple-forwarding}, works unchanged here. One caveat specific to this project: a raw memory dump (e.g.\ via \term{GDB} |dump memory|) reads \term{DDR} directly, not through the \term{CPU}'s caches, so a buffer whose cache lines have not been flushed yet may still show stale data in the dump. When inspecting a \term{CPU}-written buffer with this tool, dump it after the corresponding |cacheFlush()|, i.e.\ after |push(frame, true)| has run.

@@ -4,25 +4,16 @@
 \section{Introduction}
 \label{sec:fpgalix-camera-intro}
 
-|sw/camera_driver_2| is a \term{V4L2} driver for the \term{OV7670} camera, capturing frames through the \term{Altera} \term{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard |/dev/videoN| device. Its development was assisted by \term{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
+This chapter covers how the operating system is instructed to deliver the \term{OV7670} camera's video stream to the applications that need it. The standard solution on \term{Linux} is a kernel driver that uses the \term{V4L2} (\term{Video4Linux2}) framework to expose the camera as a standard device any compatible application can open and read frames from.
 
-\section{Building}
-\label{sec:fpgalix-camera-building}
-
-\begin{shellcode}
-cd sw/camera_driver_2
-export CROSS_COMPILE=arm-none-linux-gnueabihf-
-make
-\end{shellcode}
-
-This produces |bin/fpgalix_camera.ko|, cross-compiled against the kernel source tree.
+|sw/camera_driver_2| is that driver: it captures frames through the \term{Altera} \term{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard |/dev/videoN| device. Its development was assisted by \term{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
 
 \section{V4L2 buffer allocation}
 \label{sec:fpgalix-camera-buffer-allocation}
 
-\term{V4L2} (\term{Video4Linux2}) is the \term{Linux} kernel's video capture framework, and \term{videobuf2} (\term{vb2}) is the buffer-management layer most \term{V4L2} drivers, including this one, are built on. \term{vb2} supports several memory models for exchanging frame buffers with \term{userspace}: \term{MMAP} (buffers allocated by the driver, mapped into the application's address space), \term{USERPTR} (buffers allocated by the application, their address passed to the driver instead), and \term{DMABUF} (buffers imported from another device).
+The driver uses \term{videobuf2} (\term{vb2}), the buffer-management layer most \term{V4L2} drivers rely on, which supports several memory models for exchanging frame buffers with \term{userspace}: \term{MMAP} (buffers allocated by the driver, mapped into the application's address space), \term{USERPTR} (buffers allocated by the application, their address passed to the driver instead), and \term{DMABUF} (buffers imported from another device).
 
-This driver uses \term{MMAP}, backed by \term{vb2}'s \term{DMA}-contiguous allocator (|vb2_dma_contig_memops|): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through |mmap()|, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference: the \term{mSGDMA} engine writes to a single physical start address and length per transfer, so the buffer it writes each individual frame into must itself be physically contiguous, a guarantee arbitrary \term{userspace}-allocated memory cannot provide; the several buffers making up the capture ring need not be contiguous with one another.
+Of these, it uses \term{MMAP}, backed by \term{vb2}'s \term{DMA}-contiguous allocator (|vb2_dma_contig_memops|): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through |mmap()|, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference: the \term{mSGDMA} engine writes to a single physical start address and length per transfer, so the buffer it writes each individual frame into must itself be physically contiguous, a guarantee arbitrary \term{userspace}-allocated memory cannot provide; the several buffers making up the capture ring need not be contiguous with one another.
 
 \section{Detecting short frames}
 \label{sec:fpgalix-camera-short-frames}
@@ -43,6 +34,17 @@ Two further problems in the same driver were found and fixed: one caused the \te
 The driver, as it stands, supports a single configuration: \term{Bayer} mosaic (\term{SRGGB8}), 640$\times$480, 30 \term{fps}, matching the \term{OV7670}'s native sensor output and this project's \term{Avalon-ST} pipeline. Other pixel formats and resolutions are left to a future version.
 
 The \term{OV7670} sensor itself is neither initialized nor reset by the driver: this is done separately, over \term{I\textsuperscript{2}C}, before the driver is loaded or a stream started, using the external utilities described in Section~\ref{sec:fpgalix-camera-usage}.
+
+\section{Building}
+\label{sec:fpgalix-camera-building}
+
+\begin{shellcode}
+cd sw/camera_driver_2
+export CROSS_COMPILE=arm-none-linux-gnueabihf-
+make
+\end{shellcode}
+
+This produces |bin/fpgalix_camera.ko|: the compiled kernel module for this driver. Unlike an ordinary program, a kernel module has no stable, versioned interface to rely on: it links directly into the internal data structures and configuration of one specific kernel build, so it must be compiled against that exact kernel's source tree (Section~\ref{sec:fpgalix-kernel}) to be loadable by it.
 
 \section{Usage}
 \label{sec:fpgalix-camera-usage}

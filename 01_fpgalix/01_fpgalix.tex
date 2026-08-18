@@ -1,12 +1,12 @@
 \chapter{\sysname{FPGAlix}}
 \label{chap:fpgalix-intro}
 
-\sysname{FPGAlix} interfaces an \term{OV7670} camera module with a \term{Terasic DE1-SoC} developer board through custom \term{FPGA} hardware using \term{DMA} (\term{mSGDMA}), so the \term{CPU} is never involved in moving the video stream's bytes into memory. Unlike its bare-metal successor, \sysname{FPGAsteel}, \sysname{FPGAlix} runs a full embedded \term{Linux} system (\term{Buildroot}) on the \term{HPS}: a \term{V4L2} kernel driver exposes the camera as a standard |/dev/video0| device, and a user space pipeline, |vision_core|, filters the stream and serves it out over \term{RTSP}. It also documents, step by step, the full toolchain and development environment needed to build and run it.
+This part covers the realization of \sysname{FPGAlix}, the Linux-embedded variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. The chapters that follow proceed in the order the work itself was carried out: setting up the development environment on the host \term{PC}, building the hardware side of the system, and assembling around it a working embedded system based on a \term{Linux} kernel and a \term{Buildroot} environment. Once the system boots and the network connection is verified, the \term{DE1-SoC}'s 7-segment displays are used to show the board's \term{IP} address. Finally, the part closes with a driver for the camera over the custom hardware path and an application that processes the video stream and streams the result over the network via \term{RTSP}.
 
 \section{Quick Start}
 \label{sec:fpgalix-quick-start}
 
-The prebuilt SD card image already contains the bootloader, kernel, root filesystem and \term{FPGA} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
+Readers who want the finished system running immediately, without going through every step described in this part, can start here instead. A prebuilt SD card image is available: it already contains the bootloader, kernel, root filesystem and \term{FPGA} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
 
 \subsection{Hardware needed}
 
@@ -16,7 +16,7 @@ The prebuilt SD card image already contains the bootloader, kernel, root filesys
     \item The custom camera adapter (transmitter and receiver boards, connected by a ribbon cable), wiring the camera to the \term{DE1-SoC}'s \term{GPIO\_0} header.
     \item A microSD card, at least 8 GB.
     \item An \term{Ethernet} cable, for network access.
-    \item A PC on the same network, to reach the board over \term{SSH} and view the video stream.
+    \item A \term{PC} on the same network, to reach the board over \term{SSH} and view the video stream.
     \item A micro-\term{USB} cable, for the board's serial console. Optional: only needed to log in as root directly, or for troubleshooting.
     \item A power supply for the board.
 \end{itemize}
@@ -42,7 +42,7 @@ Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the unde
 
 Connect the \term{OV7670} camera to the \term{DE1-SoC} board's \term{GPIO\_0} header via the camera adapter,\footnote{See Part~\ref{part:appendices}, Chapter~\ref{app:camera-adapter-board}.} connect the \term{Ethernet} cable, insert the SD card, and power on the board.
 
-The board's IP address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
+The board's \term{IP} address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
 
 Two ways to log in, default password |1q2w3e4r| for both accounts:
 

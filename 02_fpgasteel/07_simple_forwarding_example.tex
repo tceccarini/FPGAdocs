@@ -26,7 +26,7 @@ The camera capture and \term{VGA} output run on two independent \term{mSGDMA} co
 \section{Prerequisites}
 \label{sec:fpgasteel-simple-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as Hello World (Chapter~\ref{chap:fpgasteel-hello-world}), plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -70,7 +70,7 @@ Conceptually, the flow runs in the opposite direction from camera capture: four 
 \label{subsec:fpgasteel-simple-forwarding-other-ip}
 
 \begin{itemize}
-    \item \textbf{\texttt{ov7670\_ctrl\_interface}} (\term{SCCB} master) and \textbf{\texttt{ov7670\_PCLK\_reset\_controller}} (camera reset) are the same cores as in I\textsuperscript{2}C Example (Section~\ref{sec:fpgasteel-i2c-hardware}).
+    \item \textbf{\texttt{ov7670\_ctrl\_interface}} (\term{SCCB} master) and \textbf{\texttt{ov7670\_PCLK\_reset\_controller}} (camera reset) are the same cores as in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-hardware}).
     \item \textbf{\texttt{hex\_display\_controller}} drives the 7-segment display.
     \item The two datapaths above, camera capture and \term{VGA} output, are each built around an |altera_msgdma| core with its prefetcher enabled.
 \end{itemize}

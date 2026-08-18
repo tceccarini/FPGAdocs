@@ -4,7 +4,9 @@
 \section{Overview}
 \label{sec:fpgalix-overview}
 
-The purpose of the \term{FPGA} fabric in \sysname{FPGAlix} is to acquire the video stream produced by an \term{OV7670} camera module and transfer each frame into \term{HPS} \term{DDR3} while minimizing the involvement of the \term{CPU} in the acquisition process. The processing cores are intended to configure a transfer once and be notified upon its completion, without participating in the handling of individual bytes. This requirement leads directly to the adoption of the \term{mSGDMA} (modular Scatter-Gather DMA) \term{IP}: an \term{Avalon Memory-Mapped} \term{DMA} engine capable of reading from an \term{Avalon-ST} stream and writing it to memory autonomously.
+This chapter illustrates the hardware realized for \sysname{FPGAlix} piece by piece, from the \term{OV7670} camera interface to the complete system.\footnote{Figure~\ref{fig:fpgalix-system-overview}, \texttt{soc\_system.qsys} block diagram; also viewable directly through \term{Platform Designer} in \term{Quartus}, by opening \texttt{hw/quartus/soc\_system.qsys}.}
+
+As described in the \nameref{chap:preface}, the \term{FPGA} fabric in \sysname{FPGAlix} is used to acquire the video stream, realizing a hardware interface that carries the data through the \term{mSGDMA} \term{IP} \cite{EP-IPUG}, an \term{Avalon Memory-Mapped} \term{DMA} engine capable of reading from an \term{Avalon-ST} stream and writing it to memory autonomously.
 
 The remaining design question concerns how a byte-wide, framed data stream, subject to backpressure and originating in the camera's own clock domain, should reach the \term{mSGDMA}. \term{Avalon-ST}~\cite{AVALON-SPEC} constitutes the natural choice for this purpose: it is the standard \term{Intel}/\term{Altera} interconnect defined for unidirectional streaming transfers, providing a ready/valid handshake for backpressure and \term{SOP}/\term{EOP} (Start-of-packet/End-of-packet) markers for frame delimitation as part of the specification itself. Moreover, it is the interface natively supported by every other \term{IP} core involved in the pipeline (|altera_avalon_dc_fifo| for the clock-domain crossing, |altera_avalon_st_adapter| for width conversion, |altera_avalon_sc_fifo| for buffering, and the \term{ST-to-MM} engine internal to |altera_msgdma|). Implementing the camera capture core (|ov7670_data_interface|) as an \term{Avalon-ST} source, rather than as a custom bus, allows it to be integrated directly into this chain without additional glue logic.
 
@@ -200,6 +202,7 @@ Packet support is enabled on this instance specifically, so that an incoming |st
 The \term{DE1-SoC}'s six 7-segment displays are driven by |hex_display_controller|, a custom \term{Platform Designer} component. A single register controls all six displays together, and any six-digit decimal number written to it is displayed accordingly.
 
 \subsection{Register interface}
+\label{sec:fpgalix-hex-register}
 
 The component exposes a single 32-bit \term{Avalon-MM} register on the \term{LW HPS}-to-\term{FPGA} bridge, with the following layout:
 

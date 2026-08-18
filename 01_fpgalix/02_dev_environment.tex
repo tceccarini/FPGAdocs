@@ -3,11 +3,9 @@
 
 \section{Introduction}
 
-The board boots a full \term{Linux} OS and is reachable over \term{Ethernet}, so no \term{JTAG}-based debugger is needed on the host: |gdbserver|, installed on the board, is attached remotely from the host with |gdb|, entirely over the network.
+This chapter covers how to set up the host used for \sysname{FPGAlix}'s hardware and software development. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \term{USB-Blaster} and serial console access.
 
-\term{JTAG} is still needed for one thing this can't replace: debugging the \term{FPGA} fabric itself, with \term{SignalTap}'s in-system logic analyzer, from \term{Quartus}. For that, a physical PC is necessary, not a \term{VM}. Forwarding the \term{USB-Blaster} from host to guest through a hypervisor's own USB redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures on timing-sensitive \term{JTAG} traffic: corrupted transfers, chains that fail to enumerate. Everything else in this chapter, writing \term{VHDL}, compiling the \term{Quartus} project, building \term{U-Boot}, the kernel, and \term{Buildroot}, works fine in a \term{VM}; only the \term{SignalTap} session needs the \term{USB-Blaster} to be truly local.
-
-This chapter covers the required |apt| packages, where each piece of software lives on disk, the environment variables needed to reach them, \term{USB-Blaster} and serial console access, and the editor used to write \term{VHDL} and application code.
+Hardware debugging\footnote{Developing inside a \term{VM} is discouraged for this: forwarding the \term{USB-Blaster} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \term{JTAG} failures.}, when needed, can only be done through the \term{USB-Blaster}'s \term{JTAG} interface, integrated on the development board itself, using \term{SignalTap}'s in-system logic analyzer from \term{Quartus}. Software debugging, in contrast, can be done either through that same interface or over the network, with |gdbserver| running on the board and attached remotely from the host with |gdb|.
 
 \section{Host requirements}
 
