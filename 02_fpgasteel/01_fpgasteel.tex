@@ -51,11 +51,13 @@ Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the unde
 
 \subsection{Connecting the serial console}
 
-Before powering on, connect the \term{DE1-SoC} to a \term{PC} with a \term{micro-USB} cable. This exposes a serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, usable with any terminal emulator (e.g. |picocom|, |PuTTY|).
+Before powering on, connect the \term{DE1-SoC} to a \term{PC} with a \term{micro-USB} cable. This exposes a serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, usable with any terminal emulator (e.g. \term{picocom}, \term{PuTTY}).
 
 \subsection{Booting}
 
-Power on the board. A menu appears over the serial console, offering a choice of 6 examples; enter the number of the one to run. Examples 1--5 also show their per-frame processing time, in milliseconds, on the 7-segment display.
+Power on the board. A menu appears over the serial console, listing the 6 examples; enter the number of the one to run. Examples 1--5 also show their per-frame processing time, in milliseconds, on the 7-segment display.
+
+The list below gives each example's program name, exactly as it appears in the menu, together with a short description of what it does:
 
 \begin{enumerate}
     \item |hello_word|: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
