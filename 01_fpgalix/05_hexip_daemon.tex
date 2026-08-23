@@ -3,11 +3,11 @@
 
 \section{Introduction}
 
-This chapter builds and deploys the software that lights up the \term{DE1-SoC}'s 7-segment hex displays with the board's \term{IP} address.\footnote{\texttt{sw/hexip\_daemon} in the repository.} |vision_core| (Chapter~\ref{chap:fpgalix-vision-core}) relies on the network connection to stream video, and that address, obtained dynamically over \term{DHCP}, is not known in advance; showing it on the displays makes it available at a glance, without hooking up a serial console every time the board boots just to find the address from the command line before switching over to the network connection.
+This chapter builds and deploys the software that lights up the \term{DE1-SoC}'s 7-segment hex displays with the board's \term{IP} address.\footnote{\texttt{sw/hexip\_daemon} in the repository.} \cmd{vision_core} (Chapter~\ref{chap:fpgalix-vision-core}) relies on the network connection to stream video, and that address, obtained dynamically over \term{DHCP}, is not known in advance; showing it on the displays makes it available at a glance, without hooking up a serial console every time the board boots just to find the address from the command line before switching over to the network connection.
 
-The program drives the displays through the |hex_display_controller| hardware component (Section~\ref{sec:fpgalix-hex-display}) whose configuration register is reachable through the \term{LW} \term{HPS}-to-\term{FPGA} bridge. The program accesses it directly by mapping that bridge's address range into its own memory with the |mmap()| function on |/dev/mem|, a special \term{Linux} device file that exposes the machine's physical address space to user space. The register layout is the one described in Section~\ref{sec:fpgalix-hex-register}.
+The program drives the displays through the \hw{hex_display_controller} hardware component (Section~\ref{sec:fpgalix-hex-display}) whose configuration register is reachable through the \term{LW} \term{HPS}-to-\term{FPGA} bridge. The program accesses it directly by mapping that bridge's address range into its own memory with the \ccode{mmap()} function on \extpath{/dev/mem}, a special \term{Linux} device file that exposes the machine's physical address space to user space. The register layout is the one described in Section~\ref{sec:fpgalix-hex-register}.
 
-The \term{IP} address needs to be known as soon as the board finishes booting, so the program is configured to run as a daemon: started automatically at boot, and left running unattended in the background afterward. It re-reads the address of a given network interface\footnote{\texttt{eth0} by default, overridable as the first command-line argument.} every three seconds, using the C library function |getifaddrs()|. Once an \term{IP} address is found, its four octets are displayed in sequence, one second each, separated by a brief blank and followed by a trailing dash, and the cycle repeats. Until an \term{IP} address is found (interface down, no \term{DHCP} lease yet), the display blinks a single dash instead, once a second, so that the daemon's own state remains visible even without an address to show.
+The \term{IP} address needs to be known as soon as the board finishes booting, so the program is configured to run as a daemon: started automatically at boot, and left running unattended in the background afterward. It re-reads the address of a given network interface\footnote{\texttt{eth0} by default, overridable as the first command-line argument.} every three seconds, using the C library function \ccode{getifaddrs()}. Once an \term{IP} address is found, its four octets are displayed in sequence, one second each, separated by a brief blank and followed by a trailing dash, and the cycle repeats. Until an \term{IP} address is found (interface down, no \term{DHCP} lease yet), the display blinks a single dash instead, once a second, so that the daemon's own state remains visible even without an address to show.
 
 \term{SIGTERM}/\term{SIGINT} are handled by turning the display off and releasing the mapping before the process exits.
 
@@ -20,19 +20,19 @@ export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make
 \end{shellcode}
 
-This produces |bin/hexip_daemon|.
+This produces \repopath{bin/hexip_daemon}.
 
 \section{Deploying as a daemon}
 \label{sec:fpgalix-hexip-deploying}
 
-|sdcard/rootfs_overlay/| already contains what is needed, as two symlinks pointing at this component's own files:
+\repopath{sdcard/rootfs_overlay/} already contains what is needed, as two symlinks pointing at this component's own files:
 
 \begin{itemize}
-    \item |opt/FPGAlix/bin/hexip_daemon| $\rightarrow$ |sw/hexip_daemon/bin/hexip_daemon|, the binary built in Section~\ref{sec:fpgalix-hexip-building}
-    \item |etc/init.d/S60hexip_daemon| $\rightarrow$ |sw/hexip_daemon/init.d/S60hexip_daemon|, a \term{BusyBox}-style init script (|S60| denoting priority 60 at startup), which starts the daemon on |eth0|
+    \item \extpath{opt/FPGAlix/bin/hexip_daemon} $\rightarrow$ \repopath{sw/hexip_daemon/bin/hexip_daemon}, the binary built in Section~\ref{sec:fpgalix-hexip-building}
+    \item \repopath{etc/init.d/S60hexip_daemon} $\rightarrow$ \repopath{sw/hexip_daemon/init.d/S60hexip_daemon}, a \term{BusyBox}-style init script (\repopath{S60} denoting priority 60 at startup), which starts the daemon on \sysid{eth0}
 \end{itemize}
 
-Since these are symlinks, building the daemon is enough for |rootfs_overlay/| to hold its current binary; no separate install step exists. Deploying it means copying both files onto the \term{SD} card's root filesystem partition (the second partition, \term{ext4}) and rebooting the board:
+Since these are symlinks, building the daemon is enough for \repopath{rootfs_overlay/} to hold its current binary; no separate install step exists. Deploying it means copying both files onto the \term{SD} card's root filesystem partition (the second partition, \term{ext4}) and rebooting the board:
 
 \begin{shellcode}
 sudo mount /dev/sdX2 /mnt
@@ -42,4 +42,4 @@ sudo cp -L sdcard/rootfs_overlay/etc/init.d/S60hexip_daemon /mnt/etc/init.d/
 sudo umount /mnt
 \end{shellcode}
 
-Replace |/dev/sdX2| with the \term{SD} card's actual root filesystem partition. On the next boot, the |S60| script starts the daemon automatically.
+Replace \extpath{/dev/sdX2} with the \term{SD} card's actual root filesystem partition. On the next boot, the \repopath{S60} script starts the daemon automatically.

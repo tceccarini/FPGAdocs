@@ -1,7 +1,7 @@
-\chapter{\sysname{FPGAsteel}}
+\chapter{\prjname{FPGAsteel}}
 \label{chap:fpgasteel-intro}
 
-This part covers the realization of \sysname{FPGAsteel}, the bare-metal variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. Unlike \sysname{FPGAlix}, \sysname{FPGAsteel} runs no operating system: the \term{Cortex-A9} drives the hardware directly, and its software is a set of purpose-built bare-metal examples rather than a \term{Linux} video pipeline.
+This part covers the realization of \prjname{FPGAsteel}, the bare-metal variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. Unlike \prjname{FPGAlix}, \prjname{FPGAsteel} runs no operating system: the \term{Cortex-A9} drives the hardware directly, and its software is a set of purpose-built bare-metal examples rather than a \term{Linux} video pipeline.
 
 The chapters that follow proceed in the order the work itself was carried out: setting up the development environment on the host \term{PC}, building the hardware side of the system, and bringing the board up. The part then closes with a progression of bare-metal examples, each one building on the last:
 
@@ -40,8 +40,8 @@ Readers who want a working example running immediately, without going through ev
 \subsection{Preparing the SD card}
 
 \begin{enumerate}
-    \item Download the \term{SD card} image (a |.7z| archive)\footnote{See Chapter~\ref{chap:fpgasteel-downloads} for where to obtain it.} and extract it.
-    \item Write the extracted image to the \term{microSD} card (at least 8 GB) with a disk-imaging tool, e.g. |dd| on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
+    \item Download the \term{SD card} image (a \repopath{.7z} archive)\footnote{See Chapter~\ref{chap:fpgasteel-downloads} for where to obtain it.} and extract it.
+    \item Write the extracted image to the \term{microSD} card (at least 8 GB) with a disk-imaging tool, e.g. \cmdpath{dd} on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
     \item Insert the card into the \term{DE1-SoC}.
 \end{enumerate}
 
@@ -60,29 +60,29 @@ Power on the board. A menu appears over the serial console, listing the 6 exampl
 The list below gives each example's program name, exactly as it appears in the menu, together with a short description of what it does:
 
 \begin{enumerate}
-    \item |hello_word|: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
-    \item |simple_forwarding_example|: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
-    \item |cache_forwarding_example|: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
-    \item |dualcore_dip_example_no_neon_no_icache|: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
-    \item |dualcore_dip_example_no_neon|: same, without \term{NEON}, with the instruction cache enabled.
-    \item |dualcore_dip_example|: same, using \term{NEON}, with the instruction cache enabled.
+    \item \cmd{hello_word}: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
+    \item \cmd{simple_forwarding_example}: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
+    \item \cmd{cache_forwarding_example}: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
+    \item \cmd{dualcore_dip_example_no_neon_no_icache}: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
+    \item \cmd{dualcore_dip_example_no_neon}: same, without \term{NEON}, with the instruction cache enabled.
+    \item \cmd{dualcore_dip_example}: same, using \term{NEON}, with the instruction cache enabled.
 \end{enumerate}
 
 \section{Repository layout}
 
-The \sysname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
+The \prjname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
 
 \begin{itemize}
-    \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
+    \item \repopath{hw/}: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
     \begin{itemize}
-        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}).
-        \item |my_vhdl/|: custom \term{Platform Designer} \term{VHDL} components written for this project.
-        \item |quartus/|: \term{Quartus} project, |soc_system.qsys|, top-level \term{VHDL}, pin assignments.
+        \item \repopath{camera_adapter/}: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}).
+        \item \repopath{my_vhdl/}: custom \term{Platform Designer} \term{VHDL} components written for this project.
+        \item \repopath{quartus/}: \term{Quartus} project, \repopath{soc_system.qsys}, top-level \term{VHDL}, pin assignments.
     \end{itemize}
-    \item |sw/|: bare-metal example applications (\term{C++}), one folder per example.
-    \item |docs/|: pointer to the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}), where the reference manuals used throughout this work are kept.
-    \item |repos/|: git submodules (\term{U-Boot}, \term{GHRD}, \term{HPS} hwlib, \term{FPGA} top-level files).
-    \item |sdcard/|: \term{SD card} boot partition contents and bootloader image, used to build the flashable image (Quick Start).
-    \item |WARNING.md|: camera hardware bug note (symlink to |hw/camera_adapter/WARNING.md|).
-    \item |LICENSE|: MIT.
+    \item \repopath{sw/}: bare-metal example applications (\term{C++}), one folder per example.
+    \item \repopath{docs/}: pointer to the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}), where the reference manuals used throughout this work are kept.
+    \item \repopath{repos/}: git submodules (\term{U-Boot}, \term{GHRD}, \term{HPS} hwlib, \term{FPGA} top-level files).
+    \item \repopath{sdcard/}: \term{SD card} boot partition contents and bootloader image, used to build the flashable image (Quick Start).
+    \item \repopath{WARNING.md}: camera hardware bug note (symlink to \repopath{hw/camera_adapter/WARNING.md}).
+    \item \repopath{LICENSE}: MIT.
 \end{itemize}

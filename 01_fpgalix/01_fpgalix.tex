@@ -1,7 +1,7 @@
-\chapter{\sysname{FPGAlix}}
+\chapter{\prjname{FPGAlix}}
 \label{chap:fpgalix-intro}
 
-This part covers the realization of \sysname{FPGAlix}, the Linux-embedded variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. The chapters that follow proceed in the order the work itself was carried out: setting up the development environment on the host \term{PC}, building the hardware side of the system, and assembling around it a working embedded system based on a \term{Linux} kernel and a \term{Buildroot} environment. Once the system boots and the network connection is verified, the \term{DE1-SoC}'s 7-segment displays are used to show the board's \term{IP} address. Finally, the part closes with a driver for the camera over the custom hardware path and an application that processes the video stream and streams the result over the network via \term{RTSP}.
+This part covers the realization of \prjname{FPGAlix}, the Linux-embedded variant of the video acquisition and processing system introduced in the \nameref{chap:preface}. The chapters that follow proceed in the order the work itself was carried out: setting up the development environment on the host \term{PC}, building the hardware side of the system, and assembling around it a working embedded system based on a \term{Linux} kernel and a \term{Buildroot} environment. Once the system boots and the network connection is verified, the \term{DE1-SoC}'s 7-segment displays are used to show the board's \term{IP} address. Finally, the part closes with a driver for the camera over the custom hardware path and an application that processes the video stream and streams the result over the network via \term{RTSP}.
 
 \section{Quick Start}
 \label{sec:fpgalix-quick-start}
@@ -25,7 +25,7 @@ Readers who want the finished system running immediately, without going through 
 
 \begin{enumerate}
     \item Download the SD card image\footnote{See Chapter~\ref{chap:fpgalix-downloads} for where to obtain it.} and extract it.
-    \item Write the extracted image to the microSD card (at least 8 GB) with any disk-imaging tool, e.g. |dd| on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
+    \item Write the extracted image to the microSD card (at least 8 GB) with any disk-imaging tool, e.g. \cmdpath{dd} on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
     \item Insert the card into the \term{DE1-SoC}.
 \end{enumerate}
 
@@ -42,25 +42,25 @@ Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the unde
 
 Connect the \term{OV7670} camera to the \term{DE1-SoC} board's \term{GPIO\_0} header via the camera adapter,\footnote{See Part~\ref{part:appendices}, Chapter~\ref{app:camera-adapter-board}.} connect the \term{Ethernet} cable, insert the SD card, and power on the board.
 
-The board's \term{IP} address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by |hexip_daemon|.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
+The board's \term{IP} address is shown automatically, a few seconds later, on the 7-segment displays, cycled one octet at a time by \cmd{hexip_daemon}.\footnote{See Chapter~\ref{chap:fpgalix-hexip-daemon}.}
 
 Two ways to log in, default password |1q2w3e4r| for both accounts:
 
 \begin{itemize}
-    \item over \term{SSH}, once the IP is known, as |wheel|, then |su| for anything that needs root (loading |camera_driver_2|, accessing hardware registers directly):
+    \item over \term{SSH}, once the IP is known, as \sysid{wheel}, then \cmdpath{su} for anything that needs root (loading \cmd{camera_driver_2}, accessing hardware registers directly):
 
 \begin{shellcode}
 ssh wheel@<board-ip>
 \end{shellcode}
 
-    \item over the serial console (115200 baud, 8N1, e.g. |picocom|), directly as |root|; no network needed for this path.
+    \item over the serial console (115200 baud, 8N1, e.g. \cmdpath{picocom}), directly as \sysid{root}; no network needed for this path.
 \end{itemize}
 
 \subsection{Running the software}
 
-|hexip_daemon| is already running once the board boots; no action needed. The prebuilt SD card image also already contains |camera_driver_2| and |vision_core|, built and placed in |wheel|'s own home directory (|/home/wheel/camera_driver_2/|, |/home/wheel/vision_core/|); no building or transferring files over |scp| is needed here. Building from source and deploying over |scp|, covered in full in later chapters, only matters after changing their source.
+\cmd{hexip_daemon} is already running once the board boots; no action needed. The prebuilt SD card image also already contains \cmd{camera_driver_2} and \cmd{vision_core}, built and placed in \sysid{wheel}'s own home directory (\extpath{/home/wheel/camera_driver_2/}, \extpath{/home/wheel/vision_core/}); no building or transferring files over \cmdpath{scp} is needed here. Building from source and deploying over \cmdpath{scp}, covered in full in later chapters, only matters after changing their source.
 
-Log in as |wheel| (or |root| from the serial console, cd-ing to |/home/wheel| first), then bring the camera up and load the driver:
+Log in as \sysid{wheel} (or \sysid{root} from the serial console, cd-ing to \extpath{/home/wheel} first), then bring the camera up and load the driver:
 
 \begin{shellcode}
 cd camera_driver_2
@@ -71,21 +71,21 @@ su                              # Not needed if already logged in as root.
 insmod fpgalix_camera.ko        # load camera driver module
 \end{shellcode}
 
-Then run |vision_core|, still as |root|, from the sibling directory:
+Then run \cmd{vision_core}, still as \sysid{root}, from the sibling directory:
 
 \begin{shellcode}
 cd ../vision_core
 ./vision_core
 \end{shellcode}
 
-It prompts interactively; every prompt accepts its default by pressing Enter, except the source, which must be set explicitly to |ov7670|:
+It prompts interactively; every prompt accepts its default by pressing Enter, except the source, which must be set explicitly to \hw{ov7670}:
 
 \begin{shellcode}
 Source [webcam/ov7670, default: webcam]: ov7670
 Encoding [mjpeg/h264/raw, default: mjpeg]:
 \end{shellcode}
 
-|ov7670| is mandatory on the board, the |webcam| source being only for the native \term{Intel} (|make intel|) build; |MJPEG|, left at its default by pressing Enter, is what this project recommends for full-color output here, since the \term{HPS} has no hardware video encoder.
+\hw{ov7670} is mandatory on the board, the \ccode{webcam} source being only for the native \term{Intel} (\cmdpath{make intel}) build; \ccode{MJPEG}, left at its default by pressing Enter, is what this project recommends for full-color output here, since the \term{HPS} has no hardware video encoder.
 
 Once running, view the stream on a PC:
 
@@ -95,24 +95,24 @@ ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/strea
 
 \section{Repository layout}
 
-The \sysname{FPGAlix} repository \cite{FPGALIX-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
+The \prjname{FPGAlix} repository \cite{FPGALIX-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
 
 \begin{itemize}
-    \item |hw/|: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
+    \item \repopath{hw/}: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
     \begin{itemize}
-        \item |camera_adapter/|: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}).
-        \item |my_vhdl/|: custom \term{Platform Designer} \term{VHDL} components written for this project.
-        \item |quartus/|: \term{Quartus} project, |soc_system.qsys|, top-level \term{VHDL}, pin assignments.
+        \item \repopath{camera_adapter/}: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}).
+        \item \repopath{my_vhdl/}: custom \term{Platform Designer} \term{VHDL} components written for this project.
+        \item \repopath{quartus/}: \term{Quartus} project, \repopath{soc_system.qsys}, top-level \term{VHDL}, pin assignments.
     \end{itemize}
-    \item |sw/|: application software running on the board's embedded \term{Linux} (\term{C/C++}), one folder per component.
+    \item \repopath{sw/}: application software running on the board's embedded \term{Linux} (\term{C/C++}), one folder per component.
     \begin{itemize}
-        \item |camera_driver_2/|: \term{V4L2} kernel driver for the \term{OV7670}.
-        \item |hexip_daemon/|: displays the board's IP on the 7-segment displays.
-        \item |vision_core/|: captures, filters and streams the camera feed over \term{RTSP}.
+        \item \repopath{camera_driver_2/}: \term{V4L2} kernel driver for the \term{OV7670}.
+        \item \repopath{hexip_daemon/}: displays the board's IP on the 7-segment displays.
+        \item \repopath{vision_core/}: captures, filters and streams the camera feed over \term{RTSP}.
     \end{itemize}
-    \item |repos/|: git submodules (\term{U-Boot}, \term{Linux} kernel, \term{Buildroot}, \term{GHRD}, |sopc2dts|, \term{Altera} \term{FPGA} top-level files).
-    \item |sdcard/|: SD card boot partition contents and root filesystem overlay, used to assemble the flashable image.
-    \item |docs/|: pointer to the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}), where the reference manuals used throughout this work are kept.
-    \item |WARNING.md|: camera hardware bug note (symlink to |hw/camera_adapter/WARNING.md|).
-    \item |LICENSE|: MIT
+    \item \repopath{repos/}: git submodules (\term{U-Boot}, \term{Linux} kernel, \term{Buildroot}, \term{GHRD}, \repopath{sopc2dts}, \term{Altera} \term{FPGA} top-level files).
+    \item \repopath{sdcard/}: SD card boot partition contents and root filesystem overlay, used to assemble the flashable image.
+    \item \repopath{docs/}: pointer to the shared documentation folder (Chapter~\ref{chap:fpgalix-downloads}), where the reference manuals used throughout this work are kept.
+    \item \repopath{WARNING.md}: camera hardware bug note (symlink to \repopath{hw/camera_adapter/WARNING.md}).
+    \item \repopath{LICENSE}: MIT
 \end{itemize}

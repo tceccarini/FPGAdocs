@@ -4,20 +4,20 @@
 \section{Introduction}
 \label{sec:fpgalix-vision-intro}
 
-This chapter's purpose is to exercise the hardware and driver developed in the previous chapters, and observe how the \term{CPU} behaved under load. |sw/vision_core| is the program built to do that: a real-time streaming pipeline, which uses the \term{OpenCV} computer-vision library to process the frames coming from the camera and the \term{GStreamer} library to stream the result over the network.
+This chapter's purpose is to exercise the hardware and driver developed in the previous chapters, and observe how the \term{CPU} behaved under load. \repopath{sw/vision_core} is the program built to do that: a real-time streaming pipeline, which uses the \term{OpenCV} computer-vision library to process the frames coming from the camera and the \term{GStreamer} library to stream the result over the network.
 
-Two capture sources are supported, through the same filter pipeline: the \term{OV7670}, via |camera_driver_2|,\footnote{See Chapter~\ref{chap:fpgalix-camera-driver-2}} and any generic \term{V4L2} webcam. Filters run as a cascade\footnote{Also referred to here as the filter pipeline.}, applied to every frame in sequence, so that the output of one becomes the input of the next. This cascade can itself be edited at run time, through a text interface called \term{SimpleUI},\footnote{Available filters include \term{auto white balance}, \term{gamma correction}, \term{Bayer demosaicing} and \term{Sobel edge detection}.} which is built with the assistance of \term{Claude Code}: filters can be added, removed or reordered while streaming, without dropping frames. The output can be encoded as \term{MJPEG}, left uncompressed, or encoded as \term{H264}; \term{MJPEG} is what this project's own notes recommend for full-color output, since the \term{HPS} has no hardware video encoder and software \term{H264} is comparatively expensive on a \term{Cortex-A9}.
+Two capture sources are supported, through the same filter pipeline: the \term{OV7670}, via \cmd{camera_driver_2},\footnote{See Chapter~\ref{chap:fpgalix-camera-driver-2}} and any generic \term{V4L2} webcam. Filters run as a cascade\footnote{Also referred to here as the filter pipeline.}, applied to every frame in sequence, so that the output of one becomes the input of the next. This cascade can itself be edited at run time, through a text interface called \term{SimpleUI},\footnote{Available filters include \term{auto white balance}, \term{gamma correction}, \term{Bayer demosaicing} and \term{Sobel edge detection}.} which is built with the assistance of \term{Claude Code}: filters can be added, removed or reordered while streaming, without dropping frames. The output can be encoded as \term{MJPEG}, left uncompressed, or encoded as \term{H264}; \term{MJPEG} is what this project's own notes recommend for full-color output, since the \term{HPS} has no hardware video encoder and software \term{H264} is comparatively expensive on a \term{Cortex-A9}.
 
-The resulting program, |vision_core|, runs as several concurrent threads, free to run across both of the \term{HPS}'s two \term{Cortex-A9} cores rather than confined to one; Section~\ref{sec:fpgalix-vision-architecture} describes how they are organized.
+The resulting program, \cmd{vision_core}, runs as several concurrent threads, free to run across both of the \term{HPS}'s two \term{Cortex-A9} cores rather than confined to one; Section~\ref{sec:fpgalix-vision-architecture} describes how they are organized.
 
 \section{Software architecture}
 \label{sec:fpgalix-vision-architecture}
 
-Unlike the earlier chapters, little of this component's behavior is visible at the hardware level: \term{V4L2}, \term{OpenCV} and \term{GStreamer} hide the camera, the \term{CPU} cores and the memory behind their own abstractions, and |vision_core| is structured as a chain of concurrent stages connected by buffer pools rather than as anything resembling the hardware block diagram of Chapter~\ref{chap:fpgalix-hw-overview}.
+Unlike the earlier chapters, little of this component's behavior is visible at the hardware level: \term{V4L2}, \term{OpenCV} and \term{GStreamer} hide the camera, the \term{CPU} cores and the memory behind their own abstractions, and \cmd{vision_core} is structured as a chain of concurrent stages connected by buffer pools rather than as anything resembling the hardware block diagram of Chapter~\ref{chap:fpgalix-hw-overview}.
 
-Three stages make up the pipeline described in Section~\ref{sec:fpgalix-vision-intro}, each running on its own thread: a capture thread (|Capturer|) pulls a raw frame from the video device, whether the \term{OV7670} through |camera_driver_2| or a generic webcam through its driver, and copies it into a frame borrowed from the input buffer; a processing thread (|Processor|) takes that frame, runs it through the current filter pipeline, and writes the result into the output buffer; a transmission thread, part of the |Streamer| class, takes the processed frame from the output buffer and hands it to \term{GStreamer}. A further thread of the same class runs \term{GStreamer}'s own event loop and handles \term{RTSP} session and client-connection management on its own, independently of the frame data path. \term{SimpleUI} runs on a fifth thread of its own, reading filter commands from standard input and editing the processing thread's pending filter list; the edits are swapped into the active list by the processing thread itself, at the start of its next iteration, so the pipeline can be changed while streaming without pausing or dropping a frame for it.
+Three stages make up the pipeline described in Section~\ref{sec:fpgalix-vision-intro}, each running on its own thread: a capture thread (\ccode{Capturer}) pulls a raw frame from the video device, whether the \term{OV7670} through \cmd{camera_driver_2} or a generic webcam through its driver, and copies it into a frame borrowed from the input buffer; a processing thread (\ccode{Processor}) takes that frame, runs it through the current filter pipeline, and writes the result into the output buffer; a transmission thread, part of the \ccode{Streamer} class, takes the processed frame from the output buffer and hands it to \term{GStreamer}. A further thread of the same class runs \term{GStreamer}'s own event loop and handles \term{RTSP} session and client-connection management on its own, independently of the frame data path. \term{SimpleUI} runs on a fifth thread of its own, reading filter commands from standard input and editing the processing thread's pending filter list; the edits are swapped into the active list by the processing thread itself, at the start of its next iteration, so the pipeline can be changed while streaming without pausing or dropping a frame for it.
 
-The input buffer and output buffer (|FrameBuffer|) sit between capture and processing, and between processing and transmission, respectively. Each is a fixed number of pre-allocated frames, so that no stage needs to allocate memory while running: a stage borrows a free frame, fills it in place, and hands it off to the next stage, which picks it up and eventually returns it to the buffer it came from once finished with it, whether directly or, for the output buffer, only once \term{GStreamer} itself is done with it. If a stage falls behind, the buffer it borrows from can run dry, or the buffer it hands frames into can fill up; either way, the frame in flight is dropped rather than the pipeline stalling to wait for space.
+The input buffer and output buffer (\ccode{FrameBuffer}) sit between capture and processing, and between processing and transmission, respectively. Each is a fixed number of pre-allocated frames, so that no stage needs to allocate memory while running: a stage borrows a free frame, fills it in place, and hands it off to the next stage, which picks it up and eventually returns it to the buffer it came from once finished with it, whether directly or, for the output buffer, only once \term{GStreamer} itself is done with it. If a stage falls behind, the buffer it borrows from can run dry, or the buffer it hands frames into can fill up; either way, the frame in flight is dropped rather than the pipeline stalling to wait for space.
 
 \begin{landscape}
 \begin{figure}[p]
@@ -34,12 +34,12 @@ The input buffer and output buffer (|FrameBuffer|) sit between capture and proce
 \subsection{The FIFO mitigations}
 \label{subsec:fpgalix-vision-fifo-mitigations}
 
-During testing, frame loss appeared already under moderate \term{CPU} load, not only under extreme load. This loss originates entirely on the input side: when the \term{FPGA} fabric cannot drain a frame fast enough, |ov7670_data_interface| is backpressured on |st_ready|, drops the frame in progress, and closes it with a bare \term{EOP} once the backpressure lifts.\footnote{See Section~\ref{sec:fpgalix-acquisition-core}.} It is the same premature \term{EOP} |camera_driver_2| was later made to detect and discard as a short frame.\footnote{See Chapter~\ref{chap:fpgalix-camera-driver-2}.} Addressing it took several rounds of tuning the \term{FPGA} data path, tracked in |hw/quartus/soc_system.qsys|:
+During testing, frame loss appeared already under moderate \term{CPU} load, not only under extreme load. This loss originates entirely on the input side: when the \term{FPGA} fabric cannot drain a frame fast enough, \hw{ov7670_data_interface} is backpressured on \hw{st_ready}, drops the frame in progress, and closes it with a bare \term{EOP} once the backpressure lifts.\footnote{See Section~\ref{sec:fpgalix-acquisition-core}.} It is the same premature \term{EOP} \cmd{camera_driver_2} was later made to detect and discard as a short frame.\footnote{See Chapter~\ref{chap:fpgalix-camera-driver-2}.} Addressing it took several rounds of tuning the \term{FPGA} data path, tracked in \repopath{hw/quartus/soc_system.qsys}:
 
 \begin{itemize}
-    \item |dc_fifo_0|'s depth was increased repeatedly, from its original 32 entries up to 256, then 4096, and finally 65536, effectively as large as the \term{Quartus} fitter would allow.
-    \item The \term{mSGDMA} engine's own |DATA_FIFO_DEPTH| and |DESCRIPTOR_FIFO_DEPTH| were increased (to 4096 and 256 respectively), its maximum burst size raised, and both it and the \term{HPS} \term{SDRAM} port it drives were widened to 128 bits, for faster draining.
-    \item A new buffer \term{FIFO}, |sc_fifo_0|, was added directly ahead of \term{mSGDMA}, sized at 8192 entries, 128 bits wide. It did not exist in the original design, but it is shown in the block diagram and described in Paragraph~\ref{subsec:fpgalix-sc-fifo}.
+    \item \hw{dc_fifo_0}'s depth was increased repeatedly, from its original 32 entries up to 256, then 4096, and finally 65536, effectively as large as the \term{Quartus} fitter would allow.
+    \item The \term{mSGDMA} engine's own \hw{DATA_FIFO_DEPTH} and \hw{DESCRIPTOR_FIFO_DEPTH} were increased (to 4096 and 256 respectively), its maximum burst size raised, and both it and the \term{HPS} \term{SDRAM} port it drives were widened to 128 bits, for faster draining.
+    \item A new buffer \term{FIFO}, \hw{sc_fifo_0}, was added directly ahead of \term{mSGDMA}, sized at 8192 entries, 128 bits wide. It did not exist in the original design, but it is shown in the block diagram and described in Paragraph~\ref{subsec:fpgalix-sc-fifo}.
 \end{itemize}
 
 These changes measurably helped, but were not, on their own, what fixed frame loss under load.
@@ -47,7 +47,7 @@ These changes measurably helped, but were not, on their own, what fixed frame lo
 \subsection{The actual fix: returning buffers to the driver immediately}
 \label{subsec:fpgalix-vision-buffer-return}
 
-The definitive mitigation was a change in |vision_core| itself, not in the \term{FPGA} fabric: instead of holding on to a \term{V4L2} buffer for the entire filter pipeline, |Capturer| copies the frame out of it immediately after dequeuing it, and returns the buffer to the driver right away:
+The definitive mitigation was a change in \cmd{vision_core} itself, not in the \term{FPGA} fabric: instead of holding on to a \term{V4L2} buffer for the entire filter pipeline, \ccode{Capturer} copies the frame out of it immediately after dequeuing it, and returns the buffer to the driver right away:
 
 \begin{lstlisting}
 wrapBuffer(m_inputBuffer[buf.index].start, ...).copyTo(frame->mat());
@@ -61,7 +61,7 @@ This is the change that, empirically, fixed the frame loss the \term{FIFO} enlar
 \subsection{What this led to in FPGAsteel}
 \label{subsec:fpgalix-vision-fpgasteel}
 
-This project's successor, \sysname{FPGAsteel}, targets the same \term{OV7670} capture pipeline but bare-metal instead of embedded \term{Linux}, and took a different approach entirely: enabling the \term{mSGDMA}'s hardware descriptor prefetcher, with its own dedicated on-chip descriptor memory, so the \term{DMA} engine re-arms itself between frames without \term{CPU} intervention. This project leaves the prefetcher disabled and manages descriptors from software instead, because enabling it here would have meant developing a dedicated kernel driver for it, on top of the \term{mSGDMA} driver already patched in Section~\ref{sec:fpgalix-camera-short-frames}; bare-metal software, with direct access to the hardware, can service it with only a few register writes. With the prefetcher handling re-arming directly from on-chip \term{SRAM} instead, \sysname{FPGAsteel} needed neither \term{FIFO}s the size of this project's, nor an equivalent to |sc_fifo_0| at all.
+This project's successor, \prjname{FPGAsteel}, targets the same \term{OV7670} capture pipeline but bare-metal instead of embedded \term{Linux}, and took a different approach entirely: enabling the \term{mSGDMA}'s hardware descriptor prefetcher, with its own dedicated on-chip descriptor memory, so the \term{DMA} engine re-arms itself between frames without \term{CPU} intervention. This project leaves the prefetcher disabled and manages descriptors from software instead, because enabling it here would have meant developing a dedicated kernel driver for it, on top of the \term{mSGDMA} driver already patched in Section~\ref{sec:fpgalix-camera-short-frames}; bare-metal software, with direct access to the hardware, can service it with only a few register writes. With the prefetcher handling re-arming directly from on-chip \term{SRAM} instead, \prjname{FPGAsteel} needed neither \term{FIFO}s the size of this project's, nor an equivalent to \hw{sc_fifo_0} at all.
 
 \section{Building}
 \label{sec:fpgalix-vision-building}
@@ -71,12 +71,12 @@ cd sw/vision_core
 make arm
 \end{shellcode}
 
-This produces |bin/vision_core|, cross-compiled with the toolchain \term{Buildroot} builds as part of its own run, which must therefore already exist. A separate, native |make intel| target also exists, for exercising the pipeline on the host itself without the board.
+This produces \repopath{bin/vision_core}, cross-compiled with the toolchain \term{Buildroot} builds as part of its own run, which must therefore already exist. A separate, native \cmdpath{make intel} target also exists, for exercising the pipeline on the host itself without the board.
 
 \section{Usage}
 \label{sec:fpgalix-vision-usage}
 
-Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header. The generic webcam source exists for the native |make intel| build, exercising the pipeline on the host itself; on the board, only the \term{OV7670} applies.
+Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header. The generic webcam source exists for the native \cmdpath{make intel} build, exercising the pipeline on the host itself; on the board, only the \term{OV7670} applies.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -86,7 +86,7 @@ Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera mo
 \subsection{Prerequisite: camera\_driver\_2 running}
 \label{subsec:fpgalix-vision-prereq}
 
-|vision_core| reads frames from |/dev/video0|, which only exists once |camera_driver_2| is loaded and the \term{OV7670} has been brought up. This repeats, condensed, the procedure detailed in Section~\ref{sec:fpgalix-camera-usage}:
+\cmd{vision_core} reads frames from \extpath{/dev/video0}, which only exists once \cmd{camera_driver_2} is loaded and the \term{OV7670} has been brought up. This repeats, condensed, the procedure detailed in Section~\ref{sec:fpgalix-camera-usage}:
 
 \begin{shellcode}
 cd sw/camera_driver_2
@@ -123,13 +123,13 @@ cd vision_core
 ./vision_core
 \end{shellcode}
 
-|vision_core| takes no command-line arguments: it prompts interactively for the video device, capture source, encoding, and several buffer/format settings, each with a sensible default accepted by pressing Enter. The one prompt that needs an explicit answer here is the source, which defaults to webcam:
+\cmd{vision_core} takes no command-line arguments: it prompts interactively for the video device, capture source, encoding, and several buffer/format settings, each with a sensible default accepted by pressing Enter. The one prompt that needs an explicit answer here is the source, which defaults to webcam:
 
 \begin{shellcode}
 Source [webcam/ov7670, default: webcam]: ov7670
 \end{shellcode}
 
-Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt, and the \term{RTSP} stream is live at |rtsp://<board-ip>:8554/stream|.
+Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt, and the \term{RTSP} stream is live at \extpath{rtsp://<board-ip>:8554/stream}.
 
 \subsection{Viewing the stream on a PC}
 \label{subsec:fpgalix-vision-viewing}
@@ -138,4 +138,4 @@ Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt
 ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
 \end{shellcode}
 
-|ffplay|, from the \term{ffmpeg} package, is already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}. The three flags all serve the same purpose, keeping the view close to real time rather than perfectly complete: |-fflags nobuffer| disables \term{ffmpeg}'s own input buffering, which would otherwise queue up frames before displaying any of them; |-flags low_delay| puts the decoder in low-latency mode, forgoing look-ahead across frames; and |-framedrop| discards frames the player falls behind on instead of queuing them for later.
+\cmdpath{ffplay}, from the \term{ffmpeg} package, is already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}. The three flags all serve the same purpose, keeping the view close to real time rather than perfectly complete: \cmdpath{-fflags nobuffer} disables \term{ffmpeg}'s own input buffering, which would otherwise queue up frames before displaying any of them; \cmdpath{-flags low_delay} puts the decoder in low-latency mode, forgoing look-ahead across frames; and \cmdpath{-framedrop} discards frames the player falls behind on instead of queuing them for later.

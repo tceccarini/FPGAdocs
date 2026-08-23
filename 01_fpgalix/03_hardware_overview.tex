@@ -4,11 +4,11 @@
 \section{Overview}
 \label{sec:fpgalix-overview}
 
-This chapter illustrates the hardware realized for \sysname{FPGAlix} piece by piece, from the \term{OV7670} camera interface to the complete system.\footnote{Figure~\ref{fig:fpgalix-system-overview}, \texttt{soc\_system.qsys} block diagram; also viewable directly through \term{Platform Designer} in \term{Quartus}, by opening \texttt{hw/quartus/soc\_system.qsys}.}
+This chapter illustrates the hardware realized for \prjname{FPGAlix} piece by piece, from the \term{OV7670} camera interface to the complete system.\footnote{Figure~\ref{fig:fpgalix-system-overview}, \texttt{soc\_system.qsys} block diagram; also viewable directly through \term{Platform Designer} in \term{Quartus}, by opening \texttt{hw/quartus/soc\_system.qsys}.}
 
-As described in the \nameref{chap:preface}, the \term{FPGA} fabric in \sysname{FPGAlix} is used to acquire the video stream, realizing a hardware interface that carries the data through the \term{mSGDMA} \term{IP} \cite{EP-IPUG}, an \term{Avalon Memory-Mapped} \term{DMA} engine capable of reading from an \term{Avalon-ST} stream and writing it to memory autonomously.
+As described in the \nameref{chap:preface}, the \term{FPGA} fabric in \prjname{FPGAlix} is used to acquire the video stream, realizing a hardware interface that carries the data through the \term{mSGDMA} \term{IP} \cite{EP-IPUG}, an \term{Avalon Memory-Mapped} \term{DMA} engine capable of reading from an \term{Avalon-ST} stream and writing it to memory autonomously.
 
-The remaining design question concerns how a byte-wide, framed data stream, subject to backpressure and originating in the camera's own clock domain, should reach the \term{mSGDMA}. \term{Avalon-ST}~\cite{AVALON-SPEC} constitutes the natural choice for this purpose: it is the standard \term{Intel}/\term{Altera} interconnect defined for unidirectional streaming transfers, providing a ready/valid handshake for backpressure and \term{SOP}/\term{EOP} (Start-of-packet/End-of-packet) markers for frame delimitation as part of the specification itself. Moreover, it is the interface natively supported by every other \term{IP} core involved in the pipeline (|altera_avalon_dc_fifo| for the clock-domain crossing, |altera_avalon_st_adapter| for width conversion, |altera_avalon_sc_fifo| for buffering, and the \term{ST-to-MM} engine internal to |altera_msgdma|). Implementing the camera capture core (|ov7670_data_interface|) as an \term{Avalon-ST} source, rather than as a custom bus, allows it to be integrated directly into this chain without additional glue logic.
+The remaining design question concerns how a byte-wide, framed data stream, subject to backpressure and originating in the camera's own clock domain, should reach the \term{mSGDMA}. \term{Avalon-ST}~\cite{AVALON-SPEC} constitutes the natural choice for this purpose: it is the standard \term{Intel}/\term{Altera} interconnect defined for unidirectional streaming transfers, providing a ready/valid handshake for backpressure and \term{SOP}/\term{EOP} (Start-of-packet/End-of-packet) markers for frame delimitation as part of the specification itself. Moreover, it is the interface natively supported by every other \term{IP} core involved in the pipeline (\hw{altera_avalon_dc_fifo} for the clock-domain crossing, \hw{altera_avalon_st_adapter} for width conversion, \hw{altera_avalon_sc_fifo} for buffering, and the \term{ST-to-MM} engine internal to \hw{altera_msgdma}). Implementing the camera capture core (\hw{ov7670_data_interface}) as an \term{Avalon-ST} source, rather than as a custom bus, allows it to be integrated directly into this chain without additional glue logic.
 
 \section{The OV7670 camera and its adapter board}
 
@@ -27,7 +27,7 @@ The \term{OV7670} is a \term{CMOS} \term{VGA} image sensor that does not generat
 
 \subsection{Rationale for a custom adapter board}
 
-Direct connection of an \term{OV7670} breakout to the \term{DE1-SoC}'s \term{GPIO\_0} header by means of unshielded jumper wires does not provide adequate signal integrity at the sensor's clock frequency: the resulting ringing and crosstalk are sufficient to corrupt sampling of \term{HREF}, \term{VSYNC}, and the data bus. To address this, a custom adapter was designed: two purpose-built \term{PCBs}, connected by a standard 40-pin \term{GPIO} ribbon cable (sources under |hw/camera_adapter/|):
+Direct connection of an \term{OV7670} breakout to the \term{DE1-SoC}'s \term{GPIO\_0} header by means of unshielded jumper wires does not provide adequate signal integrity at the sensor's clock frequency: the resulting ringing and crosstalk are sufficient to corrupt sampling of \term{HREF}, \term{VSYNC}, and the data bus. To address this, a custom adapter was designed: two purpose-built \term{PCBs}, connected by a standard 40-pin \term{GPIO} ribbon cable (sources under \repopath{hw/camera_adapter/}):
 
 \begin{itemize}
     \item \textbf{Transmitter (camera side):} mounted adjacent to the \term{OV7670} module. Each video signal (\term{PCLK}, \term{HREF}, \term{VSYNC}, \term{D[7:0]}) is driven through an \term{SN74ALVC16244A} line buffer\footnote{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}: while the camera is held in \term{RESET} or \term{POWER-DOWN}, its floating outputs can drive this buffer's inputs into an unstable state and overheat it.} and onto the ribbon cable through a 33 $\Omega$ series resistor; \term{SDA} and \term{SCL} each get their own 4.7 k$\Omega$ pull-up resistor, one per line, two on this board.
@@ -80,9 +80,9 @@ Figure~\ref{fig:ov7670-vtiming} gives the same picture at the scale of a whole f
 \longsection{Generating and resetting \term{PCLK}}{\texttt{pclk\_reset\_controller}}
 \label{sec:fpgalix-pclk-reset}
 
-Unlike \term{sys\_clk} (|clk_0|, 50 MHz, free-running from the board oscillator), \term{PCLK} does not exist until the camera is powered up and out of reset: it is generated by the \term{OV7670} itself, derived internally from the clock generator on the transmitter board\footnote{See Section~\ref{subsec:camera-master-clock}.}, and only starts toggling once the sensor is running.
+Unlike \term{sys\_clk} (\hw{clk_0}, 50 MHz, free-running from the board oscillator), \term{PCLK} does not exist until the camera is powered up and out of reset: it is generated by the \term{OV7670} itself, derived internally from the clock generator on the transmitter board\footnote{See Section~\ref{subsec:camera-master-clock}.}, and only starts toggling once the sensor is running.
 
-|pclk_reset_controller| is the custom \term{Platform Designer} component that turns this externally generated signal into a proper clock domain for the rest of the design and manages the two resets that go with it.
+\hw{pclk_reset_controller} is the custom \term{Platform Designer} component that turns this externally generated signal into a proper clock domain for the rest of the design and manages the two resets that go with it.
 
 \begin{figure}[htbp]
     \centering
@@ -93,39 +93,39 @@ Unlike \term{sys\_clk} (|clk_0|, 50 MHz, free-running from the board oscillator)
 
 \subsection{\term{PCLK} as a \term{Platform Designer} clock}
 
-|pclk_reset_controller| takes the physical \term{PCLK} pin as |pclk_in| and re-exports it as |pclk_out|, a genuine \term{Platform Designer} clock source: |pclk_out <= pclk_in| in the \term{VHDL}, a pattern \term{Quartus} recognizes and implements with a global clock buffer rather than ordinary fabric routing.
+\hw{pclk_reset_controller} takes the physical \term{PCLK} pin as \hw{pclk_in} and re-exports it as \hw{pclk_out}, a genuine \term{Platform Designer} clock source: \ccode{pclk_out <= pclk_in} in the \term{VHDL}, a pattern \term{Quartus} recognizes and implements with a global clock buffer rather than ordinary fabric routing.
 
 \subsection{The reset problem}
 
-The domain's reset is controlled by a single |sw_release| register bit, reachable from the main \term{Avalon-MM} bus running in the \term{sys\_clk} domain. A synchronizer for it cannot be built the ordinary way: logic sitting in the \term{PCLK} domain normally needs \term{PCLK} edges to deassert its reset cleanly, but \term{PCLK} itself does not exist while the camera is held in reset, so waiting on it to release its own gating reset would deadlock.
+The domain's reset is controlled by a single \hw{sw_release} register bit, reachable from the main \term{Avalon-MM} bus running in the \term{sys\_clk} domain. A synchronizer for it cannot be built the ordinary way: logic sitting in the \term{PCLK} domain normally needs \term{PCLK} edges to deassert its reset cleanly, but \term{PCLK} itself does not exist while the camera is held in reset, so waiting on it to release its own gating reset would deadlock.
 
-|pclk_reset_controller| resolves this by deriving two separate reset outputs from the same condition, |sys_reset_n| and |sw_release|:
+\hw{pclk_reset_controller} resolves this by deriving two separate reset outputs from the same condition, \hw{sys_reset_n} and \hw{sw_release}:
 
 \begin{itemize}
-    \item |camera_reset_n|: purely combinatorial, entirely in the \term{sys\_clk} domain, no dependency on \term{PCLK} at all. This drives the camera's physical reset pin directly, so it is what gets the camera running and \term{PCLK} toggling again.
-    \item |pclk_reset_n|: a two-flip-flop synchronizer, clocked on |pclk_in|, that brings the same condition into the \term{PCLK} domain for the acquisition logic. Assert is asynchronous, both flip-flops clear immediately when the condition drops, so the domain stays in reset even if \term{PCLK} stops ticking mid-frame, while deassert is synchronous, two clean \term{PCLK} edges after the camera comes back up, giving proper metastability protection for the moment \term{PCLK} starts again.
+    \item \hw{camera_reset_n}: purely combinatorial, entirely in the \term{sys\_clk} domain, no dependency on \term{PCLK} at all. This drives the camera's physical reset pin directly, so it is what gets the camera running and \term{PCLK} toggling again.
+    \item \hw{pclk_reset_n}: a two-flip-flop synchronizer, clocked on \hw{pclk_in}, that brings the same condition into the \term{PCLK} domain for the acquisition logic. Assert is asynchronous, both flip-flops clear immediately when the condition drops, so the domain stays in reset even if \term{PCLK} stops ticking mid-frame, while deassert is synchronous, two clean \term{PCLK} edges after the camera comes back up, giving proper metastability protection for the moment \term{PCLK} starts again.
 \end{itemize}
 
-Because |camera_reset_n| has no dependency on \term{PCLK}, releasing it is always safe regardless of whether \term{PCLK} is running.
+Because \hw{camera_reset_n} has no dependency on \term{PCLK}, releasing it is always safe regardless of whether \term{PCLK} is running.
 
 \subsection{Usage sequence}
 
 The dependency above dictates the order software has to follow:
 
 \begin{enumerate}
-    \item Write 0 to |sw_release|: both |camera_reset_n| and |pclk_reset_n| are held low.
-    \item Write 1 to |sw_release|: |camera_reset_n| rises immediately, releasing the camera; |pclk_reset_n| follows two \term{PCLK} edges later, once the camera starts driving \term{PCLK} again.
+    \item Write 0 to \hw{sw_release}: both \hw{camera_reset_n} and \hw{pclk_reset_n} are held low.
+    \item Write 1 to \hw{sw_release}: \hw{camera_reset_n} rises immediately, releasing the camera; \hw{pclk_reset_n} follows two \term{PCLK} edges later, once the camera starts driving \term{PCLK} again.
     \item Only once the camera is out of reset can it answer over \term{SCCB}, so its configuration has to come after this step, not before it.
 \end{enumerate}
 
 \longsection{The camera acquisition core}{\texttt{ov7670\_data\_interface}}
 \label{sec:fpgalix-acquisition-core}
 
-|ov7670_data_interface| is a custom \term{Platform Designer} component that turns the camera's \term{PCLK}/\term{HREF}/\term{VSYNC}/\term{D[7:0]} signals into the \term{Avalon-ST} stream the rest of the pipeline expects~\cite{OV7670-DS}. Both its \term{Avalon-ST} source and its \term{Avalon-MM} register interface run in the \term{PCLK} domain, the camera pixel clock. A single |ctrl| register lets software enable acquisition (|ctrl_enabled|), drive the camera's power-down pin (|ctrl_cam_pwdn|), and clear the dropped-frame counter (|ctrl_clear_counters|); a second, read-only register (|stat_dropped_cnt|) counts frames the core had to discard.
+\hw{ov7670_data_interface} is a custom \term{Platform Designer} component that turns the camera's \term{PCLK}/\term{HREF}/\term{VSYNC}/\term{D[7:0]} signals into the \term{Avalon-ST} stream the rest of the pipeline expects~\cite{OV7670-DS}. Both its \term{Avalon-ST} source and its \term{Avalon-MM} register interface run in the \term{PCLK} domain, the camera pixel clock. A single \hw{ctrl} register lets software enable acquisition (\hw{ctrl_enabled}), drive the camera's power-down pin (\hw{ctrl_cam_pwdn}), and clear the dropped-frame counter (\hw{ctrl_clear_counters}); a second, read-only register (\hw{stat_dropped_cnt}) counts frames the core had to discard.
 
-Because this register interface resides in the \term{PCLK} domain rather than \term{sys\_clk}, software cannot reach it directly from the \term{LW HPS} bridge: |mm_clock_crossing_bridge_0| sits between the two domains for exactly this purpose, translating an \term{Avalon-MM} access from \term{sys\_clk} into \term{PCLK} and back. It exists solely to give |ov7670_data_interface_0|'s register file a path from software; no other component in the design needs it.
+Because this register interface resides in the \term{PCLK} domain rather than \term{sys\_clk}, software cannot reach it directly from the \term{LW HPS} bridge: \hw{mm_clock_crossing_bridge_0} sits between the two domains for exactly this purpose, translating an \term{Avalon-MM} access from \term{sys\_clk} into \term{PCLK} and back. It exists solely to give \hw{ov7670_data_interface_0}'s register file a path from software; no other component in the design needs it.
 
-Functionally, the core forwards each active pixel byte onto the \term{Avalon-ST} bus as it arrives from the camera, treating an entire camera frame as a single \term{Avalon-ST} packet: |st_sop| marks its first byte, |st_eop| its last. As long as the downstream side keeps accepting data, this packet runs uninterrupted for the whole frame. If a backpressure event arrives instead, that is, the downstream side stops accepting data before the frame is complete, the core does not wait for it to recover: it abandons the frame in progress (drop), and inserts the \term{EOP} at the first opportunity, once the downstream side accepts data again, in place of the remaining pixel data. \term{mSGDMA} then terminates that transfer early, and software can tell the frame is incomplete from the number of bytes actually transferred, rather than being handed truncated pixel data as if it were a valid frame.
+Functionally, the core forwards each active pixel byte onto the \term{Avalon-ST} bus as it arrives from the camera, treating an entire camera frame as a single \term{Avalon-ST} packet: \hw{st_sop} marks its first byte, \hw{st_eop} its last. As long as the downstream side keeps accepting data, this packet runs uninterrupted for the whole frame. If a backpressure event arrives instead, that is, the downstream side stops accepting data before the frame is complete, the core does not wait for it to recover: it abandons the frame in progress (drop), and inserts the \term{EOP} at the first opportunity, once the downstream side accepts data again, in place of the remaining pixel data. \term{mSGDMA} then terminates that transfer early, and software can tell the frame is incomplete from the number of bytes actually transferred, rather than being handed truncated pixel data as if it were a valid frame.
 
 This behavior is implemented as a three-state machine, built directly on the \term{HREF}/\term{VSYNC} signaling described above:
 
@@ -137,30 +137,30 @@ This behavior is implemented as a three-state machine, built directly on the \te
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{WAIT\_SYNC}: the reset and idle state. It waits for |cam_vsync|'s falling edge, the frame-start marker from Figure~\ref{fig:ov7670-vtiming}, with acquisition enabled (|ctrl_enabled| = 1), and moves to ACQUIRE.
-    \item \textbf{ACQUIRE}: for every \term{PCLK} cycle with |cam_href = 1|, one byte of |cam_data| is transferred onto the \term{Avalon-ST} bus. |st_sop| is raised on the very first byte and |st_eop| on the |FRAME_SIZE|-th byte (|FRAME_SIZE| being a count of bytes, not pixels, see Figure~\ref{fig:ov7670-vtiming} and Figure~\ref{fig:ov7670-htiming}), closing the frame and returning to WAIT\_SYNC: the byte count, not the next \term{VSYNC} edge, is what ends the packet. If the downstream side deasserts |st_ready| at any point (backpressure), the core does not stall; it counts the frame as dropped and moves to WAIT\_READY instead.
-    \item \textbf{WAIT\_READY}: reached after a drop. The core waits for |st_ready| to return, then emits a bare |st_eop|, so the downstream FIFO can discard the incomplete packet cleanly, and goes back to WAIT\_SYNC. Each further \term{VSYNC} falling edge seen while still waiting counts as another dropped frame, so a downstream stall spanning several frames is reported accurately rather than silently
+    \item \textbf{WAIT\_SYNC}: the reset and idle state. It waits for \hw{cam_vsync}'s falling edge, the frame-start marker from Figure~\ref{fig:ov7670-vtiming}, with acquisition enabled (\hw{ctrl_enabled} = 1), and moves to ACQUIRE.
+    \item \textbf{ACQUIRE}: for every \term{PCLK} cycle with |cam_href = 1|, one byte of \hw{cam_data} is transferred onto the \term{Avalon-ST} bus. \hw{st_sop} is raised on the very first byte and \hw{st_eop} on the \ccode{FRAME_SIZE}-th byte (\ccode{FRAME_SIZE} being a count of bytes, not pixels, see Figure~\ref{fig:ov7670-vtiming} and Figure~\ref{fig:ov7670-htiming}), closing the frame and returning to WAIT\_SYNC: the byte count, not the next \term{VSYNC} edge, is what ends the packet. If the downstream side deasserts \hw{st_ready} at any point (backpressure), the core does not stall; it counts the frame as dropped and moves to WAIT\_READY instead.
+    \item \textbf{WAIT\_READY}: reached after a drop. The core waits for \hw{st_ready} to return, then emits a bare \hw{st_eop}, so the downstream FIFO can discard the incomplete packet cleanly, and goes back to WAIT\_SYNC. Each further \term{VSYNC} falling edge seen while still waiting counts as another dropped frame, so a downstream stall spanning several frames is reported accurately rather than silently
 swallowed.
 \end{itemize}
 
 \longsection{The Avalon-ST pipeline}{from \texttt{ov7670\_data\_interface} to \term{mSGDMA}}
 
-Section~\ref{sec:fpgalix-overview} established the rationale for streaming pixel data from the camera to \term{mSGDMA} over \term{Avalon-ST}, such that the \term{HPS} is limited to configuring a transfer and being notified upon its completion. This chapter examines that stream in detail, from |ov7670_data_interface_0.st_source| to the write into \term{HPS} \term{DDR3}; the corresponding block diagram is provided in Section~\ref{sec:fpgalix-hex-display}.
+Section~\ref{sec:fpgalix-overview} established the rationale for streaming pixel data from the camera to \term{mSGDMA} over \term{Avalon-ST}, such that the \term{HPS} is limited to configuring a transfer and being notified upon its completion. This chapter examines that stream in detail, from \hw{ov7670_data_interface_0.st_source} to the write into \term{HPS} \term{DDR3}; the corresponding block diagram is provided in Section~\ref{sec:fpgalix-hex-display}.
 
 \subsection{The pipeline}
 
-The stream traverses |ov7670_data_interface_0|, |dc_fifo_0|, |st_adapter_0|, |sc_fifo_0|, and |msgdma_0|, in that order. Of these components, only |dc_fifo_0| spans a clock-domain boundary: its |in_clk| input is driven by |pclk_out| from |pclk_reset_controller_0|, while its |out_clk| output is driven by |sys_clk|. Every component downstream of |dc_fifo_0|, namely |st_adapter_0|, |sc_fifo_0|, and |msgdma_0|, operates entirely within the |sys_clk| domain.
+The stream traverses \hw{ov7670_data_interface_0}, \hw{dc_fifo_0}, \hw{st_adapter_0}, \hw{sc_fifo_0}, and \hw{msgdma_0}, in that order. Of these components, only \hw{dc_fifo_0} spans a clock-domain boundary: its \hw{in_clk} input is driven by \hw{pclk_out} from \hw{pclk_reset_controller_0}, while its \hw{out_clk} output is driven by \hw{sys_clk}. Every component downstream of \hw{dc_fifo_0}, namely \hw{st_adapter_0}, \hw{sc_fifo_0}, and \hw{msgdma_0}, operates entirely within the \hw{sys_clk} domain.
 
 \subsection{Clock-domain crossing: \texttt{dc\_fifo\_0}}
 
-The clock domain crossing is performed at this point, immediately following the camera acquisition core and prior to any width conversion, for two reasons. First, crossing an 8-bit stream requires substantially less synchronization logic than crossing a wider stream, since a dual-clock FIFO requires synchronizers proportional to its data width. Second, this arrangement confines the dependency on |pclk|, whose frequency varies with the camera's output format and which ceases entirely while the camera is held in reset, to the smallest possible portion of the design; every subsequent stage operates against a single, stable clock.
+The clock domain crossing is performed at this point, immediately following the camera acquisition core and prior to any width conversion, for two reasons. First, crossing an 8-bit stream requires substantially less synchronization logic than crossing a wider stream, since a dual-clock FIFO requires synchronizers proportional to its data width. Second, this arrangement confines the dependency on \hw{pclk}, whose frequency varies with the camera's output format and which ceases entirely while the camera is held in reset, to the smallest possible portion of the design; every subsequent stage operates against a single, stable clock.
 
-|dc_fifo_0| is configured with a depth of 65536 entries at 8 bits, providing an elastic buffer sufficient to absorb the rate difference between |pclk| and |sys_clk|, as well as transient stalls on the |sys_clk| side, without requiring backpressure to propagate to the camera interface. Backpressure that does reach |ov7670_data_interface|'s own FSM is instead handled by discarding the affected frame rather than stalling.
+\hw{dc_fifo_0} is configured with a depth of 65536 entries at 8 bits, providing an elastic buffer sufficient to absorb the rate difference between \hw{pclk} and \hw{sys_clk}, as well as transient stalls on the \hw{sys_clk} side, without requiring backpressure to propagate to the camera interface. Backpressure that does reach \hw{ov7670_data_interface}'s own FSM is instead handled by discarding the affected frame rather than stalling.
 
 \subsection{Width conversion: \texttt{st\_adapter\_0}}
 \label{subsec:fpgalix-st-adapter}
 
-|st_adapter_0| converts the stream from 8-bit, single-symbol beats to 128-bit, 16-symbol beats. Performing this conversion after the clock-domain crossing, rather than before it, keeps the synchronization logic in |dc_fifo_0| narrow while providing |msgdma_0| and its destination, \term{HPS} \term{DDR3}, with the wide beats their burst mechanisms are designed around: a 128-bit \term{Avalon-MM} write makes substantially more efficient use of \term{SDRAM} burst bandwidth than the equivalent data transferred one byte at a time.
+\hw{st_adapter_0} converts the stream from 8-bit, single-symbol beats to 128-bit, 16-symbol beats. Performing this conversion after the clock-domain crossing, rather than before it, keeps the synchronization logic in \hw{dc_fifo_0} narrow while providing \hw{msgdma_0} and its destination, \term{HPS} \term{DDR3}, with the wide beats their burst mechanisms are designed around: a 128-bit \term{Avalon-MM} write makes substantially more efficient use of \term{SDRAM} burst bandwidth than the equivalent data transferred one byte at a time.
 
 \subsection{Buffering: \texttt{sc\_fifo\_0}}
 \label{subsec:fpgalix-sc-fifo}
@@ -179,7 +179,7 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
     \label{fig:fpgalix-hps-sdram}
 \end{figure}
 
-|msgdma_0| reaches \term{DDR3} through |hps_0_bridges.f2h_sdram1_data|, one of these dedicated \term{FPGA}-to-\term{HPS} \term{SDRAM} command ports. This path does not traverse the \term{L3} interconnect, the \term{ARM} \term{NIC-301} switch that carries \term{MPU} and \term{HPS}-to-\term{FPGA} bridge traffic, at all: it enters the \term{MPFE} as an independent command port and is arbitrated only against the other nine \term{MPFE} ports. Reaching \term{DDR3} through the \term{HPS}-to-\term{FPGA} bridge instead would place the traffic on that same \term{L3} switch, since the bridge is itself mastered by the \term{L3} main switch, competing for the interconnect bandwidth the \term{MPU} depends on. The dedicated \term{SDRAM} port avoids that competition entirely; the only resource |msgdma_0| shares with the \term{CPU} is the \term{MPFE} arbiter and the \term{DDR3} device itself.
+\hw{msgdma_0} reaches \term{DDR3} through \hw{hps_0_bridges.f2h_sdram1_data}, one of these dedicated \term{FPGA}-to-\term{HPS} \term{SDRAM} command ports. This path does not traverse the \term{L3} interconnect, the \term{ARM} \term{NIC-301} switch that carries \term{MPU} and \term{HPS}-to-\term{FPGA} bridge traffic, at all: it enters the \term{MPFE} as an independent command port and is arbitrated only against the other nine \term{MPFE} ports. Reaching \term{DDR3} through the \term{HPS}-to-\term{FPGA} bridge instead would place the traffic on that same \term{L3} switch, since the bridge is itself mastered by the \term{L3} main switch, competing for the interconnect bandwidth the \term{MPU} depends on. The dedicated \term{SDRAM} port avoids that competition entirely; the only resource \hw{msgdma_0} shares with the \term{CPU} is the \term{MPFE} arbiter and the \term{DDR3} device itself.
 
 \begin{figure}[htbp]
     \centering
@@ -190,16 +190,16 @@ The \term{HPS} \term{SDRAM} controller is built around a multi-port front end (\
 
 \subsection{\term{mSGDMA}: from \term{Avalon-ST} to \term{DDR3}}
 
-|msgdma_0| reads from |sc_fifo_0.out| on its \term{Avalon-ST} sink and writes each 128-bit beat through its \term{Avalon-MM} write master into \term{HPS} \term{DDR3}, via |hps_0_bridges.f2h_sdram1_data|. With bursting enabled and a maximum burst count of 512 beats, a single burst can transfer up to 8 \term{KiB}, which is the justification for the wide data path established in Paragraphs~\ref{subsec:fpgalix-st-adapter} and \ref{subsec:fpgalix-sc-fifo}.
+\hw{msgdma_0} reads from \hw{sc_fifo_0.out} on its \term{Avalon-ST} sink and writes each 128-bit beat through its \term{Avalon-MM} write master into \term{HPS} \term{DDR3}, via \hw{hps_0_bridges.f2h_sdram1_data}. With bursting enabled and a maximum burst count of 512 beats, a single burst can transfer up to 8 \term{KiB}, which is the justification for the wide data path established in Paragraphs~\ref{subsec:fpgalix-st-adapter} and \ref{subsec:fpgalix-sc-fifo}.
 
-Software drives \term{mSGDMA} through three interfaces reached over the \term{LW HPS} bridge: |csr|, |descriptor_slave|, and |response|. Each transfer begins with the \term{HPS} building a descriptor, specifying a destination address in \term{DDR3} and a transfer length, and writing its fields directly into the |descriptor_slave| port; the data written is only staged, not yet acted upon, until the descriptor's \term{Go} bit is written, which commits the complete descriptor into the core's internal descriptor \term{FIFO}. Queued descriptors are then processed autonomously, and on completion of each one the \term{HPS} is notified both through an interrupt and by a status write to the |response| port, giving the operating model introduced in the first paragraph of this document: the \term{HPS} only configures a transfer and is notified upon its completion.
+Software drives \term{mSGDMA} through three interfaces reached over the \term{LW HPS} bridge: \hw{csr}, \hw{descriptor_slave}, and \ccode{response}. Each transfer begins with the \term{HPS} building a descriptor, specifying a destination address in \term{DDR3} and a transfer length, and writing its fields directly into the \hw{descriptor_slave} port; the data written is only staged, not yet acted upon, until the descriptor's \term{Go} bit is written, which commits the complete descriptor into the core's internal descriptor \term{FIFO}. Queued descriptors are then processed autonomously, and on completion of each one the \term{HPS} is notified both through an interrupt and by a status write to the \ccode{response} port, giving the operating model introduced in the first paragraph of this document: the \term{HPS} only configures a transfer and is notified upon its completion.
 
-Packet support is enabled on this instance specifically, so that an incoming |st_eop| can terminate a transfer instead of relying solely on a fixed byte count: the descriptor's length field then stops being the exact transfer size and becomes an upper bound instead, with the transfer actually ending when \term{mSGDMA} observes |st_eop| on its sink. This is precisely why |ov7670_data_interface| frames the stream with |st_sop| and |st_eop| in the first place (Section~\ref{sec:fpgalix-acquisition-core}): a complete frame closes its own descriptor via |st_eop| at |FRAME_SIZE| bytes, while the bare |st_eop| emitted for a dropped frame closes the descriptor early, before |FRAME_SIZE| bytes have been transferred. The |response| port reports the actual number of bytes transferred between |st_sop| and |st_eop| for each descriptor, which is how software distinguishes a short, dropped frame from a complete one.
+Packet support is enabled on this instance specifically, so that an incoming \hw{st_eop} can terminate a transfer instead of relying solely on a fixed byte count: the descriptor's length field then stops being the exact transfer size and becomes an upper bound instead, with the transfer actually ending when \term{mSGDMA} observes \hw{st_eop} on its sink. This is precisely why \hw{ov7670_data_interface} frames the stream with \hw{st_sop} and \hw{st_eop} in the first place (Section~\ref{sec:fpgalix-acquisition-core}): a complete frame closes its own descriptor via \hw{st_eop} at \ccode{FRAME_SIZE} bytes, while the bare \hw{st_eop} emitted for a dropped frame closes the descriptor early, before \ccode{FRAME_SIZE} bytes have been transferred. The \ccode{response} port reports the actual number of bytes transferred between \hw{st_sop} and \hw{st_eop} for each descriptor, which is how software distinguishes a short, dropped frame from a complete one.
 
 \longsection{The 7-segment displays}{\texttt{hex\_display\_controller}}
 \label{sec:fpgalix-hex-display}
 
-The \term{DE1-SoC}'s six 7-segment displays are driven by |hex_display_controller|, a custom \term{Platform Designer} component. A single register controls all six displays together, and any six-digit decimal number written to it is displayed accordingly.
+The \term{DE1-SoC}'s six 7-segment displays are driven by \hw{hex_display_controller}, a custom \term{Platform Designer} component. A single register controls all six displays together, and any six-digit decimal number written to it is displayed accordingly.
 
 \subsection{Register interface}
 \label{sec:fpgalix-hex-register}
@@ -207,7 +207,7 @@ The \term{DE1-SoC}'s six 7-segment displays are driven by |hex_display_controlle
 The component exposes a single 32-bit \term{Avalon-MM} register on the \term{LW HPS}-to-\term{FPGA} bridge, with the following layout:
 
 \begin{itemize}
-    \item bit 31: |enabled| (1 displays the value below, 0 blanks every digit)
+    \item bit 31: \ccode{enabled} (1 displays the value below, 0 blanks every digit)
     \item bits [19:0]: the value to be displayed, in the range 0...999999
     \item any value above 999999 in bits [19:0] forces every digit to a dash, provided bit 31 is set; if bit 31 is clear, every digit is blanked regardless of this value
 \end{itemize}
@@ -219,7 +219,7 @@ The 20-bit binary value is converted to six \term{BCD} digits using the \term{Do
 \section{System overview}
 \label{sec:fpgalix-system-overview}
 
-The diagram in Figure~\ref{fig:fpgalix-system-overview} is the complete \term{Platform Designer} system (|soc_system.qsys|), placing the blocks discussed in the preceding chapters within the wider system: the \term{HPS}, its lightweight and full bridges into the \term{FPGA} fabric, and the \term{DE1-SoC} peripherals wired directly to dedicated \term{HPS} pins.
+The diagram in Figure~\ref{fig:fpgalix-system-overview} is the complete \term{Platform Designer} system (\repopath{soc_system.qsys}), placing the blocks discussed in the preceding chapters within the wider system: the \term{HPS}, its lightweight and full bridges into the \term{FPGA} fabric, and the \term{DE1-SoC} peripherals wired directly to dedicated \term{HPS} pins.
 
 Several blocks shown here are not covered by a dedicated chapter: the \term{LED}, \term{switch}, and \term{key} \term{PIOs}, the \term{System ID} core, the \term{JTAG UART}, the \term{Interrupt Latency Counter}, and the \term{HPS} peripherals wired to their own dedicated pins (\term{Ethernet}, \term{USB}, \term{SD/MMC}, \term{QSPI} flash, and the various serial buses). None of these originate from this project's own design work; they were inherited and combined from the \term{Cyclone V} \term{Golden Hardware Reference Design} \cite{GHRD} and from the \term{DE1-SoC} \term{Embedded Linux} Systems guide \cite{UPM-DE1}, the two starting points this system was built from, and are documented no further here. The chapters above account for everything specific to this project: the camera, its clocking, the path from acquisition to \term{DDR3}, and the 7-segment displays.
 

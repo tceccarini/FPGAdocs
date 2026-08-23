@@ -53,7 +53,7 @@
 \usepackage{xcolor}
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
 \newcommand{\term}[1]{\textsf{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
-\newcommand{\sysname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
+\newcommand{\prjname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
 
 % Glossary (Appendix C): the key (term) and the body (definition) of each entry
 % are styled centrally here, so a global look change needs editing only this file.
@@ -93,6 +93,10 @@
     urlcolor=blue,
     bookmarksnumbered=true,
 }
+
+\let\urlpath\path   % \path (from the url package, via hyperref) under a clearer name:
+                     % typesets an identifier/token verbatim in tt style, e.g. a VS Code
+                     % extension ID -- \urlpath{ms-vscode.cpptools}
 
 % ------------------------------------------------------------
 % C++ code blocks: code in black, only comments in color (clean for a thesis)
@@ -199,3 +203,98 @@
 
 % Usage in running text:
 %   The function |int compute(int x)| returns...
+
+% ------------------------------------------------------------
+% Category-colored inline code: same idea as |code| above, but tinted by
+% semantic category to make scanning easier. Each style below inherits
+% from githubcppinline (language, wrapping, ...) and overrides every
+% text-bearing key -- basicstyle, identifierstyle, keywordstyle,
+% commentstyle, stringstyle -- to the category color; leaving any one of
+% them unset falls back to githubcpp's black identifierstyle, silently
+% recoloring plain words back to black.
+%
+% Unlike |code|, these can't be lstMakeShortInline delimiters (one desired
+% pair, catFilesystem's two shades, would need two different delimiter
+% characters that still had to be remembered) -- they're plain macros
+% wrapping \lstinline[style=...]{...} instead. \lstinline's brace form
+% re-tokenizes its argument in verbatim mode same as its short-inline form,
+% so it survives being passed through a \newcommand argument.
+%
+%   \extpath{...}   filesystem path outside the repository
+%   \repopath{...}  filesystem path inside the repository
+%   \ccode{...}     C/C++ code (functions, classes, members, macros)
+%   \cmd{...}       a command/executable found on PATH
+%   \cmdpath{...}   a command/executable NOT on PATH (run via explicit path)
+%   \hw{...}        hardware/FPGA (peripherals, Qsys signals, registers, Kconfig)
+%   \sysid{...}     system-level identifier (env vars, users, groups)
+
+\definecolor{catFilesystem}{HTML}{A9720B}
+\definecolor{catCode}{HTML}{7B4FA6}
+\definecolor{catCommand}{HTML}{2E8B57}
+\definecolor{catHardware}{HTML}{8E3B75}
+\definecolor{catSystem}{HTML}{5B6B73}
+
+\lstdefinestyle{inlineFsExt}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catFilesystem!55!white},
+    identifierstyle=\color{catFilesystem!55!white},
+    keywordstyle=\color{catFilesystem!55!white},
+    commentstyle=\color{catFilesystem!55!white},
+    stringstyle=\color{catFilesystem!55!white},
+}
+\lstdefinestyle{inlineFsRepo}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catFilesystem!85!black},
+    identifierstyle=\color{catFilesystem!85!black},
+    keywordstyle=\color{catFilesystem!85!black},
+    commentstyle=\color{catFilesystem!85!black},
+    stringstyle=\color{catFilesystem!85!black},
+}
+\lstdefinestyle{inlineCode}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catCode},
+    identifierstyle=\color{catCode},
+    keywordstyle=\color{catCode},
+    commentstyle=\color{catCode},
+    stringstyle=\color{catCode},
+}
+\lstdefinestyle{inlineCmd}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catCommand!55!white},
+    identifierstyle=\color{catCommand!55!white},
+    keywordstyle=\color{catCommand!55!white},
+    commentstyle=\color{catCommand!55!white},
+    stringstyle=\color{catCommand!55!white},
+}
+\lstdefinestyle{inlineCmdExt}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catCommand!85!black},
+    identifierstyle=\color{catCommand!85!black},
+    keywordstyle=\color{catCommand!85!black},
+    commentstyle=\color{catCommand!85!black},
+    stringstyle=\color{catCommand!85!black},
+}
+\lstdefinestyle{inlineHw}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catHardware},
+    identifierstyle=\color{catHardware},
+    keywordstyle=\color{catHardware},
+    commentstyle=\color{catHardware},
+    stringstyle=\color{catHardware},
+}
+\lstdefinestyle{inlineSys}{
+    style=githubcppinline,
+    basicstyle=\ttfamily\small\color{catSystem},
+    identifierstyle=\color{catSystem},
+    keywordstyle=\color{catSystem},
+    commentstyle=\color{catSystem},
+    stringstyle=\color{catSystem},
+}
+
+\newcommand{\extpath}[1]{\lstinline[style=inlineFsExt]{#1}}
+\newcommand{\repopath}[1]{\lstinline[style=inlineFsRepo]{#1}}
+\newcommand{\ccode}[1]{\lstinline[style=inlineCode]{#1}}
+\newcommand{\cmd}[1]{\lstinline[style=inlineCmd]{#1}}
+\newcommand{\cmdpath}[1]{\lstinline[style=inlineCmdExt]{#1}}
+\newcommand{\hw}[1]{\lstinline[style=inlineHw]{#1}}
+\newcommand{\sysid}[1]{\lstinline[style=inlineSys]{#1}}

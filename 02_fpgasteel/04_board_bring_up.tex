@@ -3,7 +3,7 @@
 
 \section{Introduction}
 
-This chapter brings up the \term{DE1-SoC} board. It builds the bootloader and the \term{FPGA} bitstream, and prepares the bootable \term{SD} card that the example programs of the following chapters are loaded from. The discussion begins with an overview of the board's boot chain, from reset to a running bare-metal application (Section~\ref{sec:fpgasteel-board-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Unlike \sysname{FPGAlix}, no \term{Linux} kernel or root filesystem is involved: \term{U-Boot} loads the compiled application directly, either as a |.bin| from the \term{SD} card at standalone boot or as an |.elf| pushed over \term{JTAG} for debugging. The chapter also covers generating the \term{FPGA} bitstream and the two boot scripts that select between these paths, before closing by assembling the bootloader, the bitstream and a boot script onto a bootable \term{SD} card, producing a working baseline ready for the examples developed in the remaining chapters.
+This chapter brings up the \term{DE1-SoC} board. It builds the bootloader and the \term{FPGA} bitstream, and prepares the bootable \term{SD} card that the example programs of the following chapters are loaded from. The discussion begins with an overview of the board's boot chain, from reset to a running bare-metal application (Section~\ref{sec:fpgasteel-board-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Unlike \prjname{FPGAlix}, no \term{Linux} kernel or root filesystem is involved: \term{U-Boot} loads the compiled application directly, either as a \repopath{.bin} from the \term{SD} card at standalone boot or as an \repopath{.elf} pushed over \term{JTAG} for debugging. The chapter also covers generating the \term{FPGA} bitstream and the two boot scripts that select between these paths, before closing by assembling the bootloader, the bitstream and a boot script onto a bootable \term{SD} card, producing a working baseline ready for the examples developed in the remaining chapters.
 
 \begin{table}[htbp]
 \centering
@@ -49,7 +49,7 @@ A number of \term{apt} packages are also required, for building the bootloader a
 
 Even for a bare-metal application, the \term{HPS} cannot jump straight to user code out of reset: the \term{ARM} core has no working \term{DRAM}, clocks or pin muxing yet, and those can only be brought up by running code from on-chip \term{RAM} first. The bootloader (\term{SPL} + \term{U-Boot}) performs this early hardware init and then loads the bare-metal application into \term{DDR}; it is not tied to running \term{Linux}.
 
-On reset, the fixed-function \term{Boot ROM} samples the |BSEL[2:0]| pins to pick the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback; see \cite[``Boot Select'']{CV-TRM}). On the \term{DE1-SoC}, |HPS_BOOTSEL[2:0]| is hardwired on the \term{PCB} to 101 (boot from \term{SD/MMC}) \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type A2) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands off to \term{SPL}, which brings up clocks, pin muxing and \term{DDR}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}, which loads and starts the bare-metal application from wherever it is at that point: as an |.elf| pushed over \term{JTAG} when debugging (e.g.\ from \term{Eclipse}/\term{OpenOCD}, \term{U-Boot} only needs to have brought up \term{DDR}), or as a raw |.bin| read from the \term{SD} card boot partition when booting standalone.
+On reset, the fixed-function \term{Boot ROM} samples the \hw{BSEL[2:0]} pins to pick the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback; see \cite[``Boot Select'']{CV-TRM}). On the \term{DE1-SoC}, \hw{HPS_BOOTSEL[2:0]} is hardwired on the \term{PCB} to 101 (boot from \term{SD/MMC}) \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type A2) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands off to \term{SPL}, which brings up clocks, pin muxing and \term{DDR}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}, which loads and starts the bare-metal application from wherever it is at that point: as an \repopath{.elf} pushed over \term{JTAG} when debugging (e.g.\ from \term{Eclipse}/\term{OpenOCD}, \term{U-Boot} only needs to have brought up \term{DDR}), or as a raw \repopath{.bin} read from the \term{SD} card boot partition when booting standalone.
 
 \begin{figure}[htbp]
     \centering
@@ -61,19 +61,19 @@ On reset, the fixed-function \term{Boot ROM} samples the |BSEL[2:0]| pins to pic
 \section{Bootloader generation flow}
 \label{sec:fpgasteel-bootloader-generation}
 
-Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build flow no longer relies on |bsp-editor| to configure and generate \term{U-Boot}. The current flow is:
+Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build flow no longer relies on \cmdpath{bsp-editor} to configure and generate \term{U-Boot}. The current flow is:
 
 \begin{enumerate}
     \item Compile the hardware project in \term{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \term{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
-    \item Run |cv_bsp_generator.py| \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) on the handoff folder: it generates the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
+    \item Run \cmd{cv_bsp_generator.py} \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) on the handoff folder: it generates the board-specific header files (\repopath{pinmux_config.h}, \repopath{pll_config.h}, \repopath{sdram_config.h}, \repopath{iocsr_config.h}).
     \item Copy these headers into \term{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
-    \item Run |make| to build the bootloader image.
+    \item Run \cmdpath{make} to build the bootloader image.
 \end{enumerate}
 
-\textbf{Note:} in other projects this flow normally starts by cloning the \term{U-Boot} source from \term{GitHub}. In \sysname{FPGAsteel} this step is not needed: |repos/u-boot-socfpga| \cite{SUB-UBOOT} is already tracked as a \term{git} submodule (see |.gitmodules|), so the source is already in place after |git submodule update --init|.
+\textbf{Note:} in other projects this flow normally starts by cloning the \term{U-Boot} source from \term{GitHub}. In \prjname{FPGAsteel} this step is not needed: \repopath{repos/u-boot-socfpga} \cite{SUB-UBOOT} is already tracked as a \term{git} submodule (see \repopath{.gitmodules}), so the source is already in place after \cmdpath{git submodule update --init}.
 
 \begin{warningbox}
-    \term{Platform Designer}'s \term{IP} search path (Tools > Options > IP Catalog, ``IP Search Path'') is a \term{Quartus}-wide setting, not scoped to a single project. Every custom component this design uses (|pclk_reset_controller|, |ov7670_data_interface|, |avalon_st_64_to_24_repacker|, |pll_lock_reset_sync|, Hardware Overview~\ref{chap:fpgasteel-hw-overview}) lives under |hw/my_vhdl/qsys_components/|, and \term{Platform Designer} can only resolve them if that folder is listed there. Check this setting, not just the first time on a new machine, but every time you switch between working on \sysname{FPGAsteel} and \sysname{FPGAlix} on the same machine: each project has its own |hw/my_vhdl/qsys_components/|, and a search path left pointing at the other project's folder will make step 1 above fail.
+    \term{Platform Designer}'s \term{IP} search path (Tools > Options > IP Catalog, ``IP Search Path'') is a \term{Quartus}-wide setting, not scoped to a single project. Every custom component this design uses (\hw{pclk_reset_controller}, \hw{ov7670_data_interface}, \hw{avalon_st_64_to_24_repacker}, \hw{pll_lock_reset_sync}, Hardware Overview~\ref{chap:fpgasteel-hw-overview}) lives under \repopath{hw/my_vhdl/qsys_components/}, and \term{Platform Designer} can only resolve them if that folder is listed there. Check this setting, not just the first time on a new machine, but every time you switch between working on \prjname{FPGAsteel} and \prjname{FPGAlix} on the same machine: each project has its own \repopath{hw/my_vhdl/qsys_components/}, and a search path left pointing at the other project's folder will make step 1 above fail.
 \end{warningbox}
 
 \begin{figure}[htbp]
@@ -86,14 +86,14 @@ Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build
 \section{Getting the repository}
 \label{sec:fpgasteel-getting-repository}
 
-The sections that follow assume the \sysname{FPGAsteel} repository is already cloned locally. Here's how, submodules included:
+The sections that follow assume the \prjname{FPGAsteel} repository is already cloned locally. Here's how, submodules included:
 
 \begin{shellcode}
 git clone --recurse-submodules https://github.com/tceccarini/FPGAsteel.git
 cd FPGAsteel
 \end{shellcode}
 
-|--recurse-submodules| makes \term{git} also clone every submodule listed in |.gitmodules| right away --- these live under |repos/| (including |u-boot-socfpga|, needed in the next section). Without it, those folders would be created but left empty.
+\cmdpath{--recurse-submodules} makes \term{git} also clone every submodule listed in \repopath{.gitmodules} right away --- these live under \repopath{repos/} (including |u-boot-socfpga|, needed in the next section). Without it, those folders would be created but left empty.
 
 \section{Building the bootloader (U-Boot)}
 \label{sec:fpgasteel-building-bootloader}
@@ -103,7 +103,7 @@ These are the concrete commands behind Figure~\ref{fig:fpgasteel-bootloader-gene
 \subsection{Generate the BSP headers from the Quartus handoff}
 \label{subsec:fpgasteel-bsp-headers}
 
-Compiling the hardware project makes \term{Quartus} export the \term{HPS} configuration as \term{XML} under the handoff folder placed at |hw/quartus/hps_isw_handoff/soc_system_hps_0/|. Convert this into the \term{C} headers \term{U-Boot} needs by running:
+Compiling the hardware project makes \term{Quartus} export the \term{HPS} configuration as \term{XML} under the handoff folder placed at \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. Convert this into the \term{C} headers \term{U-Boot} needs by running:
 
 \begin{shellcode}
 python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py \
@@ -133,14 +133,14 @@ make -j$(nproc)
 \subsection{Result}
 \label{subsec:fpgasteel-build-result}
 
-The build produces |repos/u-boot-socfpga/u-boot-with-spl.sfp|, an image combining \term{SPL} and \term{U-Boot} in the \term{Altera} \term{SoCFPGA} format. This will be the file written raw to the \term{SD} card's boot partition (see Figure~\ref{fig:fpgasteel-boot-chain}), covered in a dedicated section on preparing the \term{SD} card.
+The build produces \repopath{repos/u-boot-socfpga/u-boot-with-spl.sfp}, an image combining \term{SPL} and \term{U-Boot} in the \term{Altera} \term{SoCFPGA} format. This will be the file written raw to the \term{SD} card's boot partition (see Figure~\ref{fig:fpgasteel-boot-chain}), covered in a dedicated section on preparing the \term{SD} card.
 
 \section{Generating the FPGA bitstream (RBF)}
 \label{sec:fpgasteel-generating-bitstream}
 
 The \term{FPGA} fabric on the \term{DE1-SoC} can be configured through several paths: over \term{JTAG} from \term{Quartus}, over \term{JTAG} via \term{OpenOCD}, or by the \term{HPS} itself at boot through the \term{FPGA Manager}.
 
-\sysname{FPGAsteel} uses the last one: during software development, \term{U-Boot} loads a bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager} before handing off to the application. Which path is used is a hardware setting, selected by \term{MSEL}.
+\prjname{FPGAsteel} uses the last one: during software development, \term{U-Boot} loads a bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager} before handing off to the application. Which path is used is a hardware setting, selected by \term{MSEL}.
 
 \subsection{MSEL configuration (SW10)}
 \label{subsec:fpgasteel-msel}
@@ -174,19 +174,19 @@ With \term{MSEL[4:0]} = 00000, the \term{FPGA} is configured by the \term{HPS} v
 \subsection{Converting the SOF to RBF}
 \label{subsec:fpgasteel-sof-to-rbf}
 
-\term{Quartus} compiles the hardware project into a |.sof| (\term{SRAM} Object File), the full \term{FPGA} configuration, in a format only \term{Quartus}/\term{JTAG} tools understand. The \term{FPGA Manager} instead needs an |.rbf| (Raw Binary File), a stripped-down version of the same configuration. Convert it from the root of the repository:
+\term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM} Object File), the full \term{FPGA} configuration, in a format only \term{Quartus}/\term{JTAG} tools understand. The \term{FPGA Manager} instead needs an \repopath{.rbf} (Raw Binary File), a stripped-down version of the same configuration. Convert it from the root of the repository:
 
 \begin{shellcode}
 quartus_cpf -c hw/quartus/output_files/FPGAsteel.sof \
 sdcard/boot_partition/soc_system.rbf
 \end{shellcode}
 
-The output lands directly under |sdcard/boot_partition/|, next to the other files that will end up on the \term{SD} card's boot partition.
+The output lands directly under \repopath{sdcard/boot_partition/}, next to the other files that will end up on the \term{SD} card's boot partition.
 
 \section{Boot scripts}
 \label{sec:fpgasteel-boot-scripts}
 
-\term{U-Boot} does not run a compiled \term{ELF} (or binary) directly at standalone boot: it runs a small boot script first, which tells it what to load and how to start it. \sysname{FPGAsteel} ships two of them under |sw/|, for different scenarios:
+\term{U-Boot} does not run a compiled \term{ELF} (or binary) directly at standalone boot: it runs a small boot script first, which tells it what to load and how to start it. \prjname{FPGAsteel} ships two of them under \repopath{sw/}, for different scenarios:
 
 \begin{table}[htbp]
 \centering
@@ -194,17 +194,17 @@ The output lands directly under |sdcard/boot_partition/|, next to the other file
 \toprule
 \textbf{Script} & \textbf{Purpose} \\
 \midrule
-|multiboot.script| & Standalone boot. Shows a menu of the built example apps, loads the \term{FPGA} bitstream, loads the chosen app's |.bin| from the boot partition, and jumps to it with |go|. This is the ``Standalone: .bin'' path in Figure~\ref{fig:fpgasteel-boot-chain}. \\
-|boot.script.jtag_debug| & One-time setup for \term{JTAG} debugging. Programs the \term{FPGA}, disables \term{U-Boot}'s caches, and halts with a message, ready for \term{OpenOCD}/\term{GDB} to load the \term{ELF}. This is the ``Debug: .elf'' path in Figure~\ref{fig:fpgasteel-boot-chain}. Used by every debug session, regardless of whether the example being debugged enables its own caches at runtime. \\
+\repopath{multiboot.script} & Standalone boot. Shows a menu of the built example apps, loads the \term{FPGA} bitstream, loads the chosen app's \repopath{.bin} from the boot partition, and jumps to it with \cmdpath{go}. This is the ``Standalone: .bin'' path in Figure~\ref{fig:fpgasteel-boot-chain}. \\
+\repopath{boot.script.jtag_debug} & One-time setup for \term{JTAG} debugging. Programs the \term{FPGA}, disables \term{U-Boot}'s caches, and halts with a message, ready for \term{OpenOCD}/\term{GDB} to load the \term{ELF}. This is the ``Debug: .elf'' path in Figure~\ref{fig:fpgasteel-boot-chain}. Used by every debug session, regardless of whether the example being debugged enables its own caches at runtime. \\
 \bottomrule
 \end{tabular}
-\caption{\term{U-Boot} boot scripts shipped with \sysname{FPGAsteel}.}
+\caption{\term{U-Boot} boot scripts shipped with \prjname{FPGAsteel}.}
 \label{tab:fpgasteel-boot-scripts}
 \end{table}
 
-Both are self-installing: on first run they rewrite \term{U-Boot}'s |bootcmd| environment variable and reboot, so from the second boot onward the board goes straight into that behavior without re-reading the script.
+Both are self-installing: on first run they rewrite \term{U-Boot}'s \sysid{bootcmd} environment variable and reboot, so from the second boot onward the board goes straight into that behavior without re-reading the script.
 
-Only one script can be active at a time, whichever one was last compiled to |u-boot.scr|, the fixed filename \term{U-Boot} looks for on the boot partition. Compile the one needed:
+Only one script can be active at a time, whichever one was last compiled to \repopath{u-boot.scr}, the fixed filename \term{U-Boot} looks for on the boot partition. Compile the one needed:
 
 \begin{shellcode}
 cd sw/
@@ -212,28 +212,28 @@ mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d multiboot.scrip
 ../sdcard/boot_partition/u-boot.scr
 \end{shellcode}
 
-Replace |multiboot.script| with |boot.script.jtag_debug| to switch boot mode. This step must be repeated every time you switch to a different script.
+Replace \repopath{multiboot.script} with \repopath{boot.script.jtag_debug} to switch boot mode. This step must be repeated every time you switch to a different script.
 
 \section{Preparing the SD card}
 \label{sec:fpgasteel-preparing-sd-card}
 
 \begin{warningbox}
-    This section involves low-level disk operations. A wrong device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on your machine. Always double-check every device path (|/dev/sdX|, |/dev/loopN|) before pressing Enter. When in doubt, stop and verify.
+    This section involves low-level disk operations. A wrong device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on your machine. Always double-check every device path (\extpath{/dev/sdX}, \extpath{/dev/loopN}) before pressing Enter. When in doubt, stop and verify.
 \end{warningbox}
 
-Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under |sdcard/|. Build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing |sdcard/images/sdcard.img| with the \term{SD} card device (e.g.\ |/dev/sdX|), skipping the image creation step and the final |dd|/\term{Etcher} write.
+Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under \repopath{sdcard/}. Build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing \repopath{sdcard/images/sdcard.img} with the \term{SD} card device (e.g.\ \extpath{/dev/sdX}), skipping the image creation step and the final \cmdpath{dd}/\term{Etcher} write.
 
 To write the final image to the \term{SD} card, use:
 
 \begin{itemize}
-    \item \term{Linux}: |dd| (see last step below)
+    \item \term{Linux}: \cmdpath{dd} (see last step below)
     \item \term{Windows}/\term{Mac}: \term{balenaEtcher}\footnote{\term{balenaEtcher} --- \url{https://etcher.balena.io/}}, free and open-source, just select the image and the target drive
 \end{itemize}
 
 \subsection{Create the image file}
 \label{subsec:fpgasteel-create-image}
 
-From the root of the repository, move into the |sdcard/| directory:
+From the root of the repository, move into the \repopath{sdcard/} directory:
 
 \begin{shellcode}
 cd sdcard/
@@ -255,7 +255,7 @@ Two partitions are needed: a \term{FAT32} boot partition (number 1) and a raw \t
 fdisk images/sdcard.img
 \end{shellcode}
 
-Within |fdisk|, enter the following commands in order:
+Within \cmdpath{fdisk}, enter the following commands in order:
 
 \begin{shellcode}
 o       # new MBR partition table
@@ -313,7 +313,7 @@ Find out which loop device was assigned:
 losetup -l
 \end{shellcode}
 
-Look for the entry with |sdcard.img| and note the device name (e.g.\ |/dev/loop2|). In all the commands below, replace |N| with the actual number.
+Look for the entry with \repopath{sdcard.img} and note the device name (e.g.\ \extpath{/dev/loop2}). In all the commands below, replace \ccode{N} with the actual number.
 
 \subsection{Format the partitions}
 \label{subsec:fpgasteel-format-partitions}
@@ -361,4 +361,4 @@ sudo dd if=images/sdcard.img of=/dev/sdX bs=4M status=progress
 sync
 \end{shellcode}
 
-Replace |/dev/sdX| with the actual \term{SD} card device. Double-check the target device before running: this command will overwrite it completely.
+Replace \extpath{/dev/sdX} with the actual \term{SD} card device. Double-check the target device before running: this command will overwrite it completely.

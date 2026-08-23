@@ -4,10 +4,10 @@
 \section{About this project}
 \label{sec:fpgasteel-i2c-about}
 
-|i2c_example| (under |sw/i2c_example|) checks that the \term{HPS} can communicate with the \term{OV7670} camera module over its control bus (\term{SCCB}, an \term{I\textsuperscript{2}C}-like protocol) before any actual camera driver is written. It:
+\cmd{i2c_example} (under \repopath{sw/i2c_example}) checks that the \term{HPS} can communicate with the \term{OV7670} camera module over its control bus (\term{SCCB}, an \term{I\textsuperscript{2}C}-like protocol) before any actual camera driver is written. It:
 
 \begin{itemize}
-    \item brings up the interrupt controller and \term{UART0}, as in |hello_word|;
+    \item brings up the interrupt controller and \term{UART0}, as in \cmd{hello_word};
     \item releases the camera from reset;
     \item reads the \term{OV7670}'s \term{PID} register over \term{SCCB} and prints it;
     \item spins forever.
@@ -18,7 +18,7 @@ On a working setup, the serial console prints |OV7670 PID = 0x76|, the \term{OV7
 \section{Prerequisites}
 \label{sec:fpgasteel-i2c-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}. In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under |hw/camera_adapter|.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}. In addition, the \term{OV7670} needs the custom camera adapter board (line buffer between the camera module and the \term{FPGA}) plugged into the \term{GPIO\_0} header on the \term{DE1-SoC}; schematics, bill of materials and photographs are in Appendix~\ref{app:camera-adapter-board}; the \term{PCB} files are under \repopath{hw/camera_adapter}.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -28,11 +28,11 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-i2c-hardware}
 
-Software communicates with the camera over \term{SCCB} through two modules placed in \term{Platform Designer} (|hw/quartus/soc_system.qsys|), each under its own instance name:
+Software communicates with the camera over \term{SCCB} through two modules placed in \term{Platform Designer} (\repopath{hw/quartus/soc_system.qsys}), each under its own instance name:
 
 \begin{itemize}
-    \item \textbf{\texttt{ov7670\_ctrl\_interface}:} an instance of \term{Altera}/\term{Intel}'s |altera_avalon_i2c| \term{IP}, used as the \term{I\textsuperscript{2}C}/\term{SCCB} master.
-    \item \textbf{\texttt{ov7670\_PCLK\_reset\_controller}:} a custom \term{IP} (|pclk_reset_controller|, inherited unchanged from \sysname{FPGAlix} and renamed here, not part of \term{Altera}/\term{Intel}'s \term{IP} catalog) that holds the camera in reset. While in reset, the camera doesn't drive \term{PCLK} either, so the capture logic downstream (|ov7670_video_interface|) and the dual-clock \term{FIFO} right after it on the \term{Avalon-ST} path (|ov_7670_video_dc_fifo|) have no clock to run on. The reset must be released before attempting \term{SCCB} communication or image acquisition, or the camera won't respond. Renamed from \sysname{FPGAlix}'s |pclk_reset_controller_0|, see Paragraph~\ref{subsec:fpgasteel-renamed-instances}. The two-reset scheme it implements is covered in full in PART~I -- \sysname{FPGAlix}, Section~\ref{sec:fpgalix-pclk-reset}.
+    \item \textbf{\texttt{ov7670\_ctrl\_interface}:} an instance of \term{Altera}/\term{Intel}'s \hw{altera_avalon_i2c} \term{IP}, used as the \term{I\textsuperscript{2}C}/\term{SCCB} master.
+    \item \textbf{\texttt{ov7670\_PCLK\_reset\_controller}:} a custom \term{IP} (\hw{pclk_reset_controller}, inherited unchanged from \prjname{FPGAlix} and renamed here, not part of \term{Altera}/\term{Intel}'s \term{IP} catalog) that holds the camera in reset. While in reset, the camera doesn't drive \term{PCLK} either, so the capture logic downstream (\hw{ov7670_video_interface}) and the dual-clock \term{FIFO} right after it on the \term{Avalon-ST} path (\hw{ov_7670_video_dc_fifo}) have no clock to run on. The reset must be released before attempting \term{SCCB} communication or image acquisition, or the camera won't respond. Renamed from \prjname{FPGAlix}'s \hw{pclk_reset_controller_0}, see Paragraph~\ref{subsec:fpgasteel-renamed-instances}. The two-reset scheme it implements is covered in full in PART~I -- \prjname{FPGAlix}, Section~\ref{sec:fpgalix-pclk-reset}.
 \end{itemize}
 
 \section{Code structure}
@@ -41,42 +41,42 @@ Software communicates with the camera over \term{SCCB} through two modules place
 \subsection{AvalonI2C}
 \label{subsec:fpgasteel-i2c-avaloni2c}
 
-The |AvalonI2C| class (|src/AvalonI2C.{h,cpp}|) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (|altera_avalon_i2c|), master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike |System|/|Serial| it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
+The \ccode{AvalonI2C} class (\repopath{src/AvalonI2C.{h,cpp}}) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP} (\hw{altera_avalon_i2c}), master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike \ccode{System}/\ccode{Serial} it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
 
 \begin{itemize}
-    \item \textbf{\texttt{init(speed)}:} |speed| selects the bus speed mode, |Speed::Standard| (100 \term{kHz}) or |Speed::Fast| (400 \term{kHz}). Disables the core (|CTRL|), masks interrupts (|ISER|; this driver polls, it doesn't use them), clears pending status bits (|ISR|), programs the |SCL_HIGH|/|SCL_LOW|/|SDA_HOLD| bus-timing registers for the requested speed, then reconfigures |CTRL| with the bus speed and \term{FIFO} thresholds and enables the core.
+    \item \textbf{\texttt{init(speed)}:} \ccode{speed} selects the bus speed mode, \ccode{Speed::Standard} (100 \term{kHz}) or \ccode{Speed::Fast} (400 \term{kHz}). Disables the core (\ccode{CTRL}), masks interrupts (\ccode{ISER}; this driver polls, it doesn't use them), clears pending status bits (\ccode{ISR}), programs the \hw{SCL_HIGH}/\hw{SCL_LOW}/\hw{SDA_HOLD} bus-timing registers for the requested speed, then reconfigures \ccode{CTRL} with the bus speed and \term{FIFO} thresholds and enables the core.
     \item \textbf{\texttt{deInit()}:} waits for the core to go idle, then disables it.
-    \item \textbf{\texttt{write(devAddress, regAddress, regVal)}:} |devAddress| is the 7-bit \term{I\textsuperscript{2}C} slave address, |regAddress| the register to write within that slave, |regVal| the value to write. Runs the common \term{I\textsuperscript{2}C} ``device address, register address, value'' sequence (\term{START}, dev address+W, register address, value, \term{STOP}).
-    \item \textbf{\texttt{read(devAddress, regAddress)}:} |devAddress| is the 7-bit \term{I\textsuperscript{2}C} slave address, |regAddress| the register to read; returns the value read. Writes the register address on the \term{I\textsuperscript{2}C} bus, then a repeated \term{START} into a read (\term{START}, dev address+W, register address, \term{RESTART}, dev address+R, value, \term{STOP}): standard \term{I\textsuperscript{2}C} register read.
-    \item \textbf{\texttt{isReady()}:} whether |init()| has run and |deInit()| hasn't since.
+    \item \textbf{\texttt{write(devAddress, regAddress, regVal)}:} \ccode{devAddress} is the 7-bit \term{I\textsuperscript{2}C} slave address, \ccode{regAddress} the register to write within that slave, \ccode{regVal} the value to write. Runs the common \term{I\textsuperscript{2}C} ``device address, register address, value'' sequence (\term{START}, dev address+W, register address, value, \term{STOP}).
+    \item \textbf{\texttt{read(devAddress, regAddress)}:} \ccode{devAddress} is the 7-bit \term{I\textsuperscript{2}C} slave address, \ccode{regAddress} the register to read; returns the value read. Writes the register address on the \term{I\textsuperscript{2}C} bus, then a repeated \term{START} into a read (\term{START}, dev address+W, register address, \term{RESTART}, dev address+R, value, \term{STOP}): standard \term{I\textsuperscript{2}C} register read.
+    \item \textbf{\texttt{isReady()}:} whether \ccode{init()} has run and \ccode{deInit()} hasn't since.
 \end{itemize}
 
-Internally, both |write()| and |read()| throw |ExceptionI2C104| on a \term{NACK}, an arbitration loss, or if the core doesn't respond within |CMD_TIMEOUT_MS| (10 \term{ms}): this is what turns a broken link into an error message instead of a hang.
+Internally, both \ccode{write()} and \ccode{read()} throw \ccode{ExceptionI2C104} on a \term{NACK}, an arbitration loss, or if the core doesn't respond within \ccode{CMD_TIMEOUT_MS} (10 \term{ms}): this is what turns a broken link into an error message instead of a hang.
 
 \subsection{AvalonSCCB}
 \label{subsec:fpgasteel-i2c-avalonsccb}
 
-The |AvalonSCCB| class (|src/AvalonSCCB.{h,cpp}|) derives from |AvalonI2C| and only overrides |read()|. \term{SCCB} differs from \term{I\textsuperscript{2}C} in exactly this: instead of one transaction with a repeated \term{START}, \term{SCCB} requires two separate \term{START}\ldots\term{STOP} transactions: (1) \term{START}, dev address+W, register address, \term{STOP}; (2) \term{START}, dev address+R, value, \term{STOP}. |write()| is unchanged, since \term{SCCB} and \term{I\textsuperscript{2}C} writes are identical, so it's inherited as-is from |AvalonI2C|.
+The \ccode{AvalonSCCB} class (\repopath{src/AvalonSCCB.{h,cpp}}) derives from \ccode{AvalonI2C} and only overrides \ccode{read()}. \term{SCCB} differs from \term{I\textsuperscript{2}C} in exactly this: instead of one transaction with a repeated \term{START}, \term{SCCB} requires two separate \term{START}\ldots\term{STOP} transactions: (1) \term{START}, dev address+W, register address, \term{STOP}; (2) \term{START}, dev address+R, value, \term{STOP}. \ccode{write()} is unchanged, since \term{SCCB} and \term{I\textsuperscript{2}C} writes are identical, so it's inherited as-is from \ccode{AvalonI2C}.
 
 \subsection{PclkResetController}
 \label{subsec:fpgasteel-i2c-pclkresetcontroller}
 
-The |PclkResetController| class (|src/PclkResetController.{h,cpp}|) is a singleton (there's only one on the board) wrapping the |pclk_reset_controller| core's single control register:
+The \ccode{PclkResetController} class (\repopath{src/PclkResetController.{h,cpp}}) is a singleton (there's only one on the board) wrapping the \hw{pclk_reset_controller} core's single control register:
 
 \begin{itemize}
-    \item \textbf{\texttt{assertReset()}:} holds the |ov7670_pclk| domain and the camera in reset (|sw_release| = 0).
-    \item \textbf{\texttt{deassertReset()}:} releases it (|sw_release| = 1).
+    \item \textbf{\texttt{assertReset()}:} holds the \hw{ov7670_pclk} domain and the camera in reset (\hw{sw_release} = 0).
+    \item \textbf{\texttt{deassertReset()}:} releases it (\hw{sw_release} = 1).
 \end{itemize}
 
 \subsection{ExceptionI2C}
 \label{subsec:fpgasteel-i2c-exceptioni2c}
 
-The |ExceptionI2C| class (|src/Exceptions/ExceptionI2C.h|) follows the same pattern as |ExceptionSystem|/|ExceptionSerial| (Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an |ErrorType| instead of an |ALT_STATUS_CODE|: |Nack|, |ArbitrationLost|, |Timeout|, or |NotInitialized| (a call made before |init()|).
+The \ccode{ExceptionI2C} class (\repopath{src/Exceptions/ExceptionI2C.h}) follows the same pattern as \ccode{ExceptionSystem}/\ccode{ExceptionSerial} (Section~\ref{sec:fpgasteel-hello-code-structure}), but carries an \ccode{ErrorType} instead of an \hw{ALT_STATUS_CODE}: \ccode{Nack}, \ccode{ArbitrationLost}, \ccode{Timeout}, or \ccode{NotInitialized} (a call made before \ccode{init()}).
 
 \section{How it works}
 \label{sec:fpgasteel-i2c-how-it-works}
 
-The following snippet is taken from |main.cpp|:
+The following snippet is taken from \repopath{main.cpp}:
 
 \begin{lstlisting}[caption={The main() body of i2c\_example.}, label={lst:fpgasteel-i2c-main}]
 System::getInstance().init();
@@ -91,5 +91,5 @@ uint8_t pid = sccb.read(0x21, 0x0A);
 serial->printf("OV7670 PID = 0x%02X\r\n", pid);
 \end{lstlisting}
 
-|ExceptionSystem|, |ExceptionSerial|, |ExceptionRingBuffer| and |ExceptionI2C| are all caught around this block and reported over \term{Serial}, exactly as in |hello_word|.
+\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer} and \ccode{ExceptionI2C} are all caught around this block and reported over \term{Serial}, exactly as in \cmd{hello_word}.
 

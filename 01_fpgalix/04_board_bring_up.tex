@@ -3,7 +3,7 @@
 
 \section{Introduction}
 
-This chapter brings up the \term{DE1-SoC} board and builds every component the programs of the following chapters depend on. The discussion begins with an overview of the board's boot chain, from reset to a running \term{U-Boot} (Section~\ref{sec:fpgalix-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Once \term{U-Boot} is built, the chapter covers the configuration and the building of the \term{Linux} kernel. \term{U-Boot} loads and boots this kernel, which in turn provides the driver support and core OS services, such as process scheduling, memory management, and the \term{V4L2} subsystem later used by the camera driver. The \term{Buildroot} root filesystem is built next: a complete embedded \term{Linux} userspace, from the \term{C} library and the \term{BusyBox}-provided |init| system and shell utilities, to the user space programs and libraries, \term{OpenCV} and \term{GStreamer} among them, needed to build and run |camera_driver_2| and |vision_core|. The chapter closes by assembling the bootloader, the kernel, the root filesystem and the \term{FPGA} bitstream onto a bootable \term{SD} card, producing a working baseline system ready for the examples developed in the remaining chapters.
+This chapter brings up the \term{DE1-SoC} board and builds every component the programs of the following chapters depend on. The discussion begins with an overview of the board's boot chain, from reset to a running \term{U-Boot} (Section~\ref{sec:fpgalix-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Once \term{U-Boot} is built, the chapter covers the configuration and the building of the \term{Linux} kernel. \term{U-Boot} loads and boots this kernel, which in turn provides the driver support and core OS services, such as process scheduling, memory management, and the \term{V4L2} subsystem later used by the camera driver. The \term{Buildroot} root filesystem is built next: a complete embedded \term{Linux} userspace, from the \term{C} library and the \term{BusyBox}-provided \ccode{init} system and shell utilities, to the user space programs and libraries, \term{OpenCV} and \term{GStreamer} among them, needed to build and run \cmd{camera_driver_2} and \cmd{vision_core}. The chapter closes by assembling the bootloader, the kernel, the root filesystem and the \term{FPGA} bitstream onto a bootable \term{SD} card, producing a working baseline system ready for the examples developed in the remaining chapters.
 
 \begin{table}[htbp]
 \centering
@@ -47,7 +47,7 @@ See Chapter~\ref{chap:fpgalix-devenv} for the installation and configuration of 
 
 On reset, the fixed-function \term{Boot ROM} samples the \term{BSEL[2:0]} pins to select the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \term{FPGA} fallback). On the \term{DE1-SoC}, these pins are hardwired on the \term{PCB} to boot from \term{SD/MMC} \cite{DE1-SCH}, so the \term{Boot ROM} reads the combined \term{SPL} (Secondary Program Loader) + \term{U-Boot} image from a dedicated raw partition (type \term{A2}) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands control to \term{SPL}, which brings up clocks, pin muxing and \term{DDR} \cite{CV-TRM}. \term{SPL} then loads full \term{U-Boot} into \term{DDR}.
 
-From this point, \term{U-Boot}'s boot script (|sw/boot.script|, Section~\ref{sec:fpgalix-boot-script}) loads the \term{FPGA} bitstream from the \term{SD} card and programs the \term{FPGA} fabric through the \term{HPS} \term{FPGA Manager}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and then loads the \term{Linux} kernel (\texttt{zImage}) together with its \term{Device Tree Blob}, booting it with \texttt{bootz}. The kernel then mounts the second \term{SD} card partition (\term{ext4}) as its root filesystem and starts \texttt{init}, which brings up the userspace built by \term{Buildroot}.\footnote{See Section~\ref{sec:fpgalix-buildroot}}
+From this point, \term{U-Boot}'s boot script (\repopath{sw/boot.script}, Section~\ref{sec:fpgalix-boot-script}) loads the \term{FPGA} bitstream from the \term{SD} card and programs the \term{FPGA} fabric through the \term{HPS} \term{FPGA Manager}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and then loads the \term{Linux} kernel (\texttt{zImage}) together with its \term{Device Tree Blob}, booting it with \texttt{bootz}. The kernel then mounts the second \term{SD} card partition (\term{ext4}) as its root filesystem and starts \texttt{init}, which brings up the userspace built by \term{Buildroot}.\footnote{See Section~\ref{sec:fpgalix-buildroot}}
 
 \begin{figure}[htbp]
     \centering
@@ -59,13 +59,13 @@ From this point, \term{U-Boot}'s boot script (|sw/boot.script|, Section~\ref{sec
 \section{Bootloader generation flow}
 \label{sec:fpgalix-bootloader-flow}
 
-\term{SoC EDS} (Embedded Design Suite) was \term{Altera}'s, later \term{Intel}'s, companion toolset to \term{Quartus} for \term{SoC} \term{FPGA} embedded development. Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build flow no longer relies on its \term{GUI} tool, |bsp-editor|, to configure and generate \term{U-Boot}. The current flow proceeds as follows:
+\term{SoC EDS} (Embedded Design Suite) was \term{Altera}'s, later \term{Intel}'s, companion toolset to \term{Quartus} for \term{SoC} \term{FPGA} embedded development. Since \term{SoC EDS} v19.1 Std / v19.3 Pro, the bootloader (\term{U-Boot}) build flow no longer relies on its \term{GUI} tool, \cmdpath{bsp-editor}, to configure and generate \term{U-Boot}. The current flow proceeds as follows:
 
 \begin{enumerate}
     \item The hardware project is compiled in \term{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \term{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
-    \item |cv_bsp_generator.py| \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) is run on the handoff folder, generating the board-specific header files (|pinmux_config.h|, |pll_config.h|, |sdram_config.h|, |iocsr_config.h|).
+    \item \cmd{cv_bsp_generator.py} \cite{MACNICA-BOOT} (part of the \term{U-Boot} source tree) is run on the handoff folder, generating the board-specific header files (\repopath{pinmux_config.h}, \repopath{pll_config.h}, \repopath{sdram_config.h}, \repopath{iocsr_config.h}).
     \item These headers are copied into \term{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
-    \item |make| is invoked to build the bootloader image.
+    \item \cmdpath{make} is invoked to build the bootloader image.
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -76,19 +76,19 @@ From this point, \term{U-Boot}'s boot script (|sw/boot.script|, Section~\ref{sec
 \end{figure}
 
 \begin{warningbox}
-    \term{Platform Designer}'s \term{IP} search path (Tools > Options > IP Catalog, ``IP Search Path'') is a \term{Quartus}-wide setting, not scoped to a single project. Every custom component used by this design (|pclk_reset_controller|, |ov7670_data_interface|, and the remainder found under |hw/my_vhdl/qsys_components/|, Chapter~\ref{chap:fpgalix-hw-overview}) resides there, and \term{Platform Designer} is able to resolve them only if that folder is listed. This setting should therefore be verified not only when configuring a new machine for the first time, but on every occasion where development switches between \sysname{FPGAlix} and another \term{Platform Designer} project on the same machine: each project maintains its own |hw/my_vhdl/qsys_components/|, and a search path left pointing at the other project's folder causes step 1 above to fail.
+    \term{Platform Designer}'s \term{IP} search path (Tools > Options > IP Catalog, ``IP Search Path'') is a \term{Quartus}-wide setting, not scoped to a single project. Every custom component used by this design (\hw{pclk_reset_controller}, \hw{ov7670_data_interface}, and the remainder found under \repopath{hw/my_vhdl/qsys_components/}, Chapter~\ref{chap:fpgalix-hw-overview}) resides there, and \term{Platform Designer} is able to resolve them only if that folder is listed. This setting should therefore be verified not only when configuring a new machine for the first time, but on every occasion where development switches between \prjname{FPGAlix} and another \term{Platform Designer} project on the same machine: each project maintains its own \repopath{hw/my_vhdl/qsys_components/}, and a search path left pointing at the other project's folder causes step 1 above to fail.
 \end{warningbox}
 
 \section{Getting the repository}
 
-The remainder of this chapter assumes that the \sysname{FPGAlix} repository has already been cloned locally, as follows, including submodules:
+The remainder of this chapter assumes that the \prjname{FPGAlix} repository has already been cloned locally, as follows, including submodules:
 
 \begin{shellcode}
 git clone --recurse-submodules https://github.com/tceccarini/FPGAlix.git
 cd FPGAlix
 \end{shellcode}
 
-The |--recurse-submodules| flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under |repos/| (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and |buildroot| \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
+The \cmdpath{--recurse-submodules} flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under \repopath{repos/} (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and \cmdpath{buildroot} \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
 
 \section{Building the bootloader}
 \label{sec:fpgalix-bootloader}
@@ -97,7 +97,7 @@ The following commands implement the flow shown in Figure~\ref{fig:fpgalix-boot-
 
 \subsection{Generate the BSP headers from the Quartus handoff}
 
-Compilation of the hardware project causes \term{Quartus} to export the \term{HPS} configuration as \term{XML} files under |hw/quartus/hps_isw_handoff/soc_system_hps_0/|. This configuration is then converted into the \term{C} header files required by \term{U-Boot} by means of the following command:
+Compilation of the hardware project causes \term{Quartus} to export the \term{HPS} configuration as \term{XML} files under \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. This configuration is then converted into the \term{C} header files required by \term{U-Boot} by means of the following command:
 
 \begin{shellcodepath}
 python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py 
@@ -127,7 +127,7 @@ make -j$(nproc)
 
 \subsection{Result}
 
-The build produces |repos/u-boot-socfpga/u-boot-with-spl.sfp|, an image combining \term{SPL} and \term{U-Boot} in the \term{Altera} \term{SoCFPGA} format. This file is subsequently written, in raw form, to the boot partition of the \term{SD} card; it is also accessible via the symlink |sdcard/u-boot-with-spl.sfp|.
+The build produces \repopath{repos/u-boot-socfpga/u-boot-with-spl.sfp}, an image combining \term{SPL} and \term{U-Boot} in the \term{Altera} \term{SoCFPGA} format. This file is subsequently written, in raw form, to the boot partition of the \term{SD} card; it is also accessible via the symlink \repopath{sdcard/u-boot-with-spl.sfp}.
 
 \section{Building the Linux kernel}
 \label{sec:fpgalix-kernel}
@@ -169,28 +169,28 @@ The base kernel configuration required by this project is as follows:
     \end{itemize}
 \end{itemize}
 \subsubsection{Configuration required by camera\_driver\_2}
-The following options are required specifically by |sw/camera_driver_2|:\footnote{Its own \texttt{README} documents the rationale for each; they are consolidated here so that the kernel need only be built once.}
+The following options are required specifically by \repopath{sw/camera_driver_2}:\footnote{Its own \texttt{README} documents the rationale for each; they are consolidated here so that the kernel need only be built once.}
 
 \begin{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{Multimedia support}
     \begin{itemize}
-        \item \texttt{Multimedia support} $\rightarrow$ * (built-in, |CONFIG_MEDIA_SUPPORT|). The option ``Filter media drivers'' should be left unchecked, as a consequence of which |MEDIA_CAMERA_SUPPORT| and |VIDEO_DEV| are enabled automatically.
+        \item \texttt{Multimedia support} $\rightarrow$ * (built-in, \hw{CONFIG_MEDIA_SUPPORT}). The option ``Filter media drivers'' should be left unchecked, as a consequence of which \hw{MEDIA_CAMERA_SUPPORT} and \ccode{VIDEO_DEV} are enabled automatically.
     \end{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{Multimedia support} $\rightarrow$ \texttt{Media drivers} $\rightarrow$ \texttt{V4L platform devices}
     \begin{itemize}
-        \item \texttt{Aspeed AST2400/AST2500 Video Engine} $\rightarrow$ * (built-in, |CONFIG_VIDEO_ASPEED|). |CONFIG_VIDEOBUF2_DMA_CONTIG| does not possess a corresponding |menuconfig| entry, being a hidden symbol; enabling this otherwise unrelated platform driver causes it to be selected as a side effect, since the driver itself depends on it. It is |videobuf2-dma-contig.ko| that is actually required by |camera_driver_2|; the \term{Aspeed} driver itself is never loaded on the target.
+        \item \texttt{Aspeed AST2400/AST2500 Video Engine} $\rightarrow$ * (built-in, \hw{CONFIG_VIDEO_ASPEED}). \hw{CONFIG_VIDEOBUF2_DMA_CONTIG} does not possess a corresponding |menuconfig| entry, being a hidden symbol; enabling this otherwise unrelated platform driver causes it to be selected as a side effect, since the driver itself depends on it. It is \extpath{videobuf2-dma-contig.ko} that is actually required by \cmd{camera_driver_2}; the \term{Aspeed} driver itself is never loaded on the target.
     \end{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{I\textsuperscript{2}C support} $\rightarrow$ \texttt{I\textsuperscript{2}C Hardware Bus support}
     \begin{itemize}
-        \item \texttt{Altera Soft IP I\textsuperscript{2}C} $\rightarrow$ * (built-in, |CONFIG_I2C_ALTERA|). In the absence of this option, the |altera_avalon_i2c| \term{Qsys} component (\texttt{compatible = "altr,softip-i2c-v1.0"}) remains invisible to \term{Linux}, preventing the camera from being configured over \term{I\textsuperscript{2}C} whenever the bus is routed through the \term{FPGA} rather than the \term{HPS}.
+        \item \texttt{Altera Soft IP I\textsuperscript{2}C} $\rightarrow$ * (built-in, \hw{CONFIG_I2C_ALTERA}). In the absence of this option, the \hw{altera_avalon_i2c} \term{Qsys} component (\texttt{compatible = "altr,softip-i2c-v1.0"}) remains invisible to \term{Linux}, preventing the camera from being configured over \term{I\textsuperscript{2}C} whenever the bus is routed through the \term{FPGA} rather than the \term{HPS}.
     \end{itemize}
     \item \texttt{Memory Management options}
     \begin{itemize}
-        \item \texttt{Contiguous Memory Allocator} $\rightarrow$ * (|CONFIG_CMA|)
+        \item \texttt{Contiguous Memory Allocator} $\rightarrow$ * (\hw{CONFIG_CMA})
     \end{itemize}
     \item \texttt{Library routines}
     \begin{itemize}
-        \item \texttt{DMA Contiguous Memory Allocator} $\rightarrow$ * (|CONFIG_DMA_CMA|), \texttt{Size in Mega Bytes} $\rightarrow$ 16. This setting is recommended rather than strictly mandatory: the requirement of three buffers of 640$\times$480$\times$1 byte amounts to under 1 MB, so the 16 MB default provides an ample margin.
+        \item \texttt{DMA Contiguous Memory Allocator} $\rightarrow$ * (\hw{CONFIG_DMA_CMA}), \texttt{Size in Mega Bytes} $\rightarrow$ 16. This setting is recommended rather than strictly mandatory: the requirement of three buffers of 640$\times$480$\times$1 byte amounts to under 1 MB, so the 16 MB default provides an ample margin.
     \end{itemize}
 \end{itemize}
 
@@ -212,34 +212,34 @@ Prior to building the \term{Device Tree} blobs, a board-specific \term{DTS} file
 repos/linux-socfpga/arch/arm/boot/dts/socfpga_cyclone5_fpgalix.dts
 \end{shellcodepath}
 
-This file describes the hardware topology of the \term{SoC} and is maintained manually as |socfpga_cyclone5_fpgalix.dts|, which includes |socfpga_cyclone5.dtsi| (the standard \term{SoCFPGA} base provided by the kernel) and adds the board-specific nodes on top of it.
+This file describes the hardware topology of the \term{SoC} and is maintained manually as \repopath{socfpga_cyclone5_fpgalix.dts}, which includes \repopath{socfpga_cyclone5.dtsi} (the standard \term{SoCFPGA} base provided by the kernel) and adds the board-specific nodes on top of it.
 
 \subsubsection{The Device Tree Source is already provided}
 
-|socfpga_cyclone5_fpgalix.dts| is not part of the upstream kernel; it was authored for this project and is already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule, matching the current hardware. If the \term{Platform Designer} hardware configuration has not changed, this file requires no further editing.
+\repopath{socfpga_cyclone5_fpgalix.dts} is not part of the upstream kernel; it was authored for this project and is already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule, matching the current hardware. If the \term{Platform Designer} hardware configuration has not changed, this file requires no further editing.
 
 \subsubsection{Compiling the Device Tree Blob}
 
-Unlike the \term{DTS} source, the compiled \term{Device Tree Blob} (|.dtb|) is a build artifact: it is not tracked by the submodule, it does not exist after a fresh clone, and it must be compiled locally on every build, regardless of whether the \term{DTS} source itself was changed or not. This step is therefore always required, even when Paragraph~\ref{subsec:fpgalix-dts-update} is skipped entirely:
+Unlike the \term{DTS} source, the compiled \term{Device Tree Blob} (\repopath{.dtb}) is a build artifact: it is not tracked by the submodule, it does not exist after a fresh clone, and it must be compiled locally on every build, regardless of whether the \term{DTS} source itself was changed or not. This step is therefore always required, even when Paragraph~\ref{subsec:fpgalix-dts-update} is skipped entirely:
 
 \begin{shellcode}
 make dtbs
 \end{shellcode}
 
-The compiled \term{DTB} is accessible via the symlink |sdcard/boot_partition/socfpga.dtb|, which points to |repos/linux-socfpga/arch/arm/boot/dts/socfpga_cyclone5_fpgalix.dtb|.
+The compiled \term{DTB} is accessible via the symlink \repopath{sdcard/boot_partition/socfpga.dtb}, which points to \repopath{repos/linux-socfpga/arch/arm/boot/dts/socfpga_cyclone5_fpgalix.dtb}.
 
 \subsection{Updating the Device Tree Source}
 \label{subsec:fpgalix-dts-update}
 
-This section only applies when the \term{HPS} subsystem has been modified in \term{Platform Designer}; otherwise |socfpga_cyclone5_fpgalix.dts| already matches the current hardware, and this section can be skipped.
+This section only applies when the \term{HPS} subsystem has been modified in \term{Platform Designer}; otherwise \repopath{socfpga_cyclone5_fpgalix.dts} already matches the current hardware, and this section can be skipped.
 
 \subsubsection{Using sopc2dts as a reference}
 
-|sopc2dts| is \term{Altera}'s own tool for generating a device tree from a |.sopcinfo| file, tracked in this project as the |repos/sopc2dts| submodule (a fork of |altera-opensource/sopc2dts|). It cannot, however, be employed as a direct \term{DTS} source for the kernel: its output is a standalone file that does not include |socfpga_cyclone5.dtsi| and is therefore incompatible with the modern \term{Linux} \term{SoCFPGA} \term{DTS} infrastructure.
+\repopath{sopc2dts} is \term{Altera}'s own tool for generating a device tree from a \repopath{.sopcinfo} file, tracked in this project as the \repopath{repos/sopc2dts} submodule (a fork of \extpath{altera-opensource/sopc2dts}). It cannot, however, be employed as a direct \term{DTS} source for the kernel: its output is a standalone file that does not include \repopath{socfpga_cyclone5.dtsi} and is therefore incompatible with the modern \term{Linux} \term{SoCFPGA} \term{DTS} infrastructure.
 
-It remains useful, however, as a reference: its output reflects the current \term{Platform Designer} configuration, and is compared against |socfpga_cyclone5_fpgalix.dts| to identify which addresses, interrupt numbers and compatible strings changed, updating the latter accordingly.
+It remains useful, however, as a reference: its output reflects the current \term{Platform Designer} configuration, and is compared against \repopath{socfpga_cyclone5_fpgalix.dts} to identify which addresses, interrupt numbers and compatible strings changed, updating the latter accordingly.
 
-The |sopc2dts| utility itself is not prebuilt: it is a plain \term{Java} tool (|javac|/|jar|, no \term{Quartus} or \term{Buildroot} toolchain involved); compile it from source once, the first time it is used:
+The \repopath{sopc2dts} utility itself is not prebuilt: it is a plain \term{Java} tool (\cmdpath{javac}/\cmdpath{jar}, no \term{Quartus} or \term{Buildroot} toolchain involved); compile it from source once, the first time it is used:
 
 \begin{shellcode}
 cd repos/sopc2dts
@@ -254,7 +254,7 @@ java -jar sopc2dts.jar --input ../../hw/quartus/soc_system.sopcinfo --output /tm
 
 \subsubsection{Authoring the Device Tree Source from the reference}
 
-In this project, |socfpga_cyclone5_fpgalix.dts| was authored from the |sopc2dts| reference output using \term{Claude Code}, an \term{AI} coding assistant, rather than written by hand. The reference \term{DTS} generated by |sopc2dts| (|/tmp/socfpga_ref.dts| above) was given as input, not the raw |soc_system.sopcinfo|: providing the latter directly led to significantly less accurate results, since it left the extraction of addresses, interrupt numbers and compatible strings to the \term{AI} assistant itself, rather than to |sopc2dts|. Manual authoring remains entirely possible: |socfpga_cyclone5_fpgalix.dts| is a plain text file, and the task consists solely of transcribing addresses, interrupt numbers and compatible strings from the reference output, for those who prefer to do so directly.
+In this project, \repopath{socfpga_cyclone5_fpgalix.dts} was authored from the \repopath{sopc2dts} reference output using \term{Claude Code}, an \term{AI} coding assistant, rather than written by hand. The reference \term{DTS} generated by \repopath{sopc2dts} (\extpath{/tmp/socfpga_ref.dts} above) was given as input, not the raw \repopath{soc_system.sopcinfo}: providing the latter directly led to significantly less accurate results, since it left the extraction of addresses, interrupt numbers and compatible strings to the \term{AI} assistant itself, rather than to \repopath{sopc2dts}. Manual authoring remains entirely possible: \repopath{socfpga_cyclone5_fpgalix.dts} is a plain text file, and the task consists solely of transcribing addresses, interrupt numbers and compatible strings from the reference output, for those who prefer to do so directly.
 
 \section{Building the root filesystem (Buildroot)}
 \label{sec:fpgalix-buildroot}
@@ -339,13 +339,13 @@ The base configuration required by this project is as follows:
     \end{itemize}
 \end{itemize}
 
-This last setting is not selected automatically: enabling ``Enable VFP extension support'' makes several floating-point strategies available (\term{VFPv3}, \term{NEON}, among others), and since the default chosen by \term{Buildroot} is not \term{NEON}, it must be selected explicitly. The \term{NEON}-accelerated \term{OpenCV} and \term{libjpeg-turbo} code of |sw/vision_core| depends on this setting.
+This last setting is not selected automatically: enabling ``Enable VFP extension support'' makes several floating-point strategies available (\term{VFPv3}, \term{NEON}, among others), and since the default chosen by \term{Buildroot} is not \term{NEON}, it must be selected explicitly. The \term{NEON}-accelerated \term{OpenCV} and \term{libjpeg-turbo} code of \repopath{sw/vision_core} depends on this setting.
 
-|ifconfig| needs no package of its own: it is provided by \term{BusyBox} (|CONFIG_IFCONFIG|), already enabled by default in this project's \term{BusyBox} configuration. |ip addr|/|ip route|, from \term{iproute2} above, are also available.
+\cmdpath{ifconfig} needs no package of its own: it is provided by \term{BusyBox} (\hw{CONFIG_IFCONFIG}), already enabled by default in this project's \term{BusyBox} configuration. \cmdpath{ip addr}/\cmdpath{ip route}, from \term{iproute2} above, are also available.
 
 \subsubsection{Configuration required by camera\_driver\_2 and vision\_core}
 
-The following packages, in addition to those already listed, are required specifically by |sw/camera_driver_2| and |sw/vision_core|:\footnote{Their respective \texttt{README}s document the rationale for each; they are consolidated here so that a single build suffices.}
+The following packages, in addition to those already listed, are required specifically by \repopath{sw/camera_driver_2} and \repopath{sw/vision_core}:\footnote{Their respective \texttt{README}s document the rationale for each; they are consolidated here so that a single build suffices.}
 
 \begin{itemize}
     \item \texttt{Target packages} $\rightarrow$ \texttt{Libraries} $\rightarrow$ \texttt{Hardware handling}
@@ -379,16 +379,16 @@ Upon exiting |menuconfig|, confirm \term{Yes} when prompted to save.
 make
 \end{shellcode}
 
-Do not use the |-j\$(nproc)| flag: \term{Buildroot} manages parallelism internally. The default settings already instruct \term{Buildroot} to employ all available \term{CPU} cores throughout the entire build (toolchain, packages, and root filesystem).
+Do not use the \lstinline[style=inlineCmd]!-j$(nproc)! flag: \term{Buildroot} manages parallelism internally. The default settings already instruct \term{Buildroot} to employ all available \term{CPU} cores throughout the entire build (toolchain, packages, and root filesystem).
 
-The root filesystem image is generated at |repos/buildroot/output/images/rootfs.tar|, accessible via the symlink |sdcard/rootfs.tar|, alongside the remaining \term{SD} card artifacts.
+The root filesystem image is generated at \repopath{repos/buildroot/output/images/rootfs.tar}, accessible via the symlink \repopath{sdcard/rootfs.tar}, alongside the remaining \term{SD} card artifacts.
 
-This same build also produces the toolchain used by the |make arm| target of |sw/vision_core|, at |repos/buildroot/output/host/bin/|; this \term{Buildroot} build must therefore complete before the |vision_core| program can be cross-compiled.
+This same build also produces the toolchain used by the \cmdpath{make arm} target of \repopath{sw/vision_core}, at \repopath{repos/buildroot/output/host/bin/}; this \term{Buildroot} build must therefore complete before the \cmd{vision_core} program can be cross-compiled.
 
 \section{Generating the FPGA bitstream (RBF)}
 \label{sec:fpgalix-bitstream}
 
-The \term{FPGA} fabric on the \term{DE1-SoC} may be configured through several paths: over \term{JTAG} from \term{Quartus}, over \term{JTAG} via a \term{JTAG} adapter tool, or by the \term{HPS} itself at boot, through the \term{FPGA Manager}. \sysname{FPGAlix} employs the last of these: \term{U-Boot} loads the bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager}, prior to booting \term{Linux}.
+The \term{FPGA} fabric on the \term{DE1-SoC} may be configured through several paths: over \term{JTAG} from \term{Quartus}, over \term{JTAG} via a \term{JTAG} adapter tool, or by the \term{HPS} itself at boot, through the \term{FPGA Manager}. \prjname{FPGAlix} employs the last of these: \term{U-Boot} loads the bitstream from the \term{SD} card and programs the fabric through the \term{FPGA Manager}, prior to booting \term{Linux}.
 
 \subsection{MSEL configuration (SW10)}
 \label{subsec:fpgalix-msel}
@@ -419,18 +419,18 @@ Set the six \term{SW10} switches, on the underside of the board, to the position
 
 \subsection{Converting the SOF to RBF}
 
-\term{Quartus} compiles the hardware project into a |.sof| (\term{SRAM Object File}), the complete \term{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\term{JTAG} tools. The \term{FPGA Manager} instead requires an |.rbf| (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
+\term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM Object File}), the complete \term{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\term{JTAG} tools. The \term{FPGA Manager} instead requires an \repopath{.rbf} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
 
 \begin{shellcode}
 quartus_cpf -c hw/quartus/output_files/FPGAlix.sof sdcard/boot_partition/soc_system.rbf
 \end{shellcode}
 
-The resulting output is placed directly under |sdcard/boot_partition/|, alongside the remaining files destined for the \term{SD} card's boot partition.
+The resulting output is placed directly under \repopath{sdcard/boot_partition/}, alongside the remaining files destined for the \term{SD} card's boot partition.
 
 \section{Boot script}
 \label{sec:fpgalix-boot-script}
 
-|sw/boot.script| was authored for this project: a human-readable \term{U-Boot} script that defines the boot sequence. It persists the automatically generated \term{MAC} address on first boot, sets the kernel command line (serial console on |ttyS0| at 115200 baud, root filesystem on the \term{SD} card's second partition, mounted read-write), loads and programs the \term{FPGA} bitstream generated in Section~\ref{sec:fpgalix-bitstream}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and finally loads the \term{Linux} kernel (\texttt{zImage}) and the \term{Device Tree Blob} (|socfpga.dtb|), booting the system.
+\repopath{sw/boot.script} was authored for this project: a human-readable \term{U-Boot} script that defines the boot sequence. It persists the automatically generated \term{MAC} address on first boot, sets the kernel command line (serial console on \sysid{ttyS0} at 115200 baud, root filesystem on the \term{SD} card's second partition, mounted read-write), loads and programs the \term{FPGA} bitstream generated in Section~\ref{sec:fpgalix-bitstream}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and finally loads the \term{Linux} kernel (\texttt{zImage}) and the \term{Device Tree Blob} (\repopath{socfpga.dtb}), booting the system.
 
 Compile this script into the binary image that \term{U-Boot} expects to find on the boot partition:
 
@@ -439,26 +439,26 @@ cd sw/
 mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d boot.script ../sdcard/boot_partition/u-boot.scr
 \end{shellcode}
 
-This step must be repeated whenever |sw/boot.script| is modified.
+This step must be repeated whenever \repopath{sw/boot.script} is modified.
 
 \section{Preparing the SD card}
 
 \begin{warningbox}
-    This section involves low-level disk operations. An incorrect device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on the machine in use. Every device path (|/dev/sdX|, |/dev/loopN|) should be double-checked before pressing Enter; when in doubt, the operation should be stopped and verified.
+    This section involves low-level disk operations. An incorrect device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on the machine in use. Every device path (\extpath{/dev/sdX}, \extpath{/dev/loopN}) should be double-checked before pressing Enter; when in doubt, the operation should be stopped and verified.
 \end{warningbox}
 
-The \term{SD} card requires three partitions: a \term{FAT32} boot partition (kernel, \term{DTB}, bitstream, boot script), an \term{ext4} root filesystem, and the raw \term{A2} partition for \term{U-Boot}. All files destined for the card are collected under |sdcard/|. A disk image file is constructed first and subsequently written to the physical \term{SD} card; the same procedure may be applied directly to the \term{SD} card by substituting the \term{SD} card device (e.g. |/dev/sdX|) for |sdcard/images/sdcard.img|, thereby omitting the image creation step and the final |dd|/\term{Etcher} write.
+The \term{SD} card requires three partitions: a \term{FAT32} boot partition (kernel, \term{DTB}, bitstream, boot script), an \term{ext4} root filesystem, and the raw \term{A2} partition for \term{U-Boot}. All files destined for the card are collected under \repopath{sdcard/}. A disk image file is constructed first and subsequently written to the physical \term{SD} card; the same procedure may be applied directly to the \term{SD} card by substituting the \term{SD} card device (e.g. \extpath{/dev/sdX}) for \repopath{sdcard/images/sdcard.img}, thereby omitting the image creation step and the final \cmdpath{dd}/\term{Etcher} write.
 
 The final image may be written to the \term{SD} card using:
 
 \begin{itemize}
-    \item \term{Linux}: |dd| (see the last step below)
+    \item \term{Linux}: \cmdpath{dd} (see the last step below)
     \item \term{Windows}/\term{Mac}: \term{balenaEtcher}\footnote{\term{balenaEtcher} --- \url{https://etcher.balena.io/}}, free and open-source software; the image and target drive are selected accordingly.
 \end{itemize}
 
 \subsection{Create the image file}
 
-From the root of the repository, enter the |sdcard/| directory:
+From the root of the repository, enter the \repopath{sdcard/} directory:
 
 \begin{shellcode}
 cd sdcard/
@@ -477,7 +477,7 @@ dd if=/dev/zero of=images/sdcard.img bs=1M count=7400
 fdisk images/sdcard.img
 \end{shellcode}
 
-Within |fdisk|, enter the following commands in order:
+Within \cmdpath{fdisk}, enter the following commands in order:
 
 \begin{shellcode}
 o       # new MBR partition table
@@ -527,7 +527,7 @@ p               # verify the partition table before writing
 w               # write and exit
 \end{shellcode}
 
-For this example (512-byte sectors, 7400 \term{MiB} image), the expected output of |p| is as follows:
+For this example (512-byte sectors, 7400 \term{MiB} image), the expected output of \ccode{p} is as follows:
 
 \begin{shellcode}
 Disk images/sdcard.img: 7,23 GiB, 7759462400 bytes, 15155200 sectors
@@ -554,7 +554,7 @@ Identify the assigned loop device with:
 losetup -l
 \end{shellcode}
 
-Locate the entry corresponding to |sdcard.img| and note its device name (e.g. |/dev/loop2|). In each of the commands below, |N| is to be replaced with the actual number.
+Locate the entry corresponding to \repopath{sdcard.img} and note its device name (e.g. \extpath{/dev/loop2}). In each of the commands below, \ccode{N} is to be replaced with the actual number.
 
 \subsection{Format the partitions}
 
@@ -566,7 +566,7 @@ sudo mkfs.ext4 -L rootfs /dev/loopNp2
 
 \subsection{Mount and copy the files}
 
-All commands below, like the rest of this section, are run from |sdcard/|; |boot_partition/|, |rootfs_overlay/|, |rootfs.tar| and |u-boot-with-spl.sfp| are paths relative to it.
+All commands below, like the rest of this section, are run from \repopath{sdcard/}; \repopath{boot_partition/}, \repopath{rootfs_overlay/}, \repopath{rootfs.tar} and \repopath{u-boot-with-spl.sfp} are paths relative to it.
 
 \begin{shellcode}
 cd sdcard/
@@ -615,7 +615,7 @@ sudo dd if=images/sdcard.img of=/dev/sdX bs=4M status=progress
 sync
 \end{shellcode}
 
-Replace |/dev/sdX| with the actual \term{SD} card device. \textbf{Verify the target device with particular care} prior to execution, as this command overwrites it in its entirety.
+Replace \extpath{/dev/sdX} with the actual \term{SD} card device. \textbf{Verify the target device with particular care} prior to execution, as this command overwrites it in its entirety.
 
 \section{Booting the board}
 
@@ -630,7 +630,7 @@ The \term{MSEL} configuration has already been established in Paragraph~\ref{sub
 The board exposes a serial console at 115200 baud, 8N1, no flow control:
 
 \begin{itemize}
-    \item \term{Linux}: |picocom|. Identify the device with \lstinline[style=githubcppinline]!dmesg | grep tty! (typically |/dev/ttyUSB0|), and establish the connection with |picocom -b 115200 /dev/ttyUSB0|.
+    \item \term{Linux}: \cmdpath{picocom}. Identify the device with \lstinline[style=githubcppinline]!dmesg | grep tty! (typically \extpath{/dev/ttyUSB0}), and establish the connection with \cmdpath{picocom -b 115200 /dev/ttyUSB0}.
     \item \term{Windows}: \term{TeraTerm}.\footnote{\term{TeraTerm} is available at \url{https://github.com/TeraTermProject/teraterm}.} Select the \term{COM} port that appears in \term{Device Manager} under \term{Ports (COM \& LPT)} upon connecting the cable.
 \end{itemize}
 
@@ -639,18 +639,18 @@ Upon powering on the board, the boot log should appear in the terminal immediate
 \subsection{Logging in and network access}
 \label{subsec:fpgalix-login-network}
 
-Log into the board as |root| over the serial console, with the password set in Paragraph~\ref{subsec:fpgalix-buildroot-base}.
+Log into the board as \sysid{root} over the serial console, with the password set in Paragraph~\ref{subsec:fpgalix-buildroot-base}.
 
-\term{SSH} access as |root| does not work, even though the serial console login does: \term{OpenSSH}'s default |PermitRootLogin| setting only allows |root| to log in with a key, not a password, and this project's |root| account only has a password. Create a new user, therefore, from the serial console:
+\term{SSH} access as \sysid{root} does not work, even though the serial console login does: \term{OpenSSH}'s default \sysid{PermitRootLogin} setting only allows \sysid{root} to log in with a key, not a password, and this project's \sysid{root} account only has a password. Create a new user, therefore, from the serial console:
 
 \begin{shellcode}
 mkdir -p /home
 adduser <username>
 \end{shellcode}
 
-The |mkdir -p /home| is necessary first: \term{Buildroot}'s base skeleton does not include a |/home| directory, and \term{BusyBox}'s |adduser| only creates the new user's home directory with a plain |mkdir()|, not |mkdir -p|. Without |/home| already in place, that |mkdir()| fails, silently, with nothing beyond a warning on the console; |adduser| still succeeds, but the new user is left with no home directory at all.
+The \cmdpath{mkdir -p /home} is necessary first: \term{Buildroot}'s base skeleton does not include a \extpath{/home} directory, and \term{BusyBox}'s \cmdpath{adduser} only creates the new user's home directory with a plain \ccode{mkdir()}, not \cmdpath{mkdir -p}. Without \extpath{/home} already in place, that \ccode{mkdir()} fails, silently, with nothing beyond a warning on the console; \cmdpath{adduser} still succeeds, but the new user is left with no home directory at all.
 
-Read the board's \term{IP} address, obtained automatically over \term{Ethernet} by |dhcpcd| (Paragraph~\ref{subsec:fpgalix-buildroot-base}), with either:
+Read the board's \term{IP} address, obtained automatically over \term{Ethernet} by \cmdpath{dhcpcd} (Paragraph~\ref{subsec:fpgalix-buildroot-base}), with either:
 
 \begin{shellcode}
 ifconfig

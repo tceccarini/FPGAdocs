@@ -5,11 +5,11 @@
 
 This chapter covers how to set up the host used throughout this part of the work. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \term{USB-Blaster II} and serial console access.
 
-Unlike \sysname{FPGAlix}, which can debug most of its software remotely over the network, \sysname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface. This is why the \term{VM} caveat below matters more here than it did for \sysname{FPGAlix}, where only one specific task had no alternative to a reliable \term{JTAG} connection: on \sysname{FPGAsteel}, every debug session has none.
+Unlike \prjname{FPGAlix}, which can debug most of its software remotely over the network, \prjname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface. This is why the \term{VM} caveat below matters more here than it did for \prjname{FPGAlix}, where only one specific task had no alternative to a reliable \term{JTAG} connection: on \prjname{FPGAsteel}, every debug session has none.
 
 \section{Host requirements}
 
-\sysname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
+\prjname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
 
 Developing inside a \term{VM} is discouraged. Forwarding the \term{USB-Blaster II}\footnote{I.e., the \term{JTAG} debug interface mentioned in the Introduction.} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
 
@@ -27,16 +27,16 @@ sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-
 \end{shellcode}
 
 \begin{itemize} 
-    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, |git|: building |repos/u-boot-socfpga| and its boot scripts.
-    \item |wget|, |curl|: downloading the \term{Eclipse} tarball.
-    \item |dosfstools|: |mkfs.vfat|, for preparing the \term{SD card}.
-    \item |picocom|: terminal emulator for the board's serial console.
+    \item |build-essential|, \cmdpath{bison}, \cmdpath{flex}, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, \cmdpath{git}: building \repopath{repos/u-boot-socfpga} and its boot scripts.
+    \item \cmdpath{wget}, \cmdpath{curl}: downloading the \term{Eclipse} tarball.
+    \item |dosfstools|: \cmdpath{mkfs.vfat}, for preparing the \term{SD card}.
+    \item \cmdpath{picocom}: terminal emulator for the board's serial console.
     \item |openjdk-17-jre|: \term{Eclipse} needs \term{Java} 17; a \term{JRE} suffices since it is only used here for debugging, never to compile.
-    \item |python3|, |python3-numpy|, |python3-matplotlib|: used by |cv_bsp_generator.py| (Section~\ref{subsec:fpgasteel-bsp-headers}) and |debugTools/view_frame.py| (Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}).
-    \item |pkg-config|, |libopencv-dev|: needed to build |debugTools/linux_dualcore_emulator|, the host-side emulator described in Section~\ref{sec:fpgasteel-dualcore-dip-debug-tooling}.
+    \item \cmdpath{python3}, |python3-numpy|, |python3-matplotlib|: used by \cmd{cv_bsp_generator.py} (Section~\ref{subsec:fpgasteel-bsp-headers}) and \cmd{debugTools/view_frame.py} (Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}).
+    \item |pkg-config|, |libopencv-dev|: needed to build \cmd{debugTools/linux_dualcore_emulator}, the host-side emulator described in Section~\ref{sec:fpgasteel-dualcore-dip-debug-tooling}.
 \end{itemize}
 
-The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
+The \term{ARM} toolchain and \term{OpenOCD} need no \cmdpath{apt} packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
 
 \subsection{Install the software, and where it lives}
 \label{subsec:fpgasteel-install-paths}
@@ -65,7 +65,7 @@ The user's home folder is sufficient for all four; a system-wide installation is
 \subsection{Environment variables}
 \label{subsec:fpgasteel-env-vars}
 
-Add to |~/.bashrc|, matching the install paths from Paragraph~\ref{subsec:fpgasteel-install-paths}:
+Add to {\catcode`\~=12 \extpath{~/.bashrc}}, matching the install paths from Paragraph~\ref{subsec:fpgasteel-install-paths}:
 
 \begin{shellcodepath}
 export QUARTUS_ROOTDIR="$HOME/Programs/Altera/22.1/quartus/"
@@ -77,11 +77,11 @@ export PATH="$HOME/Programs/openocd/xpack-openocd-0.12.0-7/bin:$PATH"
 export PATH="$HOME/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86_64:$PATH"
 \end{shellcodepath}
 
-Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: |openocd| and |arm-none-eabi-gcc| both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at |quartus/bin/openocd|. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including |/usr/bin|, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of |${QUARTUS_ROOTDIR}/bin|.
+Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: \cmdpath{openocd} and \cmdpath{arm-none-eabi-gcc} both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at \extpath{quartus/bin/openocd}. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including \extpath{/usr/bin}, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of \lstinline[style=inlineFsExt]!${QUARTUS_ROOTDIR}/bin!.
 
-\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (|altera-usb-blaster2.cfg|, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate |blaster\_6810.hex|, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
+\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (\extpath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
 
-Reload with |source ~/.bashrc| (or open a new shell) after editing.
+Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new shell) after editing.
 
 \subsection{USB-Blaster II and serial console access}
 \label{subsec:fpgasteel-usb-blaster}
@@ -101,27 +101,27 @@ sudo udevadm trigger
 sudo usermod -aG plugdev "$USER"
 \end{shellcode}
 
-The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as |/dev/ttyUSB0|, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every |ttyUSB*|/|ttyACM*| device to the |dialout| group. Add the user to that group too:
+The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as \extpath{/dev/ttyUSB0}, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every \sysid{ttyUSB*}/\sysid{ttyACM*} device to the \sysid{dialout} group. Add the user to that group too:
 
 \begin{shellcode}
 sudo usermod -aG dialout "$USER"
 \end{shellcode}
 
-Log out and back in (or |newgrp plugdev| / |newgrp dialout|) for both group changes to take effect.
+Log out and back in (or \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout}) for both group changes to take effect.
 
 \subsection{Editor and debugger roles}
 \label{subsec:fpgasteel-editor-roles}
 
-\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}: it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under |hw/| and the \term{C/C++} sources under |sw/| are written in \term{Visual Studio Code}, with the following extensions:
+\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}: it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under \repopath{hw/} and the \term{C/C++} sources under \repopath{sw/} are written in \term{Visual Studio Code}, with the following extensions:
 
 {\footnotesize
 \begin{itemize}
-    \item \term{VHDL}/\term{Verilog} linting, snippets, project awareness --- \path{teros-technology.teroshdl} (\term{TerosHDL}).
-    \item \term{VHDL} syntax highlighting and language support --- \path{rjyoung.vscode-modern-vhdl-support}.
-    \item \term{C/C++} \term{IntelliSense}, navigation --- \path{ms-vscode.cpptools} (+ \path{ms-vscode.cpptools-extension-pack}).
-    \item Makefile awareness (every |sw/| project builds via |make|, Section~\ref{sec:fpgasteel-hello-building}) --- \path{ms-vscode.makefile-tools}.
-    \item Editing the \term{Python} debug tools shipped with some examples (e.g. |debugTools/view_frame.py|, Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}) --- \path{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
-    \item Viewing the datasheet/manual \term{PDF}s referenced throughout |docs/| without leaving the editor --- \path{tomoki1207.pdf}.
+    \item \term{VHDL}/\term{Verilog} linting, snippets, project awareness --- \urlpath{teros-technology.teroshdl} (\term{TerosHDL}).
+    \item \term{VHDL} syntax highlighting and language support --- \urlpath{rjyoung.vscode-modern-vhdl-support}.
+    \item \term{C/C++} \term{IntelliSense}, navigation --- \urlpath{ms-vscode.cpptools} (+ \urlpath{ms-vscode.cpptools-extension-pack}).
+    \item Makefile awareness (every \repopath{sw/} project builds via \cmdpath{make}, Section~\ref{sec:fpgasteel-hello-building}) --- \urlpath{ms-vscode.makefile-tools}.
+    \item Editing the \term{Python} debug tools shipped with some examples (e.g. \cmd{debugTools/view_frame.py}, Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}) --- \urlpath{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
+    \item Viewing the datasheet/manual \term{PDF}s referenced throughout \repopath{docs/} without leaving the editor --- \urlpath{tomoki1207.pdf}.
 \end{itemize}
 }
 
