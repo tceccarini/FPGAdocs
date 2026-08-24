@@ -4,12 +4,12 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-dip-about}
 
-Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: \cmd{dualcore_dip_example}, \cmd{dualcore_dip_example_no_neon}, and \cmd{dualcore_dip_example_no_neon_no_icache} (all under \repopath{sw/}). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
+Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: \repopath{dualcore_dip_example}, \repopath{dualcore_dip_example_no_neon}, and \repopath{dualcore_dip_example_no_neon_no_icache} (all under \repopath{sw/}). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
 
 All three take the same camera-to-\term{VGA} pipeline from \nameref{chap:fpgasteel-dualcore-forwarding} and replace the plain format conversion with a small computer-vision pipeline, \ccode{DualCoreDIP}: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
 
 \begin{enumerate}
- \item converts the frame to grayscale (\term{RGB565} \cite{OV7670-DS} $\rightarrow$ \term{RGB24} + grayscale in the same pass, so both the display copy and the analysis copy are produced together);
+ \item converts the captured \term{RGB565} frame coming from the camera into two outputs, produced together in the same pass: an \term{RGB24} frame for \term{VGA} display, and a grayscale frame for analysis;
  \item thresholds it to a binary image (a pixel counts as ``object'' above a fixed brightness);
  \item cleans the binary image up morphologically, an opening (erosion followed by dilation) to remove isolated noise pixels without changing the blob's overall size;
  \item rejects the frame early if the cleaned blob touches the image border (it cannot be fully measured) or if too few pixels survived thresholding (nothing there);
@@ -23,12 +23,17 @@ Every stage above runs split across both cores, using the exact same \ccode{Work
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-dip-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-dualcore-forwarding}, including the plain \repopath{boot.script.jtag_debug} script and the same two \term{CPU1}-related debug-configuration requirements. The \term{OV7670} camera adapter board caveat from \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}) applies here too.
+Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-dualcore-forwarding}, including the plain \repopath{boot.script.jtag_debug} script and the same two \term{CPU1}-related debug-configuration requirements.
+
+\begin{warningbox}
+\textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
+\end{warningbox}
+\footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-dip-hardware}
 
-Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike \nameref{chap:fpgasteel-dualcore-bringup} and \nameref{chap:fpgasteel-dualcore-forwarding}, this project actually drives the \term{LED} \term{PIO}: one bit per \ccode{DualCoreDIP::Result} value, read directly by \repopath{main0.cpp} after each processed frame.
+Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike \nameref{chap:fpgasteel-dualcore-bringup} and \nameref{chap:fpgasteel-dualcore-forwarding}, this project actually drives the \hw{fpga_led_pio}: after each processed frame, it lights a different \term{LED} depending on whether the ball was found, found touching the border, or not found at all, giving a live visual readout of the pipeline's outcome.
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-dip-operating-principles}
@@ -36,46 +41,59 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. Unlike \na
 \subsection{The pipeline, stage by stage}
 \label{subsec:fpgasteel-dualcore-dip-pipeline}
 
-\ccode{DualCoreDIP::process()} runs the nine parallel stages and two single-core stages from Section~\ref{sec:fpgasteel-dualcore-dip-about} in a fixed sequence, always in the same order, one synchronization point after another:
+\ccode{DualCoreDIP::process()} runs several parallel stages and, when not convenient to parallelize, some single-core ones, to obtain the result introduced in Section~\ref{sec:fpgasteel-dualcore-dip-about}, in a fixed sequence, always in the same order, one synchronization point after another:
 
 \begin{figure}[htbp]
  \centering
  \includesvg[width=\linewidth]{FPGAsteelDipPipeline}
- \caption{Every green stage is one \texttt{forkJoin()} (both cores), every blue stage runs on \term{CPU0} alone. The two early exits (\texttt{EMPTY}, \texttt{ON\_BORDER}) are what let an empty or unusable scene skip most of the pipeline instead of paying for all eleven stages every frame.}
+ \caption{Every green stage is one \texttt{forkJoin()} (both cores), every blue stage runs on \term{CPU0} alone. The two early exits are what let an empty or unusable scene skip most of the pipeline instead of paying for all eleven stages every frame.}
  \label{fig:fpgasteel-dualcore-dip-pipeline}
 \end{figure}
 
-\subsection{The fork/join mechanism, reapplied}
-\label{subsec:fpgasteel-dualcore-dip-forkjoin}
-
-\ccode{DualCoreDIP::forkJoin()} is line-for-line the same sequence as \nameref{chap:fpgasteel-dualcore-forwarding}'s \ccode{DualCoreFormatConverter::start()} + \ccode{awaitDone()}: dispatch \ccode{m_worker1} to \term{CPU1}, run \ccode{m_worker0} synchronously on \term{CPU0}, then busy-poll \ccode{m_worker1.status} until it is \ccode{Completed} or \ccode{Error}. \ccode{process()} calls it nine times, reconfiguring \ccode{m_worker0}/\ccode{m_worker1} (source/destination pointers, dimensions, and a phase field selecting which of the nine operations to run) before each call. Nothing about the dispatch mechanism itself changes between one call and the next; only the data the two \ccode{Worker}s are pointed at does.
+For each parallel step, inside the \ccode{process()} method, the code first prepares the two \ccode{Worker}s, \ccode{m_worker0} and \ccode{m_worker1}, by assigning to each one what function to run and what data to run it on (e.g., one half for each core). \ccode{process()} itself, like every other function involved, always runs on \term{CPU0}; it never runs on \term{CPU1}. The fork is \ccode{DualCoreDIP::forkJoin()} handing \ccode{m_worker1} to \term{CPU1} through \ccode{Core1::dispatch()}. It then immediately continues on \term{CPU0} with \ccode{m_worker0}'s own half of the work. Once \term{CPU0} finishes its own half, it starts polling \ccode{m_worker1}'s status until it reports it done: this is the join, and what makes \ccode{forkJoin()} a genuine synchronization point between one stage and the next.
 
 \subsection{The three build variants}
 \label{subsec:fpgasteel-dualcore-dip-build-variants}
 
-The three sibling projects differ in exactly two independent compile-time choices, applied to otherwise identical code (verified by diff: \repopath{main0.cpp} and every other class are byte-identical across all three; only \repopath{DualCoreDIP.{h,cpp}} and \repopath{Config.h}'s \ccode{ICACHE_ENABLE} change):
+As anticipated in Section~\ref{sec:fpgasteel-dualcore-dip-about}, the three sibling projects differ in whether they use the instruction cache and \term{NEON} instructions (see Table~\ref{tab:fpgasteel-dualcore-dip-build-variants}). \term{NEON} is \term{ARM}'s \term{SIMD} (Single Instruction, Multiple Data) instruction set; here, it speeds up loading pixel blocks into the \term{CPU}'s registers and processing them. During development, the compiler was found to auto-vectorize only sporadically, even when explicitly instructed to; for this reason, every stage in Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline} except the two single-core ones (vii and xi) was rewritten by hand using \term{ARM} Intrinsics.
 
 \begin{table}[htbp]
  \centering
- \begin{tabular}{@{}l l l@{}}
+ \begin{tabularx}{\textwidth}{@{} l X l @{}}
   \toprule
   \textbf{Project}\footnotemark & \textbf{Step implementations} & \textbf{L1 instruction cache} \\
   \midrule
-  (none) & \term{ARM} \term{NEON} intrinsics & enabled \\
+  \repopath{_no_neon_no_icache} & plain scalar C++, same algorithm & disabled \\
   \lightmidrule
   \repopath{_no_neon} & plain scalar C++, same algorithm & enabled \\
   \lightmidrule
-  \repopath{_no_neon_no_icache} & plain scalar C++, same algorithm & disabled \\
+  (none) & \term{ARM} \term{NEON} intrinsics & enabled \\
   \bottomrule
- \end{tabular}
+ \end{tabularx}
  \caption{The three build variants of this project.}
  \label{tab:fpgasteel-dualcore-dip-build-variants}
 \end{table}
 \footnotetext{All three share the \texttt{dualcore\_dip\_example} prefix; only the distinguishing suffix is shown here.}
 
-\cmd{dualcore_dip_example}'s \ccode{step01}, \ccode{step03}, \ccode{step04}, \ccode{step05}, \ccode{step07}, \ccode{step08}, and \ccode{step09} (Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline}'s seven \term{NEON}-eligible stages) use \texttt{arm\_neon.h}\footnote{Header shipped with the \term{ARM} toolchain (Paragraph~\ref{subsec:fpgasteel-install-paths}), not a separate download.} intrinsics to process 8 or 16 pixels per instruction; the \repopath{_no_neon} variant replaces every one of them with a plain byte-at-a-time loop computing the exact same result, with no other change anywhere in the codebase. \repopath{_no_neon_no_icache} is that same scalar build with \ccode{ICACHE_ENABLE} (\repopath{Config.h}) set to false instead of true, so \ccode{System::initCore()} skips enabling the \term{L1} instruction cache on either core.
+Since the board's seven-segment display reports each frame's processing time in milliseconds (see \repopath{main0.cpp}), comparing that figure across the three build variants is enough to work out how much faster one option is than another. Table~\ref{tab:fpgasteel-dualcore-dip-speedup} reports the resulting speedup: as shown, enabling the instruction cache dramatically cuts execution time (142 ms down to 47 ms), while the cores' optimized use through \term{NEON} instructions contributes a further reduction, smaller in absolute terms than the first, but still a significant 30 ms.
 
-Since \repopath{main0.cpp} already reports per-frame processing time on the hex display, building and running all three side by side turns the family into a small, controlled benchmark: the same algorithm, on the same hardware, with \term{NEON} and the instruction cache each toggled independently, one variable at a time.
+\begin{table}[htbp]
+ \centering
+ \begin{tabularx}{\textwidth}{@{} X l l l l @{}}
+  \toprule
+  \textbf{Project} & \textbf{L1 instruction cache} & \textbf{NEON} & \textbf{t [ms]} & \textbf{Speedup} \\
+  \midrule
+  \repopath{_no_neon_no_icache} & disabled & unused & 142 & --- (baseline) \\
+  \lightmidrule
+  \repopath{_no_neon} & enabled & unused & 47 & 3.02$\times$ \\
+  \lightmidrule
+  (none) & enabled & explicit & 17 & 8.35$\times$ \\
+  \bottomrule
+ \end{tabularx}
+ \caption{Measured per-frame processing time and speedup across the three variants. Isolating \term{NEON}'s own contribution yields a further 2.76$\times$ speedup on top of the instruction cache's.}
+ \label{tab:fpgasteel-dualcore-dip-speedup}
+\end{table}
+
 
 \section{How it works}
 \label{sec:fpgasteel-dualcore-dip-how-it-works}
@@ -119,4 +137,4 @@ Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-dip-debug-tooling}
 
-\cmd{debugTools/view_frame.py}, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships \cmd{debugTools/linux_dualcore_emulator}, a small host-side (\term{Linux}, x86/\term{ARM}) build of \ccode{DualCoreDIP}'s pipeline logic against stub \term{hwlib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.
+\repopath{debugTools/view_frame.py}, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships \repopath{debugTools/linux_dualcore_emulator}, a small host-side (\term{Linux}, x86/\term{ARM}) build of \ccode{DualCoreDIP}'s pipeline logic against stub \term{hwlib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.

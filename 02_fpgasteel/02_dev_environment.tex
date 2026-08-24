@@ -22,21 +22,23 @@ Given all this, developing directly on physical \term{Ubuntu 22.04} hardware, no
 \subsection{apt packages}
 \label{subsec:fpgasteel-apt-packages}
 
+The first step is installing a handful of additional \term{Ubuntu} system programs, commonly called apt packages, through \term{Ubuntu}'s own package manager. These aren't specific to this project, but the rest of this chapter, and the project as a whole, relies on them being in place.
+
 \begin{shellcode}
 sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-tools git wget curl openjdk-17-jre python3 python3-numpy python3-matplotlib dosfstools picocom pkg-config libopencv-dev
 \end{shellcode}
 
 \begin{itemize} 
-    \item |build-essential|, \cmdpath{bison}, \cmdpath{flex}, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, \cmdpath{git}: building \repopath{repos/u-boot-socfpga} and its boot scripts.
-    \item \cmdpath{wget}, \cmdpath{curl}: downloading the \term{Eclipse} tarball.
-    \item |dosfstools|: \cmdpath{mkfs.vfat}, for preparing the \term{SD card}.
-    \item \cmdpath{picocom}: terminal emulator for the board's serial console.
-    \item |openjdk-17-jre|: \term{Eclipse} needs \term{Java} 17; a \term{JRE} suffices since it is only used here for debugging, never to compile.
-    \item \cmdpath{python3}, |python3-numpy|, |python3-matplotlib|: used by \cmd{cv_bsp_generator.py} (Section~\ref{subsec:fpgasteel-bsp-headers}) and \cmd{debugTools/view_frame.py} (Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}).
+    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|, |git|: building \repopath{repos/u-boot-socfpga} and its boot scripts.
+    \item |wget|, |curl|: fetching files over \term{HTTP}/\term{FTP} and their secure variants, from the command line.
+    \item |dosfstools|: provides \cmdpath{mkfs.vfat}, used to format the \term{SD card}.
+    \item |picocom|: terminal emulator for the board's serial console.
+    \item |openjdk-17-jre|: needed by \term{Eclipse}, installed later in this chapter (Paragraph~\ref{subsec:fpgasteel-install-paths}).
+    \item |python3|, |python3-numpy|, |python3-matplotlib|: used by \cmd{cv_bsp_generator.py} (Section~\ref{subsec:fpgasteel-bsp-headers}) and \cmd{debugTools/view_frame.py} (Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}).
     \item |pkg-config|, |libopencv-dev|: needed to build \cmd{debugTools/linux_dualcore_emulator}, the host-side emulator described in Section~\ref{sec:fpgasteel-dualcore-dip-debug-tooling}.
 \end{itemize}
 
-The \term{ARM} toolchain and \term{OpenOCD} need no \cmdpath{apt} packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
+The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
 
 \subsection{Install the software, and where it lives}
 \label{subsec:fpgasteel-install-paths}
@@ -60,7 +62,7 @@ The \term{ARM} toolchain and \term{OpenOCD} need no \cmdpath{apt} packages: both
 \label{tab:fpgasteel-dev-software}
 \end{table}
 
-The user's home folder is sufficient for all four; a system-wide installation is not required. See Section~\ref{sec:fpgasteel-getting-installers} for where to download each of these.
+Each of these four programs should be installed at the path shown in Table~\ref{tab:fpgasteel-dev-software} above; the user's home folder is sufficient for all of them, a system-wide installation is not required. Copies of all four installers are also available from \nameref{chap:fpgasteel-downloads}.
 
 \subsection{Environment variables}
 \label{subsec:fpgasteel-env-vars}
@@ -79,14 +81,18 @@ export PATH="$HOME/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86_64:$PATH"
 
 Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: \cmdpath{openocd} and \cmdpath{arm-none-eabi-gcc} both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at \extpath{quartus/bin/openocd}. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including \extpath{/usr/bin}, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of \lstinline[style=inlineFsExt]!${QUARTUS_ROOTDIR}/bin!.
 
-\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (\extpath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
+\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (\repopath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
 
-Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new shell) after editing.
+Reload the updated environment variables with the following command, or open a new shell:
+
+\begin{shellcode}
+source ~/.bashrc
+\end{shellcode}
 
 \subsection{USB-Blaster II and serial console access}
 \label{subsec:fpgasteel-usb-blaster}
 
-Beyond the packages installed in Paragraph~\ref{subsec:fpgasteel-apt-packages}, the board itself requires access to two \term{USB} devices: the \term{USB-Blaster II}, used for \term{JTAG} programming and debugging, and the \term{UART-to-USB} serial console. By default, \term{udev} restricts both device nodes to root, which would force every \term{OpenOCD} invocation and every serial connection to run as root. The following \term{udev} rule grants the invoking user's group access to the \term{USB-Blaster II} instead:
+Beyond the packages installed in Paragraph~\ref{subsec:fpgasteel-apt-packages}, the board itself requires access to two \term{USB} devices: the \term{USB-Blaster II}, used for \term{JTAG} programming and debugging, and the \term{UART-to-USB} serial console. By default, \term{udev} restricts both device nodes to root, which would force every \term{OpenOCD} invocation and every serial connection to run as root. The following rule grants the invoking user's group access to the \term{USB-Blaster II} instead:
 
 \begin{shellcode}
 sudo tee /etc/udev/rules.d/51-usbblaster.rules << 'EOF'
@@ -101,13 +107,13 @@ sudo udevadm trigger
 sudo usermod -aG plugdev "$USER"
 \end{shellcode}
 
-The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as \extpath{/dev/ttyUSB0}, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every \sysid{ttyUSB*}/\sysid{ttyACM*} device to the \sysid{dialout} group. Add the user to that group too:
+The serial console needs no equivalent custom rule. The board's \term{UART-to-USB} connector enumerates as \extpath{/dev/ttyUSB0}, used at 115200 baud, 8-N-1, and \term{Ubuntu}'s own default rule already assigns every serial device to the \sysid{dialout} group. Add the user to that group too:
 
 \begin{shellcode}
 sudo usermod -aG dialout "$USER"
 \end{shellcode}
 
-Log out and back in (or \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout}) for both group changes to take effect.
+Log out and back in for both group changes to take effect.\footnote{Or run \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout} on the already-open console to apply the change immediately, without logging out.}
 
 \subsection{Editor and debugger roles}
 \label{subsec:fpgasteel-editor-roles}
@@ -125,7 +131,3 @@ Log out and back in (or \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout}) for
 \end{itemize}
 }
 
-\section{Getting the installers}
-\label{sec:fpgasteel-getting-installers}
-
-See Chapter~\ref{chap:fpgasteel-downloads} for where to get \term{Quartus Prime}, the \term{ARM} toolchain, \term{OpenOCD}, \term{Eclipse}, and the \term{Ubuntu 22.04 LTS} image.

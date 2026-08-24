@@ -4,21 +4,14 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-about}
 
-\cmd{dualcore_bringup_test} (under \repopath{sw/dualcore_bringup_test}) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at once: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. \cmd{dualcore_forwarding_example} builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
+\textit{``Dual-Core Bring-up Test''} (under \repopath{sw/dualcore_bringup_test}) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at the same time: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. \nameref{chap:fpgasteel-dualcore-forwarding} builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
 
-The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \term{hwlib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence the \term{Linux} kernel uses to bring up its second core, implemented in \texttt{arch/arm/mach-socfpga/platsmp.c}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in \repopath{main.c} was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
+The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \term{hwlib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence the \term{Linux} kernel uses to bring up its second core, implemented in \extpath{arch/arm/mach-socfpga/platsmp.c}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in \repopath{main.c} was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-prerequisites}
 
 Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, including the \repopath{boot.script.jtag_debug} script, the same one used by every example in this project.
-
-Two additional requirements, specific to this project:
-
-\begin{itemize}
-    \item The \term{Eclipse} debug configuration's \term{OpenOCD} options must set \ccode{CHIPCORES=1}, not \ccode{CHIPCORES=2}. With \ccode{CHIPCORES=2}, \term{OpenOCD} halts \term{CPU1} over \term{JTAG} as soon as it starts running; once \term{JTAG} has halted a core this way, this project's own software has no way to resume it again, so \term{CPU1} never reaches \ccode{main1()}.
-    \item ``Initial Reset'' and ``Pre-run/Restart reset'' must both be disabled in the debug configuration, and ``Enable Arm semihosting'' must be enabled. Both are already required by \nameref{chap:fpgasteel-hello-world}; they matter even more here, since a reset reissued by \term{OpenOCD} mid-session would reassert \term{CPU1}'s reset line again, undoing the bring-up this project performs.
-\end{itemize}
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-hardware}
@@ -55,7 +48,7 @@ So \term{CPU1} is not merely idle, parked, or spinning after boot: it is held in
 \subsection{The boot address and the remap trick}
 \label{subsec:fpgasteel-dualcore-boot-address}
 
-\ccode{main()} asserts \term{CPU1}'s reset again first (\hw{RSTMGR_MPUMODRST} = 0x2), even though it should already be asserted at this point; this makes the bring-up idempotent regardless of whatever state \term{CPU1} was actually left in, rather than assuming the hardware default was never touched.
+\ccode{main()}, running on core 0, asserts \term{CPU1}'s reset again first (\hw{RSTMGR_MPUMODRST} = 0x2), even though it should already be asserted at this point; this makes the bring-up idempotent regardless of whatever state \term{CPU1} was actually left in, rather than assuming the hardware default was never touched.
 
 It then writes a two-word trampoline directly to physical address 0x0:
 
@@ -95,7 +88,7 @@ Plain \term{C}, no classes. Source: \repopath{main.c}.
     \item \ccode{main1()} (\term{CPU1} entry point, called from \repopath{startup_core1.S}): writes 123 to the hex display and loops forever. This is the only code that ever runs on \term{CPU1} in this project.
 \end{itemize}
 
-\subsection{startup\_core1.S}
+\subsection{startup\_core1}
 \label{subsec:fpgasteel-dualcore-startup-core1}
 
 \term{CPU1}'s own minimal entry stub, since \term{CPU1} starts with no stack and no runtime set up at all, unlike \term{CPU0} (which inherits \term{U-Boot}'s stack until its own \term{C} runtime takes over). Source: \repopath{startup_core1.S}.
@@ -132,7 +125,7 @@ Identical to the single-core project template (the same one \nameref{chap:fpgast
 The full sequence, \term{CPU0}'s and \term{CPU1}'s sides together:
 
 \begin{enumerate}
-    \item \term{OpenOCD} halts \term{CPU0} over \term{JTAG} and loads the \term{ELF}. \term{CPU1} is still held in hardware reset and has not executed anything at all yet.
+    \item \term{OpenOCD} debugger halts \term{CPU0} over \term{JTAG} and loads the \term{ELF} file. \term{CPU1} is still held in hardware reset and has not executed anything at all yet.
     \item \term{CPU0} runs \ccode{main()}: \term{LED}s turn on, dashes show on the hex display.
     \item \term{CPU0} runs the five-step bring-up sequence (Paragraphs~\ref{subsec:fpgasteel-dualcore-boot-address}--\ref{subsec:fpgasteel-dualcore-releasing-cpu1}).
     \item \term{CPU1} comes out of reset, executes the trampoline at 0x0, and lands in \ccode{_start_core1}, which sets up its stack and calls \ccode{main1()}.

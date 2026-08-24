@@ -60,12 +60,12 @@ Power on the board. A menu appears over the serial console, listing the 6 exampl
 The list below gives each example's program name, exactly as it appears in the menu, together with a short description of what it does:
 
 \begin{enumerate}
-    \item \cmd{hello_word}: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
-    \item \cmd{simple_forwarding_example}: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
-    \item \cmd{cache_forwarding_example}: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
-    \item \cmd{dualcore_dip_example_no_neon_no_icache}: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
-    \item \cmd{dualcore_dip_example_no_neon}: same, without \term{NEON}, with the instruction cache enabled.
-    \item \cmd{dualcore_dip_example}: same, using \term{NEON}, with the instruction cache enabled.
+    \item |hello_word|: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
+    \item |simple_forwarding_example|: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
+    \item |cache_forwarding_example|: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
+    \item |dualcore_dip_example_no_neon_no_icache|: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
+    \item |dualcore_dip_example_no_neon|: same, without \term{NEON}, with the instruction cache enabled.
+    \item |dualcore_dip_example|: same, using \term{NEON}, with the instruction cache enabled.
 \end{enumerate}
 
 \section{Repository layout}

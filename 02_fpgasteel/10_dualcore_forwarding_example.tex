@@ -4,7 +4,7 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-forwarding-about}
 
-\cmd{dualcore_forwarding_example} (under \repopath{sw/dualcore_forwarding_example}) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from \nameref{chap:fpgasteel-cache-forwarding}, and the \term{CPU1} bring-up mechanism from \nameref{chap:fpgasteel-dualcore-bringup}. What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion \cite{OV7670-DS} of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from \nameref{chap:fpgasteel-dualcore-bringup}.
+\textit{``Dual-Core Forwarding Example''} (under \repopath{sw/dualcore_forwarding_example}) combines the two previous projects: the camera-to-\term{VGA} pipeline with cache management from \nameref{chap:fpgasteel-cache-forwarding}, and the \term{CPU1} bring-up mechanism from \nameref{chap:fpgasteel-dualcore-bringup}. What is new here is the reason to bring \term{CPU1} up at all: instead of just proving \term{CPU1} can run independently, this project actually hands it work, splitting the \term{RGB565}-to-\term{RGB24} conversion of every captured frame in half, one half per core, through a small dispatch mechanism built on top of the bring-up sequence from \nameref{chap:fpgasteel-dualcore-bringup}.
 
 At startup, in addition to what \nameref{chap:fpgasteel-cache-forwarding} already does, this project:
 
@@ -46,7 +46,7 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardwa
 The mechanism is exactly the one described in \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}): assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write \hw{cpu1startaddr} for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. \ccode{Core1::start()} (\repopath{Core1.cpp}) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
 
 \begin{itemize}
- \item registers are written through \term{hwlib}'s \term{socal} accessors (\ccode{alt_setbits_word(ALT_RSTMGR_MPUMODRST_ADDR, ...)}, \ccode{alt_write_word(ALT_SYSMGR_ROMCODE_CPU1STARTADDR_ADDR, ...)}) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
+ \item registers are written through \term{hwlib}'s accessors (\ccode{alt_setbits_word(ALT_RSTMGR_MPUMODRST_ADDR, ...)}, \ccode{alt_write_word(ALT_SYSMGR_ROMCODE_CPU1STARTADDR_ADDR, ...)}) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
  \item an \ccode{sev} (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test. This is carried over unconditionally from \term{Linux}'s own \texttt{platsmp.c} sequence, the same source Dual-Core Bring-up Test credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop, which never waits in \ccode{wfe} (wait for event).
 \end{itemize}
 
@@ -55,10 +55,10 @@ The mechanism is exactly the one described in \nameref{chap:fpgasteel-dualcore-b
 \subsection{Shared MMU, per-core caches}
 \label{subsec:fpgasteel-dualcore-forwarding-shared-mmu}
 
-The \term{SCU}/\term{L1}/\term{L2} architecture is the one in \cite[Chapter 10, Figure 10-2, p.~176]{CV-TRM}. Unlike Cache Forwarding Example, where only one core ever runs, this project has two cores that both need cache and \term{MMU} support, and a page table is not something that can safely be built twice. The work is split into two methods on \ccode{System}:
+The \term{SCU}/\term{L1}/\term{L2} architecture is the one in Figure~\ref{fig:fpgasteel-cortex-a9-mpu-subsystem} on page~\pageref{fig:fpgasteel-cortex-a9-mpu-subsystem}, already reproduced in \nameref{chap:fpgasteel-cache-forwarding}. Unlike Cache Forwarding Example, where only one core ever runs, this project has two cores that both need cache and \term{MMU} support, and a page table is not something that can safely be built twice. The work is split into two methods on \ccode{System}:
 
 \begin{itemize}
- \item \ccode{prepareCacheSubsystem()}, called once, from \term{CPU0}, before \term{CPU1} exists: enables the \term{SCU}, disables whatever cache state \term{U-Boot} left behind, declares the same three-region flat 1:1 mapping as Cache Forwarding Example's \ccode{System::enableCache()} and hands it, together with a storage allocator, to \ccode{alt_mmu_va_space_create()}; \term{hwlib} is what actually writes the section table into that storage, exactly as in Subparagraph~\ref{subsubsec:fpgasteel-hwlib-performs-work}. \ccode{prepareCacheSubsystem()} then enables the \term{L2} cache and calls \ccode{initCore()} for \term{CPU0} itself.
+ \item \ccode{prepareCacheSubsystem()}, called once, from \term{CPU0}, before \term{CPU1} starts: enables the \term{SCU}, disables whatever cache state \term{U-Boot} left behind, declares the same three-region flat 1:1 mapping as Cache Forwarding Example's \ccode{System::enableCache()} and hands it, together with a storage allocator, to \ccode{alt_mmu_va_space_create()}; \term{hwlib} is what actually writes the section table into that storage, exactly as in Subparagraph~\ref{subsubsec:fpgasteel-hwlib-performs-work}. \ccode{prepareCacheSubsystem()} then enables the \term{L2} cache and calls \ccode{initCore()} for \term{CPU0} itself.
  \item \ccode{initCore()}, called once per core (by \ccode{prepareCacheSubsystem()} for \term{CPU0}, and again by \ccode{Core1::run()} for \term{CPU1} after it starts): enables the \term{VFP}/\term{NEON} coprocessor access bits (\term{CPU1} does not inherit this from \term{U-Boot} the way \term{CPU0} does), sets the \hw{ACTLR.SMP} bit to join the \term{SCU} coherency domain, points the \term{MMU} at the one shared table via \ccode{alt_mmu_va_space_enable()}, and enables the \term{L1} data cache. It also optionally enables the \term{L1} instruction cache on each core, gated behind the \ccode{ICACHE_ENABLE} compile-time flag (\repopath{Config.h}); Cache Forwarding Example has no equivalent switch at all, since it never touches the instruction cache.
 \end{itemize}
 
@@ -67,9 +67,9 @@ Both cores' \term{MMU}s are pointed, via \ccode{alt_mmu_va_space_enable()}, at t
 \subsection{The Worker/DualCoreJob dispatch mechanism}
 \label{subsec:fpgasteel-dualcore-forwarding-dispatch}
 
-This is the actual ``scheduler'' this project uses to hand work to \term{CPU1}, and it is deliberately as small as it can be: a single job slot, polled with atomics, never more than one job in flight to \term{CPU1} at a time.
+This is the actual ``scheduler'' this project uses to hand work to \term{CPU1}, and it is deliberately as small as it can be: a single job slot, polled with atomic variables, never more than one job in flight to \term{CPU1} at a time.
 
-The whole mechanism rests on two abstract classes, \ccode{Worker} and \ccode{DualCoreJob} (Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-worker}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-job}). Any task that needs to run split across the two cores must extend \ccode{DualCoreJob}, and must be able to hand back two \ccode{Worker} objects through \ccode{getWorker0()}, the one \term{CPU0} will run, and \ccode{getWorker1()}, the one \term{CPU1} will run. Calling \ccode{start()} is what actually assigns \ccode{worker1} to \term{CPU1}, through \ccode{Core1::dispatch()} (Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-shared-mmu}/\ref{subsec:fpgasteel-dualcore-forwarding-core1}): from that moment on, \term{CPU1}'s own loop, which is constantly polling, notices that a worker with \ccode{status == Ready} is waiting for it, flips it to \ccode{Running}, and calls its \ccode{run()}. \ccode{awaitDone()}, the other half of the \ccode{DualCoreJob} interface, is what blocks the caller until both \term{CPU}s have actually finished: \term{CPU0}'s own worker, run synchronously inside \ccode{start()} itself, and \term{CPU1}'s, watched afterwards through its own status flag.
+The whole mechanism rests on two abstract classes, \ccode{Worker} and \ccode{DualCoreJob} (Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-worker}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-job}). Any task that needs to run split across the two cores must extend \ccode{DualCoreJob}, and must be able to hand back two \ccode{Worker} objects through \ccode{getWorker0()}, the one \term{CPU0} will run, and \ccode{getWorker1()}, the one \term{CPU1} will run. Calling \ccode{start()} is what actually assigns \ccode{worker1} to \term{CPU1}, through \ccode{Core1::dispatch()}: from that moment on, \term{CPU1}'s own loop, which is constantly polling, notices that a worker with \ccode{status == Ready} is waiting for it, flips it to \ccode{Running}, and calls its \ccode{run()}. \ccode{awaitDone()}, the other half of the \ccode{DualCoreJob} interface, is what blocks the caller until both \term{CPU}s have actually finished: \term{CPU0}'s own worker, run synchronously inside \ccode{start()} itself, and \term{CPU1}'s, watched afterwards through its own status flag.
 
 \begin{figure}[htbp]
  \centering
@@ -98,7 +98,7 @@ This split only stays safe because of one invariant, enforced everywhere: exactl
 
 That automatic coherency covers the two \term{ARM} cores only. It says nothing about the two \term{mSGDMA} cores in the \term{FPGA} fabric: as established in Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency}, those \term{DMA} masters read and write \term{DDR} directly and are not part of the \term{SCU}'s coherency domain, exactly as on Cache Forwarding Example. So, the converted frame still needs the same clean-before-\term{DMA}-reads treatment Cache Forwarding Example established; the only question is which core is responsible for it.
 
-A cache clean instruction only ever operates on the core that executes it: a clean issued on \term{CPU0} cannot reach into \term{CPU1}'s own \term{L1} cache banks and force them to write back, and vice versa. This is why \ccode{DualCoreFormatConverter::HalfFrameWorker::run()} (\repopath{DualCoreFormatConverter.cpp}) ends with its own \ccode{alt_cache_l1_data_clean(dst, width * height * 3)} on the half it just wrote, executed by whichever core actually ran that particular worker: \term{CPU0} cleans its own half's \term{L1} lines synchronously, right after converting it; \term{CPU1} cleans its own half's \term{L1} lines from inside \ccode{Core1::run()}'s worker loop, right after its own \ccode{run()} returns. Each core can only clean what it itself dirtied, so each core does exactly that, immediately.
+A cache clean instruction only ever operates on the core that executes it: a clean issued on \term{CPU0} cannot reach into \term{CPU1}'s own \term{L1} cache banks and force them to write back, and vice versa. This is why \ccode{DualCoreFormatConverter::HalfFrameWorker::run()} (\repopath{DualCoreFormatConverter.cpp}) ends with its own cache clean\footnote{Through the \term{hwlib} function \ccode{alt_cache_l1_data_clean(dst, width * height * 3)}.} on the half it just wrote, executed by whichever core actually ran that particular worker: \term{CPU0} cleans its own half's \term{L1} lines synchronously, right after converting it; \term{CPU1} cleans its own half's \term{L1} lines from inside \ccode{Core1::run()}'s worker loop, right after its own \ccode{run()} returns. Each core can only clean what it itself dirtied, so each core does exactly that, immediately.
 
 That still only gets both halves as far as the shared \term{L2}, not to \term{DDR}. The final step is the same one Cache Forwarding Example already relies on: \ccode{vgaPool.push(vgaFrame, true)} (\repopath{main0.cpp}, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls \ccode{CacheAwareFrame::cacheFlush()}, which cleans both \term{L1} and \term{L2} for the whole buffer, but only from \term{CPU0}, the core that calls it. By that point \term{CPU0}'s own half is already clean (the per-worker clean above made that a harmless no-op), and \term{CPU1}'s half, already pushed out of \term{CPU1}'s \term{L1} into the shared \term{L2} by its own per-worker clean, is exactly what this last, single \term{L2} clean reaches and finally pushes on to \term{DDR}. Two per-core \term{L1} cleans, one shared \term{L2}-and-\term{DDR} clean: that is the whole coherency story for a frame two cores wrote together.
 
@@ -140,7 +140,7 @@ Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-camera-class}. The ISR runs
 \subsection{Vga class}
 \label{subsec:fpgasteel-dualcore-forwarding-vga}
 
-Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-vga-class}. Its ISR is also routed to \term{CPU0} only (\hw{VGA_MSGDMA_IRQ_TARGET_CORE = 0x1}).
+Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-vga-class}. Its ISR is also routed to \term{CPU0} only.
 
 \subsection{SimpleFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-simple-format-converter}
@@ -148,7 +148,7 @@ Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-vga-class}. Its ISR is also
 Renamed from Cache Forwarding Example's \ccode{SimpleFilters}, with the same per-format conversion logic (verified byte-identical body, aside from the renamed class and exception type) but a different shape, so that \ccode{DualCoreFormatConverter} can extend it: \ccode{convert()} is now virtual instead of static, the class has a virtual destructor, and the individual per-format helpers (\ccode{mosaic8ToRgb24}/\ccode{yuyv16ToRgb24}/\ccode{rgb565ToRgb24}/\ccode{rgb555ToRgb24}/\ccode{rgb444ToRgb24}) moved from private to protected so a derived class's own worker objects can call them directly.
 
 \begin{itemize}
- \item \ccode{convert(src, dst)} (virtual): unchanged behavior from Cache Forwarding Example's \ccode{SimpleFilters::convert()}: converts \ccode{src} in any supported \ccode{ColorScheme} into \ccode{dst}, which must already be \term{RGB24}. Throws \ccode{ExceptionFilter} if \ccode{dst} isn't \term{RGB24} or \ccode{src}'s format isn't handled.
+ \item \ccode{convert(src, dst)} (virtual): unchanged behavior from Cache Forwarding Example's \ccode{SimpleFilters::convert()}: converts \ccode{src} in any supported \ccode{ColorScheme} into \ccode{dst} buffer, which must already be \term{RGB24} type. Throws \ccode{ExceptionFilter} if \ccode{dst} isn't \term{RGB24} or \ccode{src}'s format isn't handled.
 \end{itemize}
 
 \subsection{HexDisplay class}
@@ -198,7 +198,7 @@ Abstract coordinator interface for a piece of work split into exactly two \ccode
 \subsection{Core1 class}
 \label{subsec:fpgasteel-dualcore-forwarding-core1}
 
-Singleton owning everything about \term{CPU1}: bringing it up and dispatching work to it. Source: \repopath{Core1.{h,cpp}}.
+Singleton owning everything about \term{CPU1}: bringing it up and dispatching work to it. Source: \lstinline[style=inlineFsRepo]!Core1.{h,cpp}!.
 
 \begin{itemize}
  \item \ccode{getInstance()}: returns the singleton instance.
@@ -213,7 +213,7 @@ Singleton owning everything about \term{CPU1}: bringing it up and dispatching wo
 \subsection{DualCoreFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-dualcore-format-converter}
 
-Implements \ccode{DualCoreJob} and extends \ccode{SimpleFormatConverter} (protected inheritance, reusing its per-format conversion helpers without exposing \ccode{convert()}'s single-core meaning directly), splitting one conversion into a top half and a bottom half, one per core. Source: \repopath{DualCoreFormatConverter.{h,cpp}}.
+Implements \ccode{DualCoreJob} and extends \ccode{SimpleFormatConverter} (protected inheritance, reusing its per-format conversion helpers without exposing \ccode{convert()}'s single-core meaning directly), splitting one conversion into a top half and a bottom half, one per core. Source: \lstinline[style=inlineFsRepo]!DualCoreFormatConverter.{h,cpp}!.
 
 \begin{itemize}
  \item \ccode{setFrames(src, dst)}: computes the split point (\ccode{height / 2}, rounded down to an even row, so a \ccode{Mosaic8} source's 2$\times$2 \term{Bayer} pattern is never cut through the middle of a block) and configures both internal \ccode{HalfFrameWorker}s' source/destination pointers and dimensions accordingly.
@@ -282,4 +282,4 @@ The only functional difference from Section~\ref{sec:fpgasteel-cache-forwarding-
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-forwarding-debug-tooling}
 
-\cmd{debugTools/view_frame.py}, same tool and same cache-flush caveat as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. The debug-configuration gotchas from Chapter~\ref{chap:fpgasteel-dualcore-bringup} apply here unchanged, since \term{CPU1} is brought up by the exact same software mechanism \term{JTAG} must stay out of.
+\repopath{debugTools/view_frame.py}, same tool and same cache-flush caveat as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. The debug-configuration gotchas from Chapter~\ref{chap:fpgasteel-dualcore-bringup} apply here unchanged, since \term{CPU1} is brought up by the exact same software mechanism \term{JTAG} must stay out of.

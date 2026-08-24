@@ -4,7 +4,7 @@
 \section{About this project}
 \label{sec:fpgasteel-hello-about}
 
-\cmd{hello_word} (under \repopath{sw/hello_word}) is the first application in \prjname{FPGAsteel}, and it sets the pattern every later example follows: hardware is wrapped in a small set of classes, each initialized with \ccode{init()} before use and torn down with \ccode{deInit()} afterwards. It:
+\textit{``Hello World''} (under \repopath{sw/hello_word}) is the first application in \prjname{FPGAsteel}, and it sets the pattern every later example follows: hardware is wrapped in a small set of classes, each initialized with \ccode{init()} before use and torn down with \ccode{deInit()} afterwards. It:
 
 \begin{itemize}
     \item brings up the interrupt controller;
@@ -26,7 +26,7 @@ The toolchain must already be set up as described in Chapter~\ref{chap:fpgasteel
     \item \repopath{boot.script.jtag_debug} compiled to \repopath{u-boot.scr} and copied to the boot partition, not \repopath{multiboot.script}.
 \end{itemize}
 
-If the \term{SD card} was already used with a different boot script (e.g.\ \repopath{multiboot.script}), don't just swap the file: wipe the card and redo the whole \term{SD card} preparation from scratch (Board Bring-up, Section~\ref{sec:fpgasteel-preparing-sd-card}), this time compiling \repopath{boot.script.jtag_debug} in Section~\ref{sec:fpgasteel-hello-jtag-debug}. This guarantees the board ends up at the ``Ready for JTAG'' prompt this project needs.
+If the \term{SD card} was already used with a different boot script (e.g.\ \repopath{multiboot.script}), don't just swap the compiled file: wipe the card and redo the whole \term{SD card} preparation from scratch (Board Bring-up, Section~\ref{sec:fpgasteel-preparing-sd-card}), this time compiling \repopath{boot.script.jtag_debug} in Section~\ref{sec:fpgasteel-hello-jtag-debug}. This guarantees the board ends up at the ``Ready for JTAG'' prompt this project needs.
 
 Two tools are needed on top of the ones from Board Bring-up, to debug over \term{JTAG} from an \term{IDE}:
 
@@ -40,16 +40,16 @@ See Paragraph~\ref{subsec:fpgasteel-install-paths} for versions and install path
 \section{Code structure}
 \label{sec:fpgasteel-hello-code-structure}
 
-The project defines two main classes, \ccode{System} and \ccode{Serial}, tasked respectively with managing the interrupt controller and \term{UART0}. Since each one is tied to a single, specific piece of hardware (there is exactly one interrupt controller and one \term{UART0}), both are implemented as singletons: the caller obtains the instance with \ccode{getInstance()}, then calls \ccode{init()}, which performs the actual hardware initialization. If \ccode{init()} fails, both throw a matching exception (\ccode{ExceptionSystem} for \ccode{System}, \ccode{ExceptionSerial} for \ccode{Serial}), carrying the name of the failing \term{hwlib} call and its \term{ALT\_STATUS\_CODE}.
+The project defines two main \term{C++} classes, \ccode{System} and \ccode{Serial}, tasked respectively with managing the interrupt controller and \term{UART0}. Since each one is tied to a single, specific piece of hardware (there is exactly one interrupt controller and one \term{UART0}), both are implemented as singletons: the caller obtains the instance with \ccode{getInstance()}, then calls \ccode{init()}, which performs the actual hardware initialization. If \ccode{init()} fails, both throw a matching exception (\ccode{ExceptionSystem} for \ccode{System}, \ccode{ExceptionSerial} for \ccode{Serial}), carrying the name of the failing \term{hwlib} call and its \term{ALT\_STATUS\_CODE}.
 
 \subsection{System}
 \label{subsec:fpgasteel-hello-system}
 
-\ccode{System} (\repopath{src/System.{h,cpp}}) manages the interrupt controller (\term{GIC}):
+\ccode{System} (\lstinline[style=inlineFsRepo]!src/System.{h,cpp}!) manages the interrupt controller (\term{GIC}):
 
 \begin{itemize}
     \item \ccode{getInstance()}: returns the singleton instance.
-    \item \ccode{init()}: initializes and enables the interrupt controller, in order: \ccode{alt_int_global_init()}, \ccode{alt_int_cpu_init()}, \ccode{alt_int_cpu_enable()}, \ccode{alt_int_global_enable()}.
+    \item \ccode{init()}: initializes and enables the interrupt controller; in order, it calls the \term{Altera} \term{hwlib} functions \ccode{alt_int_global_init()}, \ccode{alt_int_cpu_init()}, \ccode{alt_int_cpu_enable()}, \ccode{alt_int_global_enable()}.
     \item \ccode{deInit()}: disables and uninitializes it, in the reverse order.
 \end{itemize}
 
@@ -58,7 +58,7 @@ Both \ccode{init()} and \ccode{deInit()} throw \ccode{ExceptionSystem} if any of
 \subsection{Serial}
 \label{subsec:fpgasteel-hello-serial}
 
-\ccode{Serial} (\repopath{src/Serial.{h,cpp}}) manages \term{UART0} in interrupt mode, 8-N-1 at 115200 baud (constants in \repopath{Config.h}):
+\ccode{Serial} (\lstinline[style=inlineFsRepo]!src/Serial.{h,cpp}!) manages \term{UART0} in interrupt mode, 8-N-1 at 115200 baud (constants in \repopath{Config.h}):
 
 \begin{itemize}
     \item \ccode{getInstance()}: returns the singleton instance.
@@ -74,12 +74,12 @@ Both \ccode{init()} and \ccode{deInit()} throw \ccode{ExceptionSystem} if any of
 
 \ccode{init()}, \ccode{deInit()}, \ccode{flush()} and \ccode{write()} throw \ccode{ExceptionSerial} if the underlying \term{hwlib} call fails.
 
-Internally, \ccode{Serial} uses two instances of \ccode{StaticRingBuffer<char, N>} (\repopath{src/StaticRingBuffer.{h,cpp}}), one for \term{TX} and one for \term{RX}: a fixed-capacity, single-producer/single-consumer circular buffer with no dynamic allocation. \ccode{push()} throws \ccode{ExceptionRingBuffer} if the buffer is full, \ccode{pop()} throws it if the buffer is empty. This is what lets the \term{UART} interrupt handler (producer for \term{RX}, consumer for \term{TX}) and the main loop (producer for \term{TX}, consumer for \term{RX}) exchange bytes safely without a lock.
+Internally, \ccode{Serial} uses two instances of \ccode{StaticRingBuffer<char, N>} (\lstinline[style=inlineFsRepo]!src/StaticRingBuffer.{h,cpp}!), one for \term{TX} and one for \term{RX}: a fixed-capacity, single-producer/single-consumer circular buffer with no dynamic allocation. \ccode{push()} throws \ccode{ExceptionRingBuffer} if the buffer is full, \ccode{pop()} throws it if the buffer is empty. This is what lets the \term{UART} interrupt handler (producer for \term{RX}, consumer for \term{TX}) and the main loop (producer for \term{TX}, consumer for \term{RX}) exchange bytes safely without a lock.
 
 \subsection{hwlib}
 \label{subsec:fpgasteel-hello-hwlib}
 
-\ccode{System} and \ccode{Serial} sit on top of \term{hwlib}, \term{Altera}/\term{Intel}'s low-level driver library for the \term{HPS} peripherals (interrupt controller, \term{UART}, timers, \term{DMA}, etc.), pulled in as the \repopath{repos/intel-socfpga-hwlib} \term{git} submodule. Rather than depending on a prebuilt/system-wide copy, \repopath{Makefile.hwlib} compiles only what this project needs directly from the submodule's \hw{soc_cv_av} (\term{Cyclone V}) sources into a small static library artifact, \repopath{libhwlib_socfpga.a}.
+\ccode{System} and \ccode{Serial} sit on top of \term{hwlib}, \term{Altera}/\term{Intel}'s low-level driver library for the \term{HPS} peripherals (interrupt controller, \term{UART}, timers, \term{DMA}, etc.), pulled in as the \repopath{repos/intel-socfpga-hwlib} \term{git} submodule. Rather than depending on a prebuilt/system-wide copy, \repopath{Makefile.hwlib} compiles only what this project needs directly from the submodule's \repopath{soc_cv_av} (\term{Cyclone V}) sources into a small static library artifact, \repopath{libhwlib_socfpga.a}.
 
 \section{How it works}
 \label{sec:fpgasteel-hello-how-it-works}
@@ -118,7 +118,7 @@ Before starting a debug session, connect the board to the host \term{PC} with tw
     \item a \term{micro-USB} cable, for the \term{UART} terminal exposed by the \term{HPS} at 115200 baud, 8-N-1, no flow control.
 \end{itemize}
 
-On \term{Linux}, \cmdpath{picocom} is a lightweight terminal emulator for the latter: find the device with \texttt{dmesg \textbar{} grep tty} (typically \extpath{/dev/ttyUSB0}), then connect with:
+On \term{Linux}, \cmdpath{picocom} is a lightweight terminal emulator for the latter: find the device with \lstinline[style=inlineCmdExt]!dmesg | grep tty! (typically \extpath{/dev/ttyUSB0}), then connect with:
 
 \begin{shellcode}
 picocom -b 115200 /dev/ttyUSB0
@@ -135,7 +135,7 @@ With the board wired up and sitting at ``Ready for JTAG'', the rest happens insi
 \begin{enumerate}
     \item |File > Import... > General > Existing Projects into Workspace|.
     \item Select root directory and pick the \repopath{sw/hello_word} folder and set up for the \term{Arm Cross GCC} toolchain.
-    \item \ccode{Finish}.
+    \item Click on |Finish|.
 \end{enumerate}
 
 The imported project is not built from \term{Eclipse}; building stays \cmdpath{make}'s job.
@@ -147,7 +147,7 @@ The imported project is not built from \term{Eclipse}; building stays \cmdpath{m
 
 |Run > Debug Configurations... > GDB OpenOCD Debugging > New Configuration|.
 
-On the \term{Main} tab, set \term{Project} to \cmd{hello_world} and \term{C/C++ Application} to \repopath{bin/hello_word.elf}.
+On the \term{Main} tab, set \term{Project} to |hello_world| and \term{C/C++ Application} to \repopath{bin/hello_word.elf}.
 
 Leave the build setting on ``Select Automatically'': building this project is \cmdpath{make}'s job, so this never actually triggers a build from \term{Eclipse}.
 
@@ -158,7 +158,7 @@ Leave the build setting on ``Select Automatically'': building this project is \c
     \label{fig:fpgasteel-hello-debug-main}
 \end{figure}
 
-On the \term{Debugger} tab, enable ``Start OpenOCD locally'', pointing it at the \term{OpenOCD} binary installed in Paragraph~\ref{subsec:fpgasteel-install-paths}, and set \term{Config options} to both config files plus a non-destructive \hw{init_reset} (the board must already be sitting at ``Ready for JTAG'' via the \term{SD card}, Section~\ref{sec:fpgasteel-hello-prerequisites}; this must not reset it):
+On the \term{Debugger} tab, enable ``Start OpenOCD locally'', pointing it at the \term{OpenOCD} binary installed in Paragraph~\ref{subsec:fpgasteel-install-paths}, and set \term{Config options} to both config files plus a non-destructive |init_reset| (the board must already be sitting at ``Ready for JTAG'' via the \term{SD card}, Section~\ref{sec:fpgasteel-hello-prerequisites}; this must not reset it):
 
 \begin{shellcode}
 -f /home/wheel/projects/FPGAsteel/sw/hello_word/openocd/altera-usb-blaster2.cfg

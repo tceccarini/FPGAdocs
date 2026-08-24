@@ -119,12 +119,20 @@
      rx="8"
      id="rect21" />
   <text
+     x="45"
+     y="122.25484"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text22">i)</text>
+  <text
      x="278.54059"
      y="122.25484"
      text-anchor="middle"
      font-size="15px"
      class="txt-accent"
-     id="text23">step01 — RGB565 → RGB24 + Grayscale</text>
+     id="text23">RGB565 → RGB24 + Grayscale</text>
   <line
      class="line"
      x1="278.54059"
@@ -144,12 +152,20 @@
      rx="8"
      id="rect29" />
   <text
+     x="45"
+     y="182.25484"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text30">ii)</text>
+  <text
      x="278.54059"
      y="182.25484"
      text-anchor="middle"
      font-size="15px"
      class="txt-accent"
-     id="text31">step03 — binarize @ threshold, count</text>
+     id="text31">binarize @ threshold, count</text>
   <text
      x="295.25751"
      y="209.22543"
@@ -174,6 +190,14 @@
      height="40"
      rx="8"
      id="rect37" />
+  <text
+     x="45"
+     y="242.25484"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text38">iii)</text>
   <text
      x="278.54059"
      y="242.25484"
@@ -200,6 +224,14 @@
      rx="8"
      id="rect43" />
   <text
+     x="45"
+     y="302.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text44">iv)</text>
+  <text
      x="278.54059"
      y="302.25482"
      text-anchor="middle"
@@ -224,6 +256,14 @@
      height="40"
      rx="8"
      id="rect53" />
+  <text
+     x="45"
+     y="362.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text54">v)</text>
   <text
      x="278.54059"
      y="362.25482"
@@ -250,6 +290,14 @@
      rx="8"
      id="rect59" />
   <text
+     x="45"
+     y="422.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text60">vi)</text>
+  <text
      x="278.54059"
      y="422.25482"
      text-anchor="middle"
@@ -275,12 +323,20 @@
      rx="8"
      id="rect65" />
   <text
+     x="45"
+     y="482.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text66">vii)</text>
+  <text
      x="278.54059"
      y="482.25482"
      text-anchor="middle"
      font-size="15px"
      class="txt-single"
-     id="text67">step06 — border check</text>
+     id="text67">border check</text>
   <text
      x="295.65884"
      y="508.19635"
@@ -306,12 +362,20 @@
      rx="8"
      id="rect77" />
   <text
+     x="45"
+     y="542.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text78">viii)</text>
+  <text
      x="278.54059"
      y="542.25482"
      text-anchor="middle"
      font-size="15px"
      class="txt-accent"
-     id="text79">step07 — boundary = opened &amp; ~E2</text>
+     id="text79">boundary = opened &amp; ~E2</text>
   <line
      class="line"
      x1="278.54059"
@@ -331,12 +395,20 @@
      rx="8"
      id="rect83" />
   <text
+     x="45"
+     y="602.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text84">ix)</text>
+  <text
      x="278.54059"
      y="602.25482"
      text-anchor="middle"
      font-size="15px"
      class="txt-accent"
-     id="text85">step08 — bounding box; centroid = bbox center</text>
+     id="text85">bounding box; centroid = bbox center</text>
   <line
      class="line"
      x1="278.54059"
@@ -356,12 +428,20 @@
      rx="8"
      id="rect89" />
   <text
+     x="45"
+     y="662.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text90">x)</text>
+  <text
      x="278.54059"
      y="662.25482"
      text-anchor="middle"
      font-size="15px"
      class="txt-accent"
-     id="text91">step09 — overlay boundary in red on RGB24</text>
+     id="text91">overlay boundary in red on RGB24</text>
   <line
      class="line"
      x1="278.54059"
@@ -380,6 +460,14 @@
      height="40"
      rx="8"
      id="rect95" />
+  <text
+     x="45"
+     y="722.25482"
+     text-anchor="middle"
+     font-size="16px"
+     font-weight="700"
+     class="txt-muted"
+     id="text96">xi)</text>
   <text
      x="278.54059"
      y="722.25482"
