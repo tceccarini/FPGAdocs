@@ -1,7 +1,7 @@
 \chapter{Camera Adapter Board}
 \label{app:camera-adapter-board}
 
-The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board adapter designed for this project: a transmitter board that sits on the camera module and a receiver board that plugs into the \term{DE1-SoC} \term{GPIO\_0} header, joined by a 40-way ribbon cable. This appendix collects the physical documentation of those two boards: schematics, bill of materials and a photograph of the assembled system, which the hardware chapters reference but do not reproduce.
+The \gterm{ov7670}{OV7670} camera is connected to the \term{DE1-SoC} through a two-board adapter designed for this project: a transmitter board that sits on the camera module and a receiver board that plugs into the \term{DE1-SoC} \term{GPIO\_0} header, joined by a 40-way ribbon cable. This appendix collects the physical documentation of those two boards: schematics, bill of materials and a photograph of the assembled system, which the hardware chapters reference but do not reproduce.
 
 \begin{figure}[htbp]
     \centering
@@ -13,9 +13,9 @@ The \term{OV7670} camera is connected to the \term{DE1-SoC} through a two-board 
 \section{Hardware bug: camera \term{RESET} and \term{POWER-DOWN}}
 \label{sec:camera-adapter-reset-powerdown}
 
-Do not keep the \term{OV7670} in \term{RESET} or \term{POWER-DOWN} for extended periods: it can overheat the line buffer on the transmitter board and damage it permanently.
+Do not keep the \gterm{ov7670}{OV7670} in \term{RESET} or \term{POWER-DOWN} for extended periods: it can overheat the line buffer on the transmitter board and damage it permanently.
 
-While the camera is held in \term{RESET} or in \term{POWER-DOWN}\footnote{The overheating has been observed with the camera held in \term{RESET}. \term{POWER-DOWN} is expected to behave the same way, since the camera stops driving the bus in that state as well, but this has not yet been verified experimentally.} it stops driving its data and timing lines, \term{D0}--\term{D7}, \term{PCLK}, \term{HREF} and \term{VSYNC}. Those lines are left floating at the inputs of the line buffer on the transmitter board, which is then driven into an unstable state, oscillating around its switching threshold, and overheats. Keep \term{RESET} and \term{POWER-DOWN} as brief transients.
+While the camera is held in \term{RESET} or in \term{POWER-DOWN}\footnote{The overheating has been observed with the camera held in \term{RESET}. \term{POWER-DOWN} is expected to behave the same way, since the camera stops driving the bus in that state as well, but this has not yet been verified experimentally.} it stops driving its data and timing lines, \term{D0}--\term{D7}, \gterm{pclk}{PCLK}, \gterm{href}{HREF} and \gterm{vsync}{VSYNC}. Those lines are left floating at the inputs of the line buffer on the transmitter board, which is then driven into an unstable state, oscillating around its switching threshold, and overheats. Keep \term{RESET} and \term{POWER-DOWN} as brief transients.
 
 \section{Schematics}
 \label{sec:camera-adapter-schematics}

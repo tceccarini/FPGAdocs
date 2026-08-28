@@ -4,36 +4,36 @@
 \section{Introduction}
 \label{sec:fpgalix-camera-intro}
 
-This chapter covers how the operating system is instructed to deliver the \term{OV7670} camera's video stream to the applications that need it. The standard solution on \term{Linux} is a kernel driver that uses the \term{V4L2} (\term{Video4Linux2}) framework to expose the camera as a standard device any compatible application can open and read frames from.
+This chapter covers how the operating system is instructed to deliver the \gterm{ov7670}{OV7670} camera's video stream to the applications that need it. The standard solution on \term{Linux} is a kernel driver that uses the \gterm{v4l2}{V4L2} (\term{Video4Linux2}) framework to expose the camera as a standard device any compatible application can open and read frames from.
 
-\repopath{sw/camera_driver_2} is that driver: it captures frames through the \term{Altera} \term{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard \extpath{/dev/videoN} device. Its development was assisted by \term{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
+\repopath{sw/camera_driver_2} is that driver: it captures frames through the \gterm{altera}{Altera} \gterm{msgdma}{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard \extpath{/dev/videoN} device. Its development was assisted by \gterm{claudecode}{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
 
 \section{V4L2 buffer allocation}
 \label{sec:fpgalix-camera-buffer-allocation}
 
-The driver uses \term{videobuf2} (\term{vb2}), the buffer-management layer most \term{V4L2} drivers rely on, which supports several memory models for exchanging frame buffers with \term{userspace}: \term{MMAP} (buffers allocated by the driver, mapped into the application's address space), \term{USERPTR} (buffers allocated by the application, their address passed to the driver instead), and \term{DMABUF} (buffers imported from another device).
+The driver uses \term{videobuf2} (\term{vb2}), the buffer-management layer most \gterm{v4l2}{V4L2} drivers rely on, which supports several memory models for exchanging frame buffers with \term{userspace}: \gterm{mmap}{MMAP} (buffers allocated by the driver, mapped into the application's address space), \term{USERPTR} (buffers allocated by the application, their address passed to the driver instead), and \term{DMABUF} (buffers imported from another device).
 
-Of these, it uses \term{MMAP}, backed by \term{vb2}'s \term{DMA}-contiguous allocator (\ccode{vb2_dma_contig_memops}): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through \ccode{mmap()}, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference: the \term{mSGDMA} engine writes to a single physical start address and length per transfer, so the buffer it writes each individual frame into must itself be physically contiguous, a guarantee arbitrary \term{userspace}-allocated memory cannot provide; the several buffers making up the capture ring need not be contiguous with one another.
+Of these, it uses \gterm{mmap}{MMAP}, backed by \term{vb2}'s \gterm{dma}{DMA}-contiguous allocator (\ccode{vb2_dma_contig_memops}): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through \ccode{mmap()}, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference: the \gterm{msgdma}{mSGDMA} engine writes to a single physical start address and length per transfer, so the buffer it writes each individual frame into must itself be physically contiguous, a guarantee arbitrary \term{userspace}-allocated memory cannot provide; the several buffers making up the capture ring need not be contiguous with one another.
 
 \section{Detecting short frames}
 \label{sec:fpgalix-camera-short-frames}
 
-The \term{Avalon-ST} pipeline feeding the \term{mSGDMA} marks the end of every frame with an \term{EOP} (\term{End-Of-Packet}) marker. If \term{EOP} arrives before the buffer \term{mSGDMA} was writing to is full, the result is a short frame, and the \term{Altera} \term{mSGDMA} driver already present in the \term{Linux} kernel (\extpath{drivers/dma/altera-msgdma.c}), written independently of this project, gave \cmd{camera_driver_2} no way to detect this.
+The \gterm{avalonst}{Avalon-ST} pipeline feeding the \gterm{msgdma}{mSGDMA} marks the end of every frame with an \gterm{sop}{EOP} (\term{End-Of-Packet}) marker. If \gterm{sop}{EOP} arrives before the buffer \gterm{msgdma}{mSGDMA} was writing to is full, the result is a short frame, and the \gterm{altera}{Altera} \gterm{msgdma}{mSGDMA} driver already present in the \term{Linux} kernel (\extpath{drivers/dma/altera-msgdma.c}), written independently of this project, gave \cmd{camera_driver_2} no way to detect this.
 
-This problem was found empirically, through trial and error: streaming from the \term{VHDL} test pattern generators under \repopath{hw/my_vhdl/qsys_components/} showed frames coming out wrong. The root cause was then traced by directing \term{Claude Code} to analyse the driver's source directly, over several analysis passes rather than a single one, before the fault was narrowed down to three compounding problems: the \term{DMA} descriptors were not even configured to react to an early \term{EOP} in the first place; once that was corrected, the completion information the hardware did report for each transfer was still being read and then discarded, rather than passed up to \cmd{camera_driver_2}; and the first check used to detect this, once it was passed up, proved unreliable on some \term{mSGDMA} hardware revisions and had to be made more robust. All three were fixed.
+This problem was found empirically, through trial and error: streaming from the \gterm{vhdl}{VHDL} test pattern generators under \repopath{hw/my_vhdl/qsys_components/} showed frames coming out wrong. The root cause was then traced by directing \gterm{claudecode}{Claude Code} to analyse the driver's source directly, over several analysis passes rather than a single one, before the fault was narrowed down to three compounding problems: the \gterm{dma}{DMA} descriptors were not even configured to react to an early \gterm{sop}{EOP} in the first place; once that was corrected, the completion information the hardware did report for each transfer was still being read and then discarded, rather than passed up to \cmd{camera_driver_2}; and the first check used to detect this, once it was passed up, proved unreliable on some \gterm{msgdma}{mSGDMA} hardware revisions and had to be made more robust. All three were fixed.
 
 With this in place, \cmd{camera_driver_2} can tell a complete frame from a short one, and, as intended, logs and discards the latter rather than passing it to \term{userspace} as valid.
 
-Two further problems in the same driver were found and fixed: one caused the \term{DMA} engine to stall permanently after the very first short frame, the other caused a second capture session to start from corrupted internal state left behind by the first. Both are documented, with the exact patch, in \cite[``Kernel patch (mandatory)'']{DRV2-README}.
+Two further problems in the same driver were found and fixed: one caused the \gterm{dma}{DMA} engine to stall permanently after the very first short frame, the other caused a second capture session to start from corrupted internal state left behind by the first. Both are documented, with the exact patch, in \cite[``Kernel patch (mandatory)'']{DRV2-README}.
 
 \textbf{Note:} All five changes are already committed to this project's \term{Linux} kernel fork (|linux-socfpga|), which arrives as a submodule. No manual patching is required.
 
 \section{Current limitations}
 \label{sec:fpgalix-camera-limitations}
 
-The driver, as it stands, supports a single configuration: \term{Bayer} mosaic (\term{SRGGB8}), 640$\times$480, 30 \term{fps}, matching the \term{OV7670}'s native sensor output and this project's \term{Avalon-ST} pipeline. Other pixel formats and resolutions are left to a future version.
+The driver, as it stands, supports a single configuration: \term{Bayer} mosaic (\term{SRGGB8}), 640$\times$480, 30 \term{fps}, matching the \gterm{ov7670}{OV7670}'s native sensor output and this project's \gterm{avalonst}{Avalon-ST} pipeline. Other pixel formats and resolutions are left to a future version.
 
-The \term{OV7670} sensor itself is neither initialized nor reset by the driver: this is done separately, over \term{I\textsuperscript{2}C}, before the driver is loaded or a stream started, using the external utilities described in Section~\ref{sec:fpgalix-camera-usage}.
+The \gterm{ov7670}{OV7670} sensor itself is neither initialized nor reset by the driver: this is done separately, over \gterm{i2c}{I\textsuperscript{2}C}, before the driver is loaded or a stream started, using the external utilities described in Section~\ref{sec:fpgalix-camera-usage}.
 
 \section{Building}
 \label{sec:fpgalix-camera-building}
@@ -49,17 +49,17 @@ This produces \repopath{bin/fpgalix_camera.ko}: the compiled kernel module for t
 \section{Usage}
 \label{sec:fpgalix-camera-usage}
 
-Beyond the \term{DE1-SoC} board itself, this requires an \term{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header.
+Beyond the \term{DE1-SoC} board itself, this requires an \gterm{ov7670}{OV7670} camera module and the custom camera adapter connecting it to the board's \term{GPIO\_0} header.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
 \end{warningbox}
 \footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
-Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over \cmdpath{scp}; any other transfer method works just as well. If transferring over \term{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: \sysid{root} has no working \term{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs \sysid{root}, since loading a kernel module and accessing hardware registers directly both require it; root access can be reached one of two ways:
+Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over \cmdpath{scp}; any other transfer method works just as well. If transferring over \gterm{ssh}{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: \sysid{root} has no working \gterm{ssh}{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs \sysid{root}, since loading a kernel module and accessing hardware registers directly both require it; root access can be reached one of two ways:
 
 \begin{itemize}
-    \item from that same \term{SSH} session, with \cmdpath{su} (the regular user's own password does not work here: it is the \sysid{root} password set in Subparagraph~\ref{subsec:fpgalix-buildroot-base});
+    \item from that same \gterm{ssh}{SSH} session, with \cmdpath{su} (the regular user's own password does not work here: it is the \sysid{root} password set in Subparagraph~\ref{subsec:fpgalix-buildroot-base});
     \item from the serial console instead, already logged in as \sysid{root}; in this case \cmdpath{cd} into wherever the files were transferred to first, since the \sysid{root} login starts elsewhere.
 \end{itemize}
 
@@ -89,7 +89,7 @@ su
 ./resetCtrl.sh
 \end{shellcode}
 
-Select option 2, ``Deassert reset''. This releases \hw{pclk_reset_controller}'s \hw{sw_release} bit, a prerequisite for the camera to respond over \term{I\textsuperscript{2}C} at all.
+Select option 2, ``Deassert reset''. This releases \hw{pclk_reset_controller}'s \hw{sw_release} bit, a prerequisite for the camera to respond over \gterm{i2c}{I\textsuperscript{2}C} at all.
 
 \subsection{Configuring the OV7670 over I2C}
 \label{subsec:fpgalix-camera-i2c-config}
@@ -119,12 +119,12 @@ insmod fpgalix_camera.ko
 \subsection{Viewing the stream}
 \label{subsec:fpgalix-camera-viewing}
 
-\repopath{utils/debug/view.py} is a small \term{OpenCV} viewer, run on a \term{PC}, that displays the raw frames read from the board's \extpath{/dev/video0} over \term{SSH}:
+\repopath{utils/debug/view.py} is a small \gterm{opencv}{OpenCV} viewer, run on a \term{PC}, that displays the raw frames read from the board's \extpath{/dev/video0} over \gterm{ssh}{SSH}:
 
 \begin{shellcode}
 ssh <username>@<board-ip> "v4l2-ctl -d /dev/video0 --stream-mmap --stream-to=-" | python3 view.py -dwg
 \end{shellcode}
 
-\cmdpath{v4l2-ctl}, run on the board, streams raw frames to its own standard output instead of a file; piped over \term{SSH}, \cmd{view.py} reads them from its standard input and displays them. Its processing modes (\cmdpath{-r/-d/-dw/-dwg/-F}) are documented in \cite[``view.py --- Live preview'']{DRV2-README}. Its dependencies, \cmdpath{python3}, |python3-numpy| and |python3-opencv|, are already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}.
+\cmdpath{v4l2-ctl}, run on the board, streams raw frames to its own standard output instead of a file; piped over \gterm{ssh}{SSH}, \cmd{view.py} reads them from its standard input and displays them. Its processing modes (\cmdpath{-r/-d/-dw/-dwg/-F}) are documented in \cite[``view.py --- Live preview'']{DRV2-README}. Its dependencies, \cmdpath{python3}, |python3-numpy| and |python3-opencv|, are already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}.
 
 \cmdpath{v4l2-ctl} itself reads directly from \extpath{/dev/video0} and needs no elevated privileges beyond read access to that device node.

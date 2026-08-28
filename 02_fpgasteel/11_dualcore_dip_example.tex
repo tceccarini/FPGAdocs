@@ -6,10 +6,10 @@
 
 Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: \repopath{dualcore_dip_example}, \repopath{dualcore_dip_example_no_neon}, and \repopath{dualcore_dip_example_no_neon_no_icache} (all under \repopath{sw/}). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
 
-All three take the same camera-to-\term{VGA} pipeline from \nameref{chap:fpgasteel-dualcore-forwarding} and replace the plain format conversion with a small computer-vision pipeline, \ccode{DualCoreDIP}: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \term{VGA} output. At a macroscopic level, the pipeline:
+All three take the same camera-to-\gterm{vga}{VGA} pipeline from \nameref{chap:fpgasteel-dualcore-forwarding} and replace the plain format conversion with a small computer-vision pipeline, \ccode{DualCoreDIP}: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \gterm{vga}{VGA} output. At a macroscopic level, the pipeline:
 
 \begin{enumerate}
- \item converts the captured \term{RGB565} frame coming from the camera into two outputs, produced together in the same pass: an \term{RGB24} frame for \term{VGA} display, and a grayscale frame for analysis;
+ \item converts the captured \gterm{rgb565}{RGB565} frame coming from the camera into two outputs, produced together in the same pass: an \term{RGB24} frame for \gterm{vga}{VGA} display, and a grayscale frame for analysis;
  \item thresholds it to a binary image (a pixel counts as ``object'' above a fixed brightness);
  \item cleans the binary image up morphologically, an opening (erosion followed by dilation) to remove isolated noise pixels without changing the blob's overall size;
  \item rejects the frame early if the cleaned blob touches the image border (it cannot be fully measured) or if too few pixels survived thresholding (nothing there);
@@ -23,7 +23,7 @@ Every stage above runs split across both cores, using the exact same \ccode{Work
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-dip-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-dualcore-forwarding}, including the plain \repopath{boot.script.jtag_debug} script and the same two \term{CPU1}-related debug-configuration requirements.
+Same toolchain, \term{SD card} and \term{Eclipse}/\gterm{openocd}{OpenOCD} debug setup as \nameref{chap:fpgasteel-dualcore-forwarding}, including the plain \repopath{boot.script.jtag_debug} script and the same two \term{CPU1}-related debug-configuration requirements.
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -55,7 +55,7 @@ For each parallel step, inside the \ccode{process()} method, the code first prep
 \subsection{The three build variants}
 \label{subsec:fpgasteel-dualcore-dip-build-variants}
 
-As anticipated in Section~\ref{sec:fpgasteel-dualcore-dip-about}, the three sibling projects differ in whether they use the instruction cache and \term{NEON} instructions (see Table~\ref{tab:fpgasteel-dualcore-dip-build-variants}). \term{NEON} is \term{ARM}'s \term{SIMD} (Single Instruction, Multiple Data) instruction set; here, it speeds up loading pixel blocks into the \term{CPU}'s registers and processing them. During development, the compiler was found to auto-vectorize only sporadically, even when explicitly instructed to; for this reason, every stage in Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline} except the two single-core ones (vii and xi) was rewritten by hand using \term{ARM} Intrinsics.
+As anticipated in Section~\ref{sec:fpgasteel-dualcore-dip-about}, the three sibling projects differ in whether they use the instruction cache and \gterm{neon}{NEON} instructions (see Table~\ref{tab:fpgasteel-dualcore-dip-build-variants}). \gterm{neon}{NEON} is \term{ARM}'s \term{SIMD} (Single Instruction, Multiple Data) instruction set; here, it speeds up loading pixel blocks into the \term{CPU}'s registers and processing them. During development, the compiler was found to auto-vectorize only sporadically, even when explicitly instructed to; for this reason, every stage in Figure~\ref{fig:fpgasteel-dualcore-dip-pipeline} except the two single-core ones (vii and xi) was rewritten by hand using \term{ARM} Intrinsics.
 
 \begin{table}[htbp]
  \centering
@@ -67,7 +67,7 @@ As anticipated in Section~\ref{sec:fpgasteel-dualcore-dip-about}, the three sibl
   \lightmidrule
   \repopath{_no_neon} & plain scalar C++, same algorithm & enabled \\
   \lightmidrule
-  (none) & \term{ARM} \term{NEON} intrinsics & enabled \\
+  (none) & \term{ARM} \gterm{neon}{NEON} intrinsics & enabled \\
   \bottomrule
  \end{tabularx}
  \caption{The three build variants of this project.}
@@ -75,7 +75,7 @@ As anticipated in Section~\ref{sec:fpgasteel-dualcore-dip-about}, the three sibl
 \end{table}
 \footnotetext{All three share the \texttt{dualcore\_dip\_example} prefix; only the distinguishing suffix is shown here.}
 
-Since the board's seven-segment display reports each frame's processing time in milliseconds (see \repopath{main0.cpp}), comparing that figure across the three build variants is enough to work out how much faster one option is than another. Table~\ref{tab:fpgasteel-dualcore-dip-speedup} reports the resulting speedup: as shown, enabling the instruction cache dramatically cuts execution time (142 ms down to 47 ms), while the cores' optimized use through \term{NEON} instructions contributes a further reduction, smaller in absolute terms than the first, but still a significant 30 ms.
+Since the board's seven-segment display reports each frame's processing time in milliseconds (see \repopath{main0.cpp}), comparing that figure across the three build variants is enough to work out how much faster one option is than another. Table~\ref{tab:fpgasteel-dualcore-dip-speedup} reports the resulting speedup: as shown, enabling the instruction cache dramatically cuts execution time (142 ms down to 47 ms), while the cores' optimized use through \gterm{neon}{NEON} instructions contributes a further reduction, smaller in absolute terms than the first, but still a significant 30 ms.
 
 \begin{table}[htbp]
  \centering
@@ -137,4 +137,4 @@ Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-dip-debug-tooling}
 
-\repopath{debugTools/view_frame.py}, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships \repopath{debugTools/linux_dualcore_emulator}, a small host-side (\term{Linux}, x86/\term{ARM}) build of \ccode{DualCoreDIP}'s pipeline logic against stub \term{hwlib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.
+\repopath{debugTools/view_frame.py}, same tool as Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}. This project additionally ships \repopath{debugTools/linux_dualcore_emulator}, a small host-side (\term{Linux}, x86/\term{ARM}) build of \ccode{DualCoreDIP}'s pipeline logic against stub \gterm{hwlib}{hwlib} headers, used to test and tune the vision algorithm itself (thresholds, morphology, early-exit conditions) against saved frames on a development machine, without needing the board at all; it is not part of the bare-metal build and is not covered further here.

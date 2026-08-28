@@ -7,11 +7,11 @@ The chapters that follow proceed in the order the work itself was carried out: s
 
 \begin{enumerate}
     \item \nameref{chap:fpgasteel-hello-world}: prints a message on the serial console.
-    \item \nameref{chap:fpgasteel-i2c-example}: establishes an \term{I\textsuperscript{2}C} communication for configuring the camera.
-    \item \nameref{chap:fpgasteel-simple-forwarding}: forwards the incoming video stream from the camera to \term{VGA} output.
+    \item \nameref{chap:fpgasteel-i2c-example}: establishes an \gterm{i2c}{I\textsuperscript{2}C}\footnote{\glsentrydesc{i2c}} communication for configuring the camera.
+    \item \nameref{chap:fpgasteel-simple-forwarding}: forwards the incoming video stream from the camera to \gterm{vga}{VGA}\footnote{\glsentrydesc{vga}} output.
     \item \nameref{chap:fpgasteel-cache-forwarding}: tests the same path with the \term{CPU} caches enabled.
     \item \nameref{chap:fpgasteel-dualcore-bringup}: brings up the second core.
-    \item \nameref{chap:fpgasteel-dualcore-forwarding}: splits the camera-to-\term{VGA} format conversion across both cores.
+    \item \nameref{chap:fpgasteel-dualcore-forwarding}: splits the camera-to-\gterm{vga}{VGA} format conversion across both cores.
     \item \nameref{chap:fpgasteel-dualcore-dip}: implements an image-processing chain, running on both cores, that locates the boundaries and outline of a bright object against a dark background.
 \end{enumerate}
 
@@ -29,9 +29,9 @@ Readers who want a working example running immediately, without going through ev
 
 \begin{itemize}
     \item A \term{Terasic DE1-SoC} board.
-    \item An \term{OV7670} camera module.
+    \item An \gterm{ov7670}{OV7670}\footnote{\glsentrydesc{ov7670}} camera module.
     \item The custom camera adapter (transmitter and receiver boards, connected by a ribbon cable), wiring the camera to the \term{DE1-SoC}'s \term{GPIO\_0} header. Required only by the examples that use the camera.
-    \item A \term{VGA} monitor and cable. Required only by the examples that show video output.
+    \item A \gterm{vga}{VGA} monitor and cable. Required only by the examples that show video output.
     \item A \term{microSD} card, at least 8 GB.
     \item A \term{micro-USB} cable, for the board's serial console.
     \item A power supply for the board.
@@ -41,17 +41,17 @@ Readers who want a working example running immediately, without going through ev
 
 \begin{enumerate}
     \item Download the \term{SD card} image (a \repopath{.7z} archive)\footnote{See Chapter~\ref{chap:fpgasteel-downloads} for where to obtain it.} and extract it.
-    \item Write the extracted image to the \term{microSD} card (at least 8 GB) with a disk-imaging tool, e.g. \cmdpath{dd} on \term{Linux} or \term{balenaEtcher} on Windows/Mac.
+    \item Write the extracted image to the \term{microSD} card (at least 8 GB) with a disk-imaging tool, e.g. \cmdpath{dd} on \term{Linux} or \gterm{balenaetcher}{balenaEtcher}\footnote{\glsentrydesc{balenaetcher}} on Windows/Mac.
     \item Insert the card into the \term{DE1-SoC}.
 \end{enumerate}
 
 \subsection{Board configuration}
 
-Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the underside of the board, so that switches 1 through 5 are ON (\term{SW10} uses negative logic: ON means logic 0). This lets the \term{HPS} configure the \term{FPGA} fabric from the \term{SD card} at boot.
+Before powering on, set the \term{DE1-SoC}'s \term{SW10} DIP switch, on the underside of the board, so that switches 1 through 5 are ON (\term{SW10} uses negative logic: ON means logic 0). This lets the \gterm{hps}{HPS}\footnote{\glsentrydesc{hps}} configure the \gterm{fpga}{FPGA}\footnote{\glsentrydesc{fpga}} fabric from the \term{SD card} at boot.
 
 \subsection{Connecting the serial console}
 
-Before powering on, connect the \term{DE1-SoC} to a \term{PC} with a \term{micro-USB} cable. This exposes a serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, usable with any terminal emulator (e.g. \term{picocom}, \term{PuTTY}).
+Before powering on, connect the \term{DE1-SoC} to a \term{PC} with a \term{micro-USB} cable. This exposes a serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, usable with any terminal emulator (e.g. \gterm{picocom}{picocom}, \gterm{putty}{PuTTY}).
 
 \subsection{Booting}
 
@@ -61,27 +61,27 @@ The list below gives each example's program name, exactly as it appears in the m
 
 \begin{enumerate}
     \item |hello_word|: prints ``Hello, World!'' and ``GoodBye'' over the serial console (\term{CPU} caches off).
-    \item |simple_forwarding_example|: captures video from the camera and shows it on \term{VGA} output (camera, adapter, and \term{VGA} monitor required; \term{CPU} caches off).
+    \item |simple_forwarding_example|: captures video from the camera and shows it on \gterm{vga}{VGA} output (camera, adapter, and \gterm{vga}{VGA} monitor required; \term{CPU} caches off).
     \item |cache_forwarding_example|: same as above, with the \term{CPU}'s data cache enabled (instruction cache off).
-    \item |dualcore_dip_example_no_neon_no_icache|: a small computer-vision pipeline split across both \term{CPU} cores, without \term{NEON} and without the instruction cache (data cache on).
-    \item |dualcore_dip_example_no_neon|: same, without \term{NEON}, with the instruction cache enabled.
-    \item |dualcore_dip_example|: same, using \term{NEON}, with the instruction cache enabled.
+    \item |dualcore_dip_example_no_neon_no_icache|: a small computer-vision pipeline split across both \term{CPU} cores, without \gterm{neon}{NEON}\footnote{\glsentrydesc{neon}} and without the instruction cache (data cache on).
+    \item |dualcore_dip_example_no_neon|: same, without \gterm{neon}{NEON}, with the instruction cache enabled.
+    \item |dualcore_dip_example|: same, using \gterm{neon}{NEON}, with the instruction cache enabled.
 \end{enumerate}
 
 \section{Repository layout}
 
-The \prjname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \term{GitHub}, is laid out as follows:
+The \prjname{FPGAsteel} repository \cite{FPGASTEEL-REPO}, which is hosted on \gterm{github}{GitHub}\footnote{\glsentrydesc{github}}, is laid out as follows:
 
 \begin{itemize}
-    \item \repopath{hw/}: \term{FPGA} hardware project (\term{Quartus Prime} + \term{Platform Designer}).
+    \item \repopath{hw/}: \gterm{fpga}{FPGA} hardware project (\gterm{quartusprime}{Quartus Prime}\footnote{\glsentrydesc{quartusprime}} + \gterm{platformdesigner}{Platform Designer}\footnote{\glsentrydesc{platformdesigner}}).
     \begin{itemize}
-        \item \repopath{camera_adapter/}: custom \term{PCB} bridging the \term{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}).
-        \item \repopath{my_vhdl/}: custom \term{Platform Designer} \term{VHDL} components written for this project.
-        \item \repopath{quartus/}: \term{Quartus} project, \repopath{soc_system.qsys}, top-level \term{VHDL}, pin assignments.
+        \item \repopath{camera_adapter/}: custom \gterm{pcb}{PCB}\footnote{\glsentrydesc{pcb}} bridging the \gterm{ov7670}{OV7670} to the \term{DE1-SoC}'s \term{GPIO\_0} header; the board layouts themselves are mirrored in the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}).
+        \item \repopath{my_vhdl/}: custom \gterm{platformdesigner}{Platform Designer} \gterm{vhdl}{VHDL}\footnote{\glsentrydesc{vhdl}} components written for this project.
+        \item \repopath{quartus/}: \term{Quartus} project, \repopath{soc_system.qsys}, top-level \gterm{vhdl}{VHDL}, pin assignments.
     \end{itemize}
-    \item \repopath{sw/}: bare-metal example applications (\term{C++}), one folder per example.
+    \item \repopath{sw/}: bare-metal example applications (\gterm{cpp}{C++}\footnote{\glsentrydesc{cpp}}), one folder per example.
     \item \repopath{docs/}: pointer to the shared documentation folder (Chapter~\ref{chap:fpgasteel-downloads}), where the reference manuals used throughout this work are kept.
-    \item \repopath{repos/}: git submodules (\term{U-Boot}, \term{GHRD}, \term{HPS} hwlib, \term{FPGA} top-level files).
+    \item \repopath{repos/}: git submodules (\gterm{uboot}{U-Boot}\footnote{\glsentrydesc{uboot}}, \gterm{ghrd}{GHRD}\footnote{\glsentrydesc{ghrd}}, \gterm{hps}{HPS} hwlib, \gterm{fpga}{FPGA} top-level files).
     \item \repopath{sdcard/}: \term{SD card} boot partition contents and bootloader image, used to build the flashable image (Quick Start).
     \item \repopath{WARNING.md}: camera hardware bug note (symlink to \repopath{hw/camera_adapter/WARNING.md}).
     \item \repopath{LICENSE}: MIT.

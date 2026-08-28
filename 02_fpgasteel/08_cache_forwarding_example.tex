@@ -4,16 +4,16 @@
 \section{About this project}
 \label{sec:fpgasteel-cache-forwarding-about}
 
-\textit{``Cache Forwarding Example''} (under \repopath{sw/cache_forwarding_example}) runs the exact same camera-to-\term{VGA} forwarding pipeline as \nameref{chap:fpgasteel-simple-forwarding}, over the same \term{FPGA} hardware, unchanged, but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (\ccode{SimpleFilters::convert()}, in particular) but introduces a new problem absent from \nameref{chap:fpgasteel-simple-forwarding}: the two \term{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \term{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
+\textit{``Cache Forwarding Example''} (under \repopath{sw/cache_forwarding_example}) runs the exact same camera-to-\gterm{vga}{VGA} forwarding pipeline as \nameref{chap:fpgasteel-simple-forwarding}, over the same \gterm{fpga}{FPGA} hardware, unchanged, but with the \term{CPU}'s data cache and the shared \term{L2} cache enabled. Enabling them means the frame buffers in \term{DDR} can be cached by the \term{CPU}, which is faster for the software side (\ccode{SimpleFilters::convert()}, in particular) but introduces a new problem absent from \nameref{chap:fpgasteel-simple-forwarding}: the two \gterm{msgdma}{mSGDMA} cores that move frames in and out of \term{DDR} bypass the \term{ARM} cores' caches entirely, so the \term{CPU}'s cached view of a frame buffer can silently diverge from what is actually in \term{DDR}, the only copy the \gterm{dma}{DMA} cores ever see. Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture} explains why, and how this project resolves it.
 
-Compared to \nameref{chap:fpgasteel-simple-forwarding}, this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, \ccode{System::enableCache()} enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \term{MMU} mapping. Everything else at startup, and in the main loop, is structurally the same: \ccode{Camera} and \ccode{Vga} still run the same descriptor/prefetcher pipelines, and \ccode{SimpleFilters} still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through \ccode{CacheAwareFrame}/\ccode{CacheAwareFramePool} (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain \ccode{Frame}/\ccode{FramePool} used before, so that the handoff between the \term{CPU} and each \term{DMA} master can carry an explicit cache flush or invalidate where one is needed.
+Compared to \nameref{chap:fpgasteel-simple-forwarding}, this project adds one step to startup: right after bringing up the interrupt controller, and before anything else runs, \ccode{System::enableCache()} enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 section-based \gterm{mmu}{MMU} mapping. Everything else at startup, and in the main loop, is structurally the same: \ccode{Camera} and \ccode{Vga} still run the same descriptor/prefetcher pipelines, and \ccode{SimpleFilters} still converts each captured frame to \term{RGB24} for display. The one loop-level difference is that frame buffers are now handled through \ccode{CacheAwareFrame}/\ccode{CacheAwareFramePool} (Paragraph~\ref{subsec:fpgasteel-cache-aware-frame}, Paragraph~\ref{subsec:fpgasteel-cache-aware-framepool}) instead of the plain \ccode{Frame}/\ccode{FramePool} used before, so that the handoff between the \term{CPU} and each \gterm{dma}{DMA} master can carry an explicit cache flush or invalidate where one is needed.
 
-The camera and \term{VGA} \term{ISR}s themselves, \ccode{Camera::onTransferComplete()} and \ccode{Vga::onTransferComplete()}, are unaltered: comparing this project's \repopath{Camera.cpp}/\repopath{Vga.cpp} against \nameref{chap:fpgasteel-simple-forwarding}'s shows no logic difference at all.
+The camera and \gterm{vga}{VGA} \gterm{isr}{ISR}s themselves, \ccode{Camera::onTransferComplete()} and \ccode{Vga::onTransferComplete()}, are unaltered: comparing this project's \repopath{Camera.cpp}/\repopath{Vga.cpp} against \nameref{chap:fpgasteel-simple-forwarding}'s shows no logic difference at all.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-cache-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+Same toolchain, \term{SD card} and \term{Eclipse}/\gterm{openocd}{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \gterm{ov7670}{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -23,7 +23,7 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-cache-forwarding-hardware}
 
-Unchanged: see Section~\ref{sec:fpgasteel-simple-forwarding-hardware}. Both \term{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}).
+Unchanged: see Section~\ref{sec:fpgasteel-simple-forwarding-hardware}. Both \gterm{msgdma}{mSGDMA} cores, their descriptor memories, and every other \term{IP} core listed there are exactly the same hardware used by this project (the \gterm{avalonst}{Avalon-ST}/\gterm{avalonmm}{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}).
 
 \section{Operating principles}
 \label{sec:fpgasteel-cache-forwarding-operating-principles}
@@ -34,13 +34,13 @@ Unchanged: see Section~\ref{sec:fpgasteel-simple-forwarding-hardware}. Both \ter
 \subsubsection{The cache and SCU hardware}
 \label{subsubsec:fpgasteel-cache-scu-hardware}
 
-The Cyclone V SoC \term{FPGA} integrates a built-in dual-core \term{ARM} Cortex-A9 processor. Each core is provided with two separate 32 KB caches, one for data and one for instructions, plus its own \term{MMU} and \term{NEON}/\term{FPU} media processing engine.
+The Cyclone V SoC \gterm{fpga}{FPGA} integrates a built-in dual-core \term{ARM} Cortex-A9 processor. Each core is provided with two separate 32 KB caches, one for data and one for instructions, plus its own \gterm{mmu}{MMU} and \gterm{neon}{NEON}/\term{FPU} media processing engine.
 
 Moreover, the two cores share a single 512 KB \term{L2} cache (a \term{PL310} controller), holding both data and instructions for either core.
 
-Keeping the two cores' private \term{L1} caches coherent with each other, and with the shared \term{L2} below them, is the job of the Snoop Control Unit (\term{SCU}): it arbitrates every \term{L1} line request coming from either core, keeps track of which core currently holds each line, and either forwards a fresh copy between the two caches or invalidates a stale one, so a write performed on one core is never left stale in the other core's cache. The \term{SCU} also hosts the global exclusive monitor used by atomic (load-exclusive/store-exclusive) instructions, which is why enabling it matters even when only one core is actually running. The \term{GIC}, a global timer, and an Accelerator Coherency Port are also shared between the two cores, alongside the \term{L2} controller.
+Keeping the two cores' private \term{L1} caches coherent with each other, and with the shared \term{L2} below them, is the job of the Snoop Control Unit (\gterm{scu}{SCU}): it arbitrates every \term{L1} line request coming from either core, keeps track of which core currently holds each line, and either forwards a fresh copy between the two caches or invalidates a stale one, so a write performed on one core is never left stale in the other core's cache. The \gterm{scu}{SCU} also hosts the global exclusive monitor used by atomic (load-exclusive/store-exclusive) instructions, which is why enabling it matters even when only one core is actually running. The \gterm{gic}{GIC}, a global timer, and an Accelerator Coherency Port are also shared between the two cores, alongside the \term{L2} controller.
 
-This project only runs on one core, so the \term{SCU}'s role here is narrower than in a true dual-core configuration; it must still be enabled, though, since the \term{L2} controller and the cache-maintenance operations this project relies on depend on it being on (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}).
+This project only runs on one core, so the \gterm{scu}{SCU}'s role here is narrower than in a true dual-core configuration; it must still be enabled, though, since the \term{L2} controller and the cache-maintenance operations this project relies on depend on it being on (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}).
 
 \begin{figure}[htbp]
     \centering
@@ -52,19 +52,19 @@ This project only runs on one core, so the \term{SCU}'s role here is narrower th
 \subsubsection{DMA vs.\ cache coherency}
 \label{subsubsec:fpgasteel-dma-cache-coherency}
 
-\ccode{Camera} and \ccode{Vga} classes (Paragraph~\ref{subsec:fpgasteel-cache-camera-class}, Paragraph~\ref{subsec:fpgasteel-cache-vga-class}) move frame data in and out of \term{DDR} through two \term{FPGA}-fabric \term{mSGDMA} cores. Those cores read and write \term{DDR} directly; they do not pass through the \term{ARM} cores' \term{L1}/\term{L2} cache hierarchy, and cannot snoop it. With caching enabled, this creates two distinct coherency problems, one per direction:
+\ccode{Camera} and \ccode{Vga} classes (Paragraph~\ref{subsec:fpgasteel-cache-camera-class}, Paragraph~\ref{subsec:fpgasteel-cache-vga-class}) move frame data in and out of \term{DDR} through two \gterm{fpga}{FPGA}-fabric \gterm{msgdma}{mSGDMA} cores. Those cores read and write \term{DDR} directly; they do not pass through the \term{ARM} cores' \term{L1}/\term{L2} cache hierarchy, and cannot snoop it. With caching enabled, this creates two distinct coherency problems, one per direction:
 
 \begin{enumerate}
-    \item \textbf{\term{CPU} writes, \term{DMA} reads.} After \ccode{SimpleFilters::convert()} writes a converted \term{RGB24} frame, that data may still sit only in the \term{CPU}'s caches, not yet written back to \term{DDR}. If \ccode{Vga}'s \term{mSGDMA} core is then pointed at that buffer, it reads stale bytes straight out of \term{DDR}, missing the \term{CPU}'s most recent writes.
-    \item \textbf{\term{DMA} writes, \term{CPU} reads.} After \ccode{Camera}'s \term{mSGDMA} core writes a captured frame into a buffer, the \term{CPU} may still be holding an older copy of that same memory in cache from a previous read. If the \term{CPU} reads that buffer again without first discarding the stale copy, it sees old pixel data instead of what the \term{DMA} core just wrote.
+    \item \textbf{\term{CPU} writes, \gterm{dma}{DMA} reads.} After \ccode{SimpleFilters::convert()} writes a converted \term{RGB24} frame, that data may still sit only in the \term{CPU}'s caches, not yet written back to \term{DDR}. If \ccode{Vga}'s \gterm{msgdma}{mSGDMA} core is then pointed at that buffer, it reads stale bytes straight out of \term{DDR}, missing the \term{CPU}'s most recent writes.
+    \item \textbf{\gterm{dma}{DMA} writes, \term{CPU} reads.} After \ccode{Camera}'s \gterm{msgdma}{mSGDMA} core writes a captured frame into a buffer, the \term{CPU} may still be holding an older copy of that same memory in cache from a previous read. If the \term{CPU} reads that buffer again without first discarding the stale copy, it sees old pixel data instead of what the \gterm{dma}{DMA} core just wrote.
 \end{enumerate}
 
-The fix is the same operation in both cases, just named differently depending on direction: before the \term{DMA} core reads \term{CPU}-written data, the corresponding cache lines must be cleaned (written back to \term{DDR}, also called flushing); before the \term{CPU} reads \term{DMA}-written data, the corresponding cache lines must be invalidated (discarded, so the next read is forced to fetch straight from \term{DDR}). Paragraph~\ref{subsec:fpgasteel-cache-aware-frame} covers the two methods that do this, \ccode{CacheAwareFrame::cacheFlush()} and \ccode{CacheAwareFrame::cacheInvalidate()}; Section~\ref{sec:fpgasteel-cache-forwarding-how-it-works} shows exactly where each one is called.
+The fix is the same operation in both cases, just named differently depending on direction: before the \gterm{dma}{DMA} core reads \term{CPU}-written data, the corresponding cache lines must be cleaned (written back to \term{DDR}, also called flushing); before the \term{CPU} reads \gterm{dma}{DMA}-written data, the corresponding cache lines must be invalidated (discarded, so the next read is forced to fetch straight from \term{DDR}). Paragraph~\ref{subsec:fpgasteel-cache-aware-frame} covers the two methods that do this, \ccode{CacheAwareFrame::cacheFlush()} and \ccode{CacheAwareFrame::cacheInvalidate()}; Section~\ref{sec:fpgasteel-cache-forwarding-how-it-works} shows exactly where each one is called.
 
 \subsubsection{Enabling the MMU}
 \label{subsubsec:fpgasteel-enabling-mmu}
 
-The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} also being on: cacheability and shareability are per-region attributes carried by the \term{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to \term{Intel}'s \term{hwlib} function \ccode{alt_mmu_va_space_create()}, which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
+The Cortex-A9 \term{L1} data cache cannot be turned on without the \gterm{mmu}{MMU} also being on: cacheability and shareability are per-region attributes carried by the \gterm{mmu}{MMU}'s translation tables, not a separate switch, so the cache literally has nowhere to read those attributes from until address translation is active. This project uses the simplest translation table that satisfies that requirement: a flat 1:1 mapping (every virtual address maps to the identical physical address), declared as three regions and handed to \term{Intel}'s \gterm{hwlib}{hwlib} function \ccode{alt_mmu_va_space_create()}, which builds the actual hardware descriptors transparently, choosing whatever granularity each region's alignment and size allow. The project itself never deals with that choice:
 
 \begin{table}[htbp]
     \centering
@@ -74,9 +74,9 @@ The Cortex-A9 \term{L1} data cache cannot be turned on without the \term{MMU} al
         \midrule
         0x00000000 & 1024 MB & Cacheable\newline{}write-back write-allocate & \term{DDR}: code, stack, heap, frame buffers \\
         \lightmidrule
-        0xC0000000 & 960 MB & Non-cacheable & \term{HPS}-\term{FPGA} bridge: \term{mSGDMA} descriptor memories, \term{Avalon-MM} peripherals \\
+        0xC0000000 & 960 MB & Non-cacheable & \gterm{hps}{HPS}-\gterm{fpga}{FPGA} bridge: \gterm{msgdma}{mSGDMA} descriptor memories, \gterm{avalonmm}{Avalon-MM} peripherals \\
         \lightmidrule
-        0xFC000000 & 64 MB & Device & \term{HPS} peripherals (\term{UART}, \term{GIC}, timers, \ldots) \\
+        0xFC000000 & 64 MB & Device & \gterm{hps}{HPS} peripherals (\term{UART}, \gterm{gic}{GIC}, timers, \ldots) \\
         \bottomrule
     \end{tabular}
     \caption[MMU section mapping built by System::enableCache()]{\term{MMU} section mapping built by System::enableCache().}
@@ -88,7 +88,7 @@ The \term{DDR} region is the only one marked cacheable (see Table~\ref{tab:fpgas
 \subsubsection{hwlib performs the work}
 \label{subsubsec:fpgasteel-hwlib-performs-work}
 
-None of the above (\term{SCU}/cache/\term{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \term{SCU} and setting the \hw{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \term{hwlib} has no wrapper for that specific step. Everything else, building the section table, switching the \term{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \term{hwlib}; Paragraph~\ref{subsec:fpgasteel-cache-system-class} walks through \ccode{System::enableCache()}, where all of these calls are made, in the order they must run.
+None of the above (\gterm{scu}{SCU}/cache/\gterm{mmu}{MMU} manipulation) is done through custom register-level code written for this project, with one narrow exception: enabling the \gterm{scu}{SCU} and setting the \hw{ACTLR.SMP} bit, done directly through the Arm's \term{CP15} coprocessor, since \gterm{hwlib}{hwlib} has no wrapper for that specific step. Everything else, building the section table, switching the \gterm{mmu}{MMU} on, enabling the \term{L1} data cache and the \term{L2} controller, and later cleaning or invalidating a buffer's cache lines, goes through Altera/Intel's \gterm{hwlib}{hwlib}; Paragraph~\ref{subsec:fpgasteel-cache-system-class} walks through \ccode{System::enableCache()}, where all of these calls are made, in the order they must run.
 
 \subsection{Descriptors and the prefetcher}
 \label{subsec:fpgasteel-cache-descriptors-prefetcher}
@@ -98,12 +98,12 @@ Unchanged: see Section~\ref{subsec:fpgasteel-descriptors-prefetcher}. Everything
 \subsection{Camera capture internals}
 \label{subsec:fpgasteel-cache-camera-capture}
 
-Unchanged: see Section~\ref{subsec:fpgasteel-camera-capture-interrupt}. The \term{ISR} \ccode{Camera::onTransferComplete()} runs the identical sequence, unchanged; since \term{DMA} writes are invisible to the \term{CPU} cache, the buffer it hands over still needs an explicit cache invalidate before use, done here by \ccode{Camera}'s \ccode{CacheAwareFramePool} (\ccode{camPool.pop(true)}).
+Unchanged: see Section~\ref{subsec:fpgasteel-camera-capture-interrupt}. The \gterm{isr}{ISR} \ccode{Camera::onTransferComplete()} runs the identical sequence, unchanged; since \gterm{dma}{DMA} writes are invisible to the \term{CPU} cache, the buffer it hands over still needs an explicit cache invalidate before use, done here by \ccode{Camera}'s \ccode{CacheAwareFramePool} (\ccode{camPool.pop(true)}).
 
 \subsection{VGA output internals}
 \label{subsec:fpgasteel-cache-vga-output}
 
-Unchanged: see Section~\ref{subsec:fpgasteel-vga-output-interrupt}. The \term{ISR} \ccode{Vga::onTransferComplete()} runs the identical sequence, unchanged; since the \term{CPU} cache is invisible to \term{DMA} reads, the frame must be flushed explicitly before being pushed into \ccode{vgaPool}, done here by \ccode{Vga}'s \ccode{CacheAwareFramePool} (\ccode{vgaPool.push(frame, true)}).
+Unchanged: see Section~\ref{subsec:fpgasteel-vga-output-interrupt}. The \gterm{isr}{ISR} \ccode{Vga::onTransferComplete()} runs the identical sequence, unchanged; since the \term{CPU} cache is invisible to \gterm{dma}{DMA} reads, the frame must be flushed explicitly before being pushed into \ccode{vgaPool}, done here by \ccode{Vga}'s \ccode{CacheAwareFramePool} (\ccode{vgaPool.push(frame, true)}).
 
 \section{Code structure}
 \label{sec:fpgasteel-cache-code-structure}
@@ -128,7 +128,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-prefetcher-extended-descriptor}.
 \subsection{MsgdmaPrefetcherMemory class}
 \label{subsec:fpgasteel-cache-msgdma-prefetcher-memory}
 
-Unchanged: see Section~\ref{subsec:fpgasteel-msgdma-prefetcher-memory}. Descriptor memory is left non-cacheable by the \term{MMU} mapping (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}), so this class needs no cache maintenance of its own.
+Unchanged: see Section~\ref{subsec:fpgasteel-msgdma-prefetcher-memory}. Descriptor memory is left non-cacheable by the \gterm{mmu}{MMU} mapping (Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu}), so this class needs no cache maintenance of its own.
 
 \subsection{PrefetchedMSGDMA class}
 \label{subsec:fpgasteel-cache-prefetched-msgdma}
@@ -161,10 +161,10 @@ Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
 \ccode{System} is the same singleton used in \nameref{chap:fpgasteel-simple-forwarding} (\ccode{init()}, \ccode{micros()}, \ccode{millis()}, \ccode{delay()}, \ccode{delayMicroseconds()}, \ccode{deInit()}, all identical), plus one new method this project actually relies on: \ccode{enableCache()}. Source: \lstinline[style=inlineFsRepo]!src/System.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{enableCache()}: enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 \term{MMU} mapping discussed in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}. Must be called after \ccode{init()}. It performs the following actions in order:
+    \item \ccode{enableCache()}: enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 \gterm{mmu}{MMU} mapping discussed in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}. Must be called after \ccode{init()}. It performs the following actions in order:
     \begin{itemize}
-        \item Enables the \term{SCU} (invalidates its tag \term{RAM}, sets its enable bit) and sets the \term{ACTLR.SMP} bit, both through direct \term{CP15} coprocessor access, since U-Boot's own startup code leaves the \term{SCU} disabled and clears \term{ACTLR}.
-        \item Calls \ccode{alt_cache_system_disable()}, leaving both caches in a known, clean state before the \term{MMU} configuration underneath them changes.
+        \item Enables the \gterm{scu}{SCU} (invalidates its tag \term{RAM}, sets its enable bit) and sets the \term{ACTLR.SMP} bit, both through direct \term{CP15} coprocessor access, since U-Boot's own startup code leaves the \gterm{scu}{SCU} disabled and clears \term{ACTLR}.
+        \item Calls \ccode{alt_cache_system_disable()}, leaving both caches in a known, clean state before the \gterm{mmu}{MMU} configuration underneath them changes.
         \item Builds the three-region section table from Subparagraph~\ref{subsubsec:fpgasteel-enabling-mmu} and activates it, via \ccode{alt_mmu_va_space_create()} followed by \ccode{alt_mmu_va_space_enable()}.
         \item Enables the \term{L1} data cache (\ccode{alt_cache_l1_data_enable()}) and the \term{L2} cache (\ccode{alt_cache_l2_init()} then \ccode{alt_cache_l2_enable()}).
     \end{itemize}
@@ -180,8 +180,8 @@ Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
     \item \ccode{CacheAwareFrame(width, height, colorScheme)} (overloaded constructor, form 1): allocates a new buffer via \ccode{memalign()}, aligned to the cache line size, owned by this object and released by the destructor. Throws \ccode{ExceptionFrame} if the allocation fails.
     \item \ccode{CacheAwareFrame(buffer, bufferSize, width, height, colorScheme)} (overloaded constructor, form 2): wraps an existing buffer, exactly like \ccode{Frame}'s equivalent constructor; the caller is responsible for making sure that buffer is itself cache-line aligned.
     \item {\catcode`\~=12 \ccode{~CacheAwareFrame()}} (destructor): frees the buffer, but only if it was allocated by form 1 above.
-    \item \ccode{cacheFlush()}: cleans this frame's buffer's cache lines, writing them back to \term{DDR} (\ccode{alt_cache_system_clean()}). Call this after the \term{CPU} has written the buffer and before a \term{DMA} master reads it.
-    \item \ccode{cacheInvalidate()}: invalidates this frame's buffer in the \term{CPU} caches (\ccode{alt_cache_system_invalidate()}). Call this after a \term{DMA} master has written the buffer and before the \term{CPU} reads it.
+    \item \ccode{cacheFlush()}: cleans this frame's buffer's cache lines, writing them back to \term{DDR} (\ccode{alt_cache_system_clean()}). Call this after the \term{CPU} has written the buffer and before a \gterm{dma}{DMA} master reads it.
+    \item \ccode{cacheInvalidate()}: invalidates this frame's buffer in the \term{CPU} caches (\ccode{alt_cache_system_invalidate()}). Call this after a \gterm{dma}{DMA} master has written the buffer and before the \term{CPU} reads it.
 \end{itemize}
 
 \subsection{CacheAwareFramePool class}
@@ -235,11 +235,11 @@ while (true) {
 }
 \end{lstlisting}
 
-Each cache call above fires at the exact moment a buffer changes hands between the \term{CPU} and a \term{DMA} master, matching one of the two directions from Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency}:
+Each cache call above fires at the exact moment a buffer changes hands between the \term{CPU} and a \gterm{dma}{DMA} master, matching one of the two directions from Subparagraph~\ref{subsubsec:fpgasteel-dma-cache-coherency}:
 
 \begin{itemize}
-    \item \ccode{camPool.pop(true)} handles the ``\term{DMA} writes, \term{CPU} reads'' case: \ccode{Camera}'s \term{mSGDMA} core has just written a captured frame into \term{DDR}, and the \term{CPU} is about to use it inside \ccode{SimpleFilters::convert()}. Invalidating the cache first forces a read out to \term{DDR}, so it actually sees what the \term{DMA} core wrote.
-    \item \ccode{vgaPool.push(vgaFrame, true)} handles the ``\term{CPU} writes, \term{DMA} reads'' case: \ccode{SimpleFilters::convert()} has just written a converted \term{RGB24} frame on the \term{CPU}, and \ccode{Vga}'s \term{mSGDMA} core is about to read it. Flushing first pushes those \term{CPU} writes out to \term{DDR}, so the \term{DMA} core doesn't read a buffer that is only partially, or not yet, written back.
+    \item \ccode{camPool.pop(true)} handles the ``\gterm{dma}{DMA} writes, \term{CPU} reads'' case: \ccode{Camera}'s \gterm{msgdma}{mSGDMA} core has just written a captured frame into \term{DDR}, and the \term{CPU} is about to use it inside \ccode{SimpleFilters::convert()}. Invalidating the cache first forces a read out to \term{DDR}, so it actually sees what the \gterm{dma}{DMA} core wrote.
+    \item \ccode{vgaPool.push(vgaFrame, true)} handles the ``\term{CPU} writes, \gterm{dma}{DMA} reads'' case: \ccode{SimpleFilters::convert()} has just written a converted \term{RGB24} frame on the \term{CPU}, and \ccode{Vga}'s \gterm{msgdma}{mSGDMA} core is about to read it. Flushing first pushes those \term{CPU} writes out to \term{DDR}, so the \gterm{dma}{DMA} core doesn't read a buffer that is only partially, or not yet, written back.
 \end{itemize}
 
 Neither \ccode{borrow()} nor \ccode{giveBack()} needs a cache operation of its own: both only touch bookkeeping state inside \ccode{FramePool}, never the pixel buffer itself.

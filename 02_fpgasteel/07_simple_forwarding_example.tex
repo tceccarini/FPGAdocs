@@ -4,29 +4,29 @@
 \section{About this project}
 \label{sec:fpgasteel-simple-forwarding-about}
 
-\textit{``Simple Forwarding Example''} (under \repopath{sw/simple_forwarding_example}) captures continuous video from the \term{OV7670} and forwards it to \term{VGA} output. At startup it:
+\textit{``Simple Forwarding Example''} (under \repopath{sw/simple_forwarding_example}) captures continuous video from the \gterm{ov7670}{OV7670} and forwards it to \gterm{vga}{VGA} output. At startup it:
 
 \begin{itemize}
     \item brings up the interrupt controller and a microsecond timebase (\ccode{System});
-    \item brings up \term{UART0} for the serial console (\ccode{Serial});
+    \item brings up \gterm{uart0}{UART0} for the serial console (\ccode{Serial});
     \item releases the camera from reset (\ccode{PclkResetController});
-    \item starts \term{VGA} output, showing a test pattern until a real frame is available (\ccode{Vga});
-    \item configures and starts continuous \term{RGB565} capture from the camera (\ccode{Camera}).
+    \item starts \gterm{vga}{VGA} output, showing a test pattern until a real frame is available (\ccode{Vga});
+    \item configures and starts continuous \gterm{rgb565}{RGB565} capture from the camera (\ccode{Camera}).
 \end{itemize}
 
 Then, in the main loop, it:
 
 \begin{itemize}
-    \item converts each captured frame from \term{RGB565} to \term{RGB24} (\ccode{SimpleFilters});
+    \item converts each captured frame from \gterm{rgb565}{RGB565} to \term{RGB24} (\ccode{SimpleFilters});
     \item shows the conversion time, in milliseconds, on the 7-segment display (\ccode{HexDisplay}).
 \end{itemize}
 
-The camera capture and \term{VGA} output run on two independent \term{mSGDMA} cores, each in a ping-pong descriptor pair.
+The camera capture and \gterm{vga}{VGA} output run on two independent \gterm{msgdma}{mSGDMA} cores, each in a ping-pong descriptor pair.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-simple-forwarding-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \term{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
+Same toolchain, \term{SD card} and \term{Eclipse}/\gterm{openocd}{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, plus the \gterm{ov7670}{OV7670} camera adapter board on \term{GPIO\_0} as described in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-prerequisites}).
 
 \begin{warningbox}
 \textbf{Hardware bug:} do not leave the camera in \term{RESET} or \term{POWER-DOWN} for extended periods.\footnotemark
@@ -36,54 +36,54 @@ Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-simple-forwarding-hardware}
 
-The rationale behind this datapath's configuration, width choice, prefetcher enablement, \term{VGA} components, is covered in Paragraph~\ref{subsec:fpgasteel-msgdma-config} and Section~\ref{sec:fpgasteel-vga-output}; this section only covers the operational role of each block.
+The rationale behind this datapath's configuration, width choice, prefetcher enablement, \gterm{vga}{VGA} components, is covered in Paragraph~\ref{subsec:fpgasteel-msgdma-config} and Section~\ref{sec:fpgasteel-vga-output}; this section only covers the operational role of each block.
 
 \subsection{Camera capture (\term{Avalon-ST}$\rightarrow$\term{Avalon-MM})}
 \label{subsec:fpgasteel-simple-forwarding-camera-capture}
 
-Four blocks carry camera pixels into \term{HPS} \term{DDR}, in order (the \term{Avalon-ST}/\term{Avalon-MM} conventions used here are defined in \cite{AVALON-SPEC}):
+Four blocks carry camera pixels into \gterm{hps}{HPS} \term{DDR}, in order (the \gterm{avalonst}{Avalon-ST}/\gterm{avalonmm}{Avalon-MM} conventions used here are defined in \cite{AVALON-SPEC}):
 
 \begin{enumerate}
-    \item \textbf{\hw{ov7670_video_interface}} (|ov7670_data_interface|, custom \term{IP} inherited unchanged from \prjname{FPGAlix} and renamed here, see Paragraph~\ref{subsec:fpgasteel-renamed-instances}): reads the \term{OV7670}'s parallel pixel bus (\term{HREF}/\term{VSYNC}/8-bit data) and repackages it into a standard \term{Avalon-ST} byte stream, each frame as one packet, with \term{SOP} on the first byte and \term{EOP} on the last.\footnote{\term{SOP} and \term{EOP} stand for Start of Packet and End of Packet, respectively.}
-    \item \textbf{\hw{ov7670_st_adapter}} (standard \term{Avalon-ST} width adapter \term{IP}): widens that stream from 8 bit to 64 bit, the width the \term{mSGDMA} below expects.
-    \item \textbf{\hw{ov_7670_video_dc_fifo}} (dual-clock \term{FIFO}): crosses the stream from the camera's own pixel clock (\hw{ov7670_pclk}) into the \term{HPS}-facing clock domain; the two clocks are unrelated, so this crossing is mandatory, not just buffering.
-    \item \textbf{\hw{ov7670_video_msgdma}}: an \term{mSGDMA} core (\term{ST}$\rightarrow$\term{MM} direction) with its prefetcher enabled. It writes each incoming packet into whichever \term{DDR} buffer the current descriptor points to; the descriptors themselves live in \hw{ov7670_prefercher_descriptor_mem}, a small on-chip \term{RAM}.
+    \item \textbf{\hw{ov7670_video_interface}} (|ov7670_data_interface|, custom \term{IP} inherited unchanged from \prjname{FPGAlix} and renamed here, see Paragraph~\ref{subsec:fpgasteel-renamed-instances}): reads the \gterm{ov7670}{OV7670}'s parallel pixel bus (\gterm{href}{HREF}\footnote{\glsentrydesc{href}}/\gterm{vsync}{VSYNC}\footnote{\glsentrydesc{vsync}}/8-bit data) and repackages it into a standard \gterm{avalonst}{Avalon-ST} byte stream, each frame as one packet, with \gterm{sop}{SOP} on the first byte and \gterm{sop}{EOP} on the last.\footnote{\glsentrydesc{sop}}
+    \item \textbf{\hw{ov7670_st_adapter}} (standard \gterm{avalonst}{Avalon-ST} width adapter \term{IP}): widens that stream from 8 bit to 64 bit, the width the \gterm{msgdma}{mSGDMA} below expects.
+    \item \textbf{\hw{ov_7670_video_dc_fifo}} (dual-clock \term{FIFO}): crosses the stream from the camera's own pixel clock (\hw{ov7670_pclk}) into the \gterm{hps}{HPS}-facing clock domain; the two clocks are unrelated, so this crossing is mandatory, not just buffering.
+    \item \textbf{\hw{ov7670_video_msgdma}}: an \gterm{msgdma}{mSGDMA} core (\term{ST}$\rightarrow$\term{MM} direction) with its prefetcher enabled. It writes each incoming packet into whichever \term{DDR} buffer the current descriptor points to; the descriptors themselves live in \hw{ov7670_prefercher_descriptor_mem}, a small on-chip \term{RAM}.
 \end{enumerate}
 
-\hw{ov7670_data_interface} cannot pause the camera, since the sensor's pixel clock runs free regardless of what happens downstream. So, if the \term{Avalon-ST} ready signal from the rest of the chain above goes low in the middle of a frame (backpressure), it gives up on that frame outright: it stops forwarding bytes, counts a dropped frame, and once ready comes back it closes the truncated packet with a bare \term{EOP} before waiting for the next frame to start. A frame cut short this way still completes the \term{DMA} transfer on the software side, just with fewer bytes than expected; \ccode{Camera::onTransferComplete()} catches this by checking \ccode{bytesTransferred == FRAME_SIZE} and discards the frame instead of handing it to the pool.
+\hw{ov7670_data_interface} cannot pause the camera, since the sensor's pixel clock runs free regardless of what happens downstream. So, if the \gterm{avalonst}{Avalon-ST} ready signal from the rest of the chain above goes low in the middle of a frame (backpressure), it gives up on that frame outright: it stops forwarding bytes, counts a dropped frame, and once ready comes back it closes the truncated packet with a bare \gterm{sop}{EOP} before waiting for the next frame to start. A frame cut short this way still completes the \gterm{dma}{DMA}\footnote{\glsentrydesc{dma}} transfer on the software side, just with fewer bytes than expected; \ccode{Camera::onTransferComplete()} catches this by checking \ccode{bytesTransferred == FRAME_SIZE} and discards the frame instead of handing it to the pool.
 
 The full state machine behind this behavior (\term{WAIT\_SYNC}/\term{ACQUIRE}/\term{WAIT\_READY}) is documented in PART~I -- \prjname{FPGAlix}, Section~\ref{sec:fpgalix-acquisition-core}.
 
 \subsection{VGA output (\term{Avalon-MM}$\rightarrow$\term{Avalon-ST})}
 \label{subsec:fpgasteel-simple-forwarding-vga-output}
 
-Conceptually, the flow runs in the opposite direction from camera capture: four blocks carry frames from \term{DDR} back out to the \term{VGA} connector.
+Conceptually, the flow runs in the opposite direction from camera capture: four blocks carry frames from \term{DDR} back out to the \gterm{vga}{VGA} connector.
 
 \begin{enumerate}
-    \item \textbf{\hw{vga_msgdma}}: an \term{mSGDMA} core (\term{MM}$\rightarrow$\term{ST} direction) with its prefetcher enabled. It reads a frame from whichever \term{DDR} buffer the current descriptor points to and turns it into an \term{Avalon-ST} stream; descriptors live in \hw{vga_prefercher_descriptor_mem}.
-    \item \textbf{\hw{vga_dc_fifo}} (dual-clock \term{FIFO}): crosses the stream into the \term{VGA} pixel clock domain.
+    \item \textbf{\hw{vga_msgdma}}: an \gterm{msgdma}{mSGDMA} core (\term{MM}$\rightarrow$\term{ST} direction) with its prefetcher enabled. It reads a frame from whichever \term{DDR} buffer the current descriptor points to and turns it into an \gterm{avalonst}{Avalon-ST} stream; descriptors live in \hw{vga_prefercher_descriptor_mem}.
+    \item \textbf{\hw{vga_dc_fifo}} (dual-clock \term{FIFO}): crosses the stream into the \gterm{vga}{VGA} pixel clock domain.
     \item \textbf{\hw{vga_64_to_24_repacker}}: narrows the stream back down from 64 bit to 24 bit, one \term{RGB888} pixel per beat, the width \hw{vga_controller} below expects.
-    \item \textbf{\hw{vga_controller}} (kind |altera_up_avalon_video_vga_controller|): drives the \term{DE1-SoC}'s \term{VGA} connector at a fixed $640\times480$, turning the incoming \term{RGB} stream into the connector's analog sync/color signals. Since this core only understands \term{RGB888}, \term{VGA} frames must always be \term{RGB24}.
+    \item \textbf{\hw{vga_controller}} (kind |altera_up_avalon_video_vga_controller|): drives the \term{DE1-SoC}'s \gterm{vga}{VGA} connector at a fixed $640\times480$, turning the incoming \term{RGB} stream into the connector's analog sync/color signals. Since this core only understands \term{RGB888}, \gterm{vga}{VGA} frames must always be \term{RGB24}.
 \end{enumerate}
 
 \subsection{Other IP cores}
 \label{subsec:fpgasteel-simple-forwarding-other-ip}
 
 \begin{itemize}
-    \item \textbf{\hw{ov7670_ctrl_interface}} (\term{SCCB} master) and \textbf{\hw{ov7670_PCLK_reset_controller}} (camera reset) are the same cores as in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-hardware}).
+    \item \textbf{\hw{ov7670_ctrl_interface}} (\gterm{i2c}{SCCB} master) and \textbf{\hw{ov7670_PCLK_reset_controller}} (camera reset) are the same cores as in \nameref{chap:fpgasteel-i2c-example} (Section~\ref{sec:fpgasteel-i2c-hardware}).
     \item \textbf{\hw{hex_display_controller}} drives the 7-segment display.
-    \item The two datapaths above, camera capture and \term{VGA} output, are each built around an |altera_msgdma| core with its prefetcher enabled.
+    \item The two datapaths above, camera capture and \gterm{vga}{VGA} output, are each built around an |altera_msgdma| core with its prefetcher enabled.
 \end{itemize}
 
 \subsection{Interrupts}
 \label{subsec:fpgasteel-simple-forwarding-interrupts}
 
-Both \term{mSGDMA} cores raise a \term{GIC} interrupt on transfer completion (\hw{f2h_irq0[3]} for the camera, \hw{f2h_irq0[5]} for \term{VGA}), which is what lets \ccode{Camera} and \ccode{Vga} re-arm their descriptors from the \term{ISR} without polling.
+Both \gterm{msgdma}{mSGDMA} cores raise a \gterm{gic}{GIC} interrupt on transfer completion (\hw{f2h_irq0[3]} for the camera, \hw{f2h_irq0[5]} for \gterm{vga}{VGA}), which is what lets \ccode{Camera} and \ccode{Vga} re-arm their descriptors from the \gterm{isr}{ISR}\footnote{\glsentrydesc{isr}} without polling.
 
 \section{Operating principles: \term{mSGDMA} video pipelines}
 \label{sec:fpgasteel-msgdma-video-pipelines}
 
-Camera capture and \term{VGA} output are both built around the same descriptor / prefetcher mechanism, running in opposite directions. Paragraph~\ref{subsec:fpgasteel-descriptors-prefetcher} covers that mechanism once, in general; Paragraphs~\ref{subsec:fpgasteel-camera-capture-interrupt} and \ref{subsec:fpgasteel-vga-output-interrupt} then only cover what is specific to camera capture and to \term{VGA} output.
+Camera capture and \gterm{vga}{VGA} output are both built around the same descriptor / prefetcher mechanism, running in opposite directions. Paragraph~\ref{subsec:fpgasteel-descriptors-prefetcher} covers that mechanism once, in general; Paragraphs~\ref{subsec:fpgasteel-camera-capture-interrupt} and \ref{subsec:fpgasteel-vga-output-interrupt} then only cover what is specific to camera capture and to \gterm{vga}{VGA} output.
 
 \subsection{Descriptors and the prefetcher}
 \label{subsec:fpgasteel-descriptors-prefetcher}
@@ -96,18 +96,18 @@ A \ccode{PrefetcherExtendedDescriptor} is a 64-byte hardware record containing, 
     \item a source and/or destination \term{DDR} address (depending on transfer direction),
     \item a transfer length in bytes,
     \item a pointer to the next descriptor in the chain,
-    \item control flags (direction, \term{IRQ}-on-completion).
+    \item control flags (direction, \gterm{irq}{IRQ}\footnote{\glsentrydesc{irq}}-on-completion).
 \end{itemize}
 
 Once the transfer runs, hardware fills in the actual byte count transferred and a status word.
 
 \subsubsection{Descriptor memory and the loop}
 
-Each of the \ccode{Camera} and \ccode{Vga} pipelines allocates exactly two of these descriptors (let's call them \ccode{desc0} and \ccode{desc1}) in a dedicated small on-chip \term{RAM} (\hw{ov7670_prefercher_descriptor_mem} for the camera, Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture}; \hw{vga_prefercher_descriptor_mem} for \term{VGA}, Paragraph~\ref{subsec:fpgasteel-simple-forwarding-vga-output}), dual-ported: the \term{CPU} reaches it at a fixed address through the \term{FPGA} bridge (e.g.\ \hw{0xC1010000} for the camera, \repopath{Config.h}), while the prefetcher inside the \term{mSGDMA} core always sees that same memory starting at address 0. (\ccode{MsgdmaPrefetcherMemory} translates between the two, Paragraph~\ref{subsec:fpgasteel-msgdma-prefetcher-memory}). Each descriptor's next-pointer is set to the other descriptor's prefetcher-side address: \ccode{desc0} $\rightarrow$ \ccode{desc1} $\rightarrow$ \ccode{desc0} $\rightarrow$ \ldots, a two-descriptor loop that lives entirely in this dedicated on-chip memory, not in \term{DDR}.
+Each of the \ccode{Camera} and \ccode{Vga} pipelines allocates exactly two of these descriptors (let's call them \ccode{desc0} and \ccode{desc1}) in a dedicated small on-chip \term{RAM} (\hw{ov7670_prefercher_descriptor_mem} for the camera, Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture}; \hw{vga_prefercher_descriptor_mem} for \gterm{vga}{VGA}, Paragraph~\ref{subsec:fpgasteel-simple-forwarding-vga-output}), dual-ported: the \term{CPU} reaches it at a fixed address through the \gterm{fpga}{FPGA} bridge (e.g.\ \hw{0xC1010000} for the camera, \repopath{Config.h}), while the prefetcher inside the \gterm{msgdma}{mSGDMA} core always sees that same memory starting at address 0. (\ccode{MsgdmaPrefetcherMemory} translates between the two, Paragraph~\ref{subsec:fpgasteel-msgdma-prefetcher-memory}). Each descriptor's next-pointer is set to the other descriptor's prefetcher-side address: \ccode{desc0} $\rightarrow$ \ccode{desc1} $\rightarrow$ \ccode{desc0} $\rightarrow$ \ldots, a two-descriptor loop that lives entirely in this dedicated on-chip memory, not in \term{DDR}.
 
 \subsubsection{What the prefetcher does}
 
-Without it, software would have to hand the \term{mSGDMA}'s dispatcher one descriptor at a time, itself, for every single transfer. With the prefetcher enabled, software only has to point it, once (typically at initialization), at the first descriptor in the loop above. From there the prefetcher reads each descriptor directly out of that memory and hands it to the dispatcher, the part of the \term{mSGDMA} core that actually drives the \term{Avalon-MM}/\term{Avalon-ST} read and write masters and moves the bytes. Once a transfer finishes, the prefetcher follows that descriptor's own \ccode{nextDescPtr} field to fetch the next one, on its own, with no further intervention from software, for as long as there is a committed descriptor to find.
+Without it, software would have to hand the \gterm{msgdma}{mSGDMA}'s dispatcher one descriptor at a time, itself, for every single transfer. With the prefetcher enabled, software only has to point it, once (typically at initialization), at the first descriptor in the loop above. From there the prefetcher reads each descriptor directly out of that memory and hands it to the dispatcher, the part of the \gterm{msgdma}{mSGDMA} core that actually drives the \gterm{avalonmm}{Avalon-MM}/\gterm{avalonst}{Avalon-ST} read and write masters and moves the bytes. Once a transfer finishes, the prefetcher follows that descriptor's own \ccode{nextDescPtr} field to fetch the next one, on its own, with no further intervention from software, for as long as there is a committed descriptor to find.
 
 \subsubsection{OWNED\_BY\_HW: running vs.\ waiting}
 
@@ -132,9 +132,9 @@ The instant a running descriptor's transfer finishes, hardware itself clears its
 \subsection{Camera capture internals}
 \label{subsec:fpgasteel-camera-capture-interrupt}
 
-\ccode{Camera} runs the mechanism from Paragraph~\ref{subsec:fpgasteel-descriptors-prefetcher} on \hw{ov7670_video_msgdma} / \hw{ov7670_prefercher_descriptor_mem}; \ccode{desc0} and \ccode{desc1} each hold a destination address only, since this is an \term{ST}--\term{MM} transfer (the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address).
+\ccode{Camera} runs the mechanism from Paragraph~\ref{subsec:fpgasteel-descriptors-prefetcher} on \hw{ov7670_video_msgdma} / \hw{ov7670_prefercher_descriptor_mem}; \ccode{desc0} and \ccode{desc1} each hold a destination address only, since this is an \term{ST}--\term{MM} transfer (the source is the incoming \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address).
 
-\ccode{Camera::onTransferComplete()} is the \term{ISR} called every time a frame arrives over the \term{ST}$\rightarrow$\term{MM} stream from the camera; in order, it:
+\ccode{Camera::onTransferComplete()} is the \gterm{isr}{ISR} called every time a frame arrives over the \term{ST}$\rightarrow$\term{MM} stream from the camera; in order, it:
 \begin{enumerate}
     \item reads the destination address out of the descriptor that just finished, identifies which \ccode{camPool} buffer it points to, and returns that frame to the pool (\ccode{push()} if the transfer was clean, \ccode{giveBack()} otherwise, Paragraph~\ref{subsec:fpgasteel-framepool});
     \item pulls a fresh buffer out of \ccode{camPool} (\ccode{borrow()}) for the descriptor that is about to run next, the one still waiting, not yet committed, and writes that buffer's address into its destination field;
@@ -146,9 +146,9 @@ The instant a running descriptor's transfer finishes, hardware itself clears its
 \subsection{VGA output internals}
 \label{subsec:fpgasteel-vga-output-interrupt}
 
-\ccode{Vga} runs the same mechanism on \hw{vga_msgdma} / \hw{vga_prefercher_descriptor_mem}; \ccode{desc0} and \ccode{desc1} each hold a source address only, since this is an \term{MM}--\term{ST} transfer (the destination is the outgoing \term{Avalon-ST} stream, not a memory address).
+\ccode{Vga} runs the same mechanism on \hw{vga_msgdma} / \hw{vga_prefercher_descriptor_mem}; \ccode{desc0} and \ccode{desc1} each hold a source address only, since this is an \term{MM}--\term{ST} transfer (the destination is the outgoing \gterm{avalonst}{Avalon-ST} stream, not a memory address).
 
-\ccode{Vga::onTransferComplete()} is the \term{ISR} called every time a \term{MM}$\rightarrow$\term{ST} \term{VGA} frame transfer completes; it checks whether \ccode{vgaPool} has a new frame ready (\ccode{pop()}), then:
+\ccode{Vga::onTransferComplete()} is the \gterm{isr}{ISR} called every time a \term{MM}$\rightarrow$\term{ST} \gterm{vga}{VGA} frame transfer completes; it checks whether \ccode{vgaPool} has a new frame ready (\ccode{pop()}), then:
 \begin{itemize}
     \item if there is one available: it writes the new frame's buffer address into the source field of the descriptor that's about to run next (the one still waiting, not yet committed), and gives the old frame, the one that had just finished being shown, back to the pool (\ccode{giveBack()});
     \item else (i.e.\ if none is available): it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it; that frame is never given back to the pool, since it's still the one in use.
@@ -182,7 +182,7 @@ Represents a single image frame: it owns (or wraps) the pixel buffer, together w
 \subsection{FramePool class}
 \label{subsec:fpgasteel-framepool}
 
-\ccode{FramePool} manages a set of \ccode{Frame} objects built over memory the caller allocates. The caller decides \ccode{count}, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and \ccode{count} to \ccode{FramePool}'s constructor. The pool uses no heap allocation and no locks: it can be shared safely between the main loop and a single \term{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
+\ccode{FramePool} manages a set of \ccode{Frame} objects built over memory the caller allocates. The caller decides \ccode{count}, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and \ccode{count} to \ccode{FramePool}'s constructor. The pool uses no heap allocation and no locks: it can be shared safely between the main loop and a single \gterm{isr}{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
 
 Internally, \ccode{FramePool} also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at runtime, they are fixed at compile time to \ccode{MAX_SLOTS = 8}, and \ccode{count} is clamped to \ccode{MAX_SLOTS} if it ever exceeds it. \ccode{MAX_SLOTS} only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what \ccode{count} controls.
 
@@ -213,7 +213,7 @@ None of these calls ever copy pixel data: \ccode{FramePool} only ever exchanges 
     \item \ccode{push(frame)} (producer): marks a \ccode{Busy} slot \ccode{Ready}, enqueueing it for the consumer.
     \item \ccode{pop()} (consumer): dequeues the oldest \ccode{Ready} slot and marks it \ccode{Processing}. Throws \ccode{ExceptionFramePool(QueueEmpty)} if nothing is queued.
     \item \ccode{giveBack(frame)} (consumer): marks a \ccode{Processing} slot \ccode{Free} again, closing the cycle.
-    \item \ccode{findByBuffer(bufferAddr)}: returns the \ccode{Frame} whose buffer starts at \ccode{bufferAddr}, or \ccode{nullptr} if none matches. Used by the \term{DMA} completion \term{ISR}s (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) to identify which slot a just-finished transfer wrote into.
+    \item \ccode{findByBuffer(bufferAddr)}: returns the \ccode{Frame} whose buffer starts at \ccode{bufferAddr}, or \ccode{nullptr} if none matches. Used by the \gterm{dma}{DMA} completion \gterm{isr}{ISR}s (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) to identify which slot a just-finished transfer wrote into.
     \item \ccode{available()}: returns the number of frames currently queued (\ccode{Ready}) for the consumer.
     \item \ccode{capacity()}: returns the pool's total number of slots.
 \end{itemize}
@@ -223,7 +223,7 @@ None of these calls ever copy pixel data: \ccode{FramePool} only ever exchanges 
 \subsection{PrefetcherExtendedDescriptor class}
 \label{subsec:fpgasteel-prefetcher-extended-descriptor}
 
-\ccode{PrefetcherExtendedDescriptor} is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named \ccode{Descriptor} (the class itself is declared \ccode{alignas(64)}, which is what actually guarantees the descriptor's required hardware alignment). The layout of \ccode{Descriptor} is not a design choice made by this project: it is fixed by the \term{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{See: \cite{EP-IPUG}.}
+\ccode{PrefetcherExtendedDescriptor} is the public interface through which software operates on one hardware descriptor: setters to populate its fields, commit methods to hand it over to hardware, and read-only queries to inspect it once a transfer has completed. Internally, the class holds nothing but that single descriptor, represented as a private, 64-byte struct named \ccode{Descriptor} (the class itself is declared \ccode{alignas(64)}, which is what actually guarantees the descriptor's required hardware alignment). The layout of \ccode{Descriptor} is not a design choice made by this project: it is fixed by the \gterm{msgdma}{mSGDMA} \term{IP} core itself and is documented by \term{Intel} as follows.\footnote{See: \cite{EP-IPUG}.}
 
 \begin{table}[htbp]
     \centering
@@ -297,7 +297,7 @@ The size and field order of \ccode{Descriptor}, together with the \ccode{alignas
 \subsection{MsgdmaPrefetcherMemory class}
 \label{subsec:fpgasteel-msgdma-prefetcher-memory}
 
-Manages the on-chip descriptor \term{RAM} that both the \term{CPU} and the prefetcher reach, each through its own address for that same memory. The \term{CPU} reaches it through the heavy \term{HPS}-\term{FPGA} bridge (e.g.\ \hw{0xC1010000} for the camera, \repopath{Config.h}); the prefetcher always sees it starting at address 0. Source: \lstinline[style=inlineFsRepo]!src/MsgdmaPrefetcherMemory.{h,cpp}!.
+Manages the on-chip descriptor \term{RAM} that both the \term{CPU} and the prefetcher reach, each through its own address for that same memory. The \term{CPU} reaches it through the heavy \gterm{hps}{HPS}-\gterm{fpga}{FPGA} bridge (e.g.\ \hw{0xC1010000} for the camera, \repopath{Config.h}); the prefetcher always sees it starting at address 0. Source: \lstinline[style=inlineFsRepo]!src/MsgdmaPrefetcherMemory.{h,cpp}!.
 
 \begin{itemize}
     \item \ccode{MsgdmaPrefetcherMemory(cpuBase, sizeBytes)} (constructor): records the \term{CPU}-side base address and computes how many descriptors fit in \ccode{sizeBytes}.
@@ -310,54 +310,54 @@ Manages the on-chip descriptor \term{RAM} that both the \term{CPU} and the prefe
 \subsection{PrefetchedMSGDMA class}
 \label{subsec:fpgasteel-prefetched-msgdma}
 
-Drives an \hw{altera_msgdma} core with its prefetcher enabled: the dispatcher \hw{CSR} and prefetcher \hw{CSR} registers are what this class actually operates on. The constructor also takes two interrupt-routing values: \ccode{gicIrqId}, the number that identifies this core's completion interrupt among all the interrupt lines the \term{GIC} (Generic Interrupt Controller) manages, and \ccode{irqTargetCore}, a bitmask of which \term{CPU} core(s) should handle it. \ccode{registerInterrupt()} below is what actually uses \ccode{gicIrqId} to tell the \term{GIC} which interrupts to route to this class's callback. One more constructor parameter, \ccode{descriptorMemBase}, is only recorded: this class never reads it back. It exists so that a \ccode{PrefetchedMSGDMA} and a \ccode{MsgdmaPrefetcherMemory} can be constructed using the same base address. The same class serves both \term{ST}$\rightarrow$\term{MM} and \term{MM}$\rightarrow$\term{ST} transfers: direction is entirely a property of the descriptor content (source/destination, \term{SOP}/\term{EOP} flags), not of this driver. Source: \lstinline[style=inlineFsRepo]!src/PrefetchedMSGDMA.{h,cpp}!.
+Drives an \hw{altera_msgdma} core with its prefetcher enabled: the dispatcher \hw{CSR} and prefetcher \hw{CSR} registers are what this class actually operates on. The constructor also takes two interrupt-routing values: \ccode{gicIrqId}, the number that identifies this core's completion interrupt among all the interrupt lines the \gterm{gic}{GIC} (Generic Interrupt Controller) manages, and \ccode{irqTargetCore}, a bitmask of which \term{CPU} core(s) should handle it. \ccode{registerInterrupt()} below is what actually uses \ccode{gicIrqId} to tell the \gterm{gic}{GIC} which interrupts to route to this class's callback. One more constructor parameter, \ccode{descriptorMemBase}, is only recorded: this class never reads it back. It exists so that a \ccode{PrefetchedMSGDMA} and a \ccode{MsgdmaPrefetcherMemory} can be constructed using the same base address. The same class serves both \term{ST}$\rightarrow$\term{MM} and \term{MM}$\rightarrow$\term{ST} transfers: direction is entirely a property of the descriptor content (source/destination, \gterm{sop}{SOP}/\gterm{sop}{EOP} flags), not of this driver. Source: \lstinline[style=inlineFsRepo]!src/PrefetchedMSGDMA.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{PrefetchedMSGDMA(csrBase, prefetcherCsrBase, descriptorMemBase, gicIrqId, irqTargetCore)} (constructor): records the register bases and the \term{IRQ} identification needed by \ccode{init()}/\ccode{start()} and \ccode{registerInterrupt()} below.
+    \item \ccode{PrefetchedMSGDMA(csrBase, prefetcherCsrBase, descriptorMemBase, gicIrqId, irqTargetCore)} (constructor): records the register bases and the \gterm{irq}{IRQ} identification needed by \ccode{init()}/\ccode{start()} and \ccode{registerInterrupt()} below.
     \item \ccode{init()}: resets the prefetcher then the dispatcher and clears status, leaving descriptor processing stopped. Must run before \ccode{start()}.
     \item \ccode{start(descIndex = 0)}: starts the prefetcher from the descriptor at \ccode{descIndex}. Throws \ccode{ExceptionMsgdma(PrefetcherBusy)} if already running, \ccode{ExceptionMsgdma(NotInitialized)} if \ccode{init()} hasn't run.
     \item \ccode{stop()}: clears the prefetcher's \term{RUN} bit and stops the dispatcher.
     \item \ccode{deInit()}: stops both prefetcher and dispatcher (teardown).
     \item \ccode{isBusy}: returns whether the dispatcher's read/write masters are currently executing a transfer on the bus. This reflects the dispatcher only, not the prefetcher pipeline: it can read \ccode{false} between two back-to-back descriptors even while the prefetcher still has more queued. To check whether a specific descriptor's transfer has completed, poll that descriptor's \ccode{PrefetcherExtendedDescriptor::isComplete()} instead.
-    \item \ccode{registerInterrupt(callback, context)}: enables the transfer-complete \term{IRQ} in the \term{GIC} and registers \ccode{callback} to run from \term{ISR} context for any descriptor committed with the transfer-complete \term{IRQ} bit set. \ccode{callback} must not throw: exceptions inside an \term{ISR} are undefined behavior, which is why \ccode{Camera::onTransferComplete()} and \ccode{Vga::onTransferComplete()} (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) both wrap their body in a local try/catch instead of letting anything escape.
+    \item \ccode{registerInterrupt(callback, context)}: enables the transfer-complete \gterm{irq}{IRQ} in the \gterm{gic}{GIC} and registers \ccode{callback} to run from \gterm{isr}{ISR} context for any descriptor committed with the transfer-complete \gterm{irq}{IRQ} bit set. \ccode{callback} must not throw: exceptions inside an \gterm{isr}{ISR} are undefined behavior, which is why \ccode{Camera::onTransferComplete()} and \ccode{Vga::onTransferComplete()} (Paragraphs~\ref{subsec:fpgasteel-camera-class}, \ref{subsec:fpgasteel-vga-class}) both wrap their body in a local try/catch instead of letting anything escape.
 \end{itemize}
 
 \subsection{Camera class}
 \label{subsec:fpgasteel-camera-class}
 
-\ccode{Camera} is a singleton that owns three collaborators, all by composition, not inheritance: \ccode{AvalonSCCB}, for talking to the sensor's control registers over \term{SCCB}/\term{I\textsuperscript{2}C}; \ccode{PrefetchedMSGDMA}, driving the \hw{ov7670_video_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{ov7670_prefercher_descriptor_mem}). It does not touch the \term{OV7670}'s \hw{ov7670_pclk} reset line: releasing the sensor from reset is explicitly left to the caller (\ccode{PclkResetController}, used directly by \ccode{main()}, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). \ccode{desc0}/\ccode{desc1} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \term{Avalon-ST} stream, not a \term{DDR} address.
+\ccode{Camera} is a singleton that owns three collaborators, all by composition, not inheritance: \ccode{AvalonSCCB}, for talking to the sensor's control registers over \gterm{i2c}{SCCB}/\gterm{i2c}{I\textsuperscript{2}C}; \ccode{PrefetchedMSGDMA}, driving the \hw{ov7670_video_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{ov7670_prefercher_descriptor_mem}). It does not touch the \gterm{ov7670}{OV7670}'s \hw{ov7670_pclk} reset line: releasing the sensor from reset is explicitly left to the caller (\ccode{PclkResetController}, used directly by \ccode{main()}, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). \ccode{desc0}/\ccode{desc1} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: \lstinline[style=inlineFsRepo]!src/Camera.{h,cpp}!.
 
 \begin{itemize}
     \item \ccode{getInstance()}: returns the singleton instance.
-    \item \ccode{init(pool)}: requires a \ccode{FramePool} with capacity $\geq$ 2 and a matching \ccode{FRAME_WIDTH*FRAME_HEIGHT}/\ccode{CAMERA_COLOR_SCHEME} (\repopath{Config.h}; a mismatch throws \ccode{ExceptionCamera}); soft-resets the sensor, checks its product \term{ID} over \term{SCCB}, writes the color-scheme-specific and common register tables via \ccode{AvalonSCCB}, then reads every register back to confirm it took (readback mismatches also throw \ccode{ExceptionCamera}). Enables the \hw{ov7670_data_interface}, sets up two descriptors from the descriptor memory in ping-pong (\ccode{desc0} armed and started, \ccode{desc1} prepared but deliberately left uncommitted, so the prefetcher has nothing to run there until the \term{ISR} commits it), and starts \ccode{PrefetchedMSGDMA}.
-    \item \ccode{deInit()}: stops the \term{DMA}, disables the data interface, and soft-resets the sensor.
-    \item \ccode{verticalFlip(enable)}: toggles the \term{OV7670}'s \term{MVFP} register, bit 5, directly.
-    \item \ccode{horizontalMirror(enable)}: toggles the \term{OV7670}'s \term{MVFP} register, bit 4, directly.
-    \item \ccode{getDroppedFramesCounter}: returns the \hw{ov7670_data_interface}'s hardware counter, which is incremented whenever the \term{FPGA}-side pipeline itself drops a frame; independent of the software fallback described under \ccode{onTransferComplete()} below.
+    \item \ccode{init(pool)}: requires a \ccode{FramePool} with capacity $\geq$ 2 and a matching \ccode{FRAME_WIDTH*FRAME_HEIGHT}/\ccode{CAMERA_COLOR_SCHEME} (\repopath{Config.h}; a mismatch throws \ccode{ExceptionCamera}); soft-resets the sensor, checks its product \term{ID} over \gterm{i2c}{SCCB}, writes the color-scheme-specific and common register tables via \ccode{AvalonSCCB}, then reads every register back to confirm it took (readback mismatches also throw \ccode{ExceptionCamera}). Enables the \hw{ov7670_data_interface}, sets up two descriptors from the descriptor memory in ping-pong (\ccode{desc0} armed and started, \ccode{desc1} prepared but deliberately left uncommitted, so the prefetcher has nothing to run there until the \gterm{isr}{ISR} commits it), and starts \ccode{PrefetchedMSGDMA}.
+    \item \ccode{deInit()}: stops the \gterm{dma}{DMA}, disables the data interface, and soft-resets the sensor.
+    \item \ccode{verticalFlip(enable)}: toggles the \gterm{ov7670}{OV7670}'s \term{MVFP} register, bit 5, directly.
+    \item \ccode{horizontalMirror(enable)}: toggles the \gterm{ov7670}{OV7670}'s \term{MVFP} register, bit 4, directly.
+    \item \ccode{getDroppedFramesCounter}: returns the \hw{ov7670_data_interface}'s hardware counter, which is incremented whenever the \gterm{fpga}{FPGA}-side pipeline itself drops a frame; independent of the software fallback described under \ccode{onTransferComplete()} below.
     \item \ccode{clearDroppedFramesCounter()}: resets that counter to zero.
-    \item \ccode{hasIsrFault()}: returns whether the \term{ISR} (below) caught an exception.
-    \item \ccode{getIsrFaultType()}: returns the type of the exception the \term{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
+    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an exception.
+    \item \ccode{getIsrFaultType()}: returns the type of the exception the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
     \item \ccode{clearIsrFault()}: clears the fault flag.
-    \item \ccode{onTransferComplete()} (private, the \term{ISR}, \ccode{noexcept}): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal \ccode{m_dummyBuffer}), checks for \term{DMA} errors/early-termination/short transfer and either \ccode{push()}es the frame to the pool (good) or \ccode{giveBack()}s it (bad are discarded; Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture} covers the early-termination case). Then tries to \ccode{borrow()} a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at \ccode{m_dummyBuffer} instead, so the \term{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any exception (\ccode{ExceptionMsgdma} or otherwise) sets the fault flag above instead of propagating.
+    \item \ccode{onTransferComplete()} (private, the \gterm{isr}{ISR}, \ccode{noexcept}): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal \ccode{m_dummyBuffer}), checks for \gterm{dma}{DMA} errors/early-termination/short transfer and either \ccode{push()}es the frame to the pool (good) or \ccode{giveBack()}s it (bad are discarded; Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture} covers the early-termination case). Then tries to \ccode{borrow()} a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at \ccode{m_dummyBuffer} instead, so the \gterm{dma}{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any exception (\ccode{ExceptionMsgdma} or otherwise) sets the fault flag above instead of propagating.
 \end{itemize}
 
 \subsection{Vga class}
 \label{subsec:fpgasteel-vga-class}
 
-\ccode{Vga} is a singleton that owns two collaborators, by composition, not inheritance: \ccode{PrefetchedMSGDMA}, driving the \hw{vga_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{vga_prefercher_descriptor_mem}). Unlike \ccode{Camera}, it has nothing external to configure over a control bus: \hw{vga_controller} is fixed-function, with no equivalent of \ccode{AvalonSCCB}. Instead, \ccode{Vga} generates its own 8-bar color test pattern internally, so \term{VGA} output is already running the moment \ccode{init()} returns, before any real frame exists. \ccode{desc0}/\ccode{desc1} each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \term{Avalon-ST} stream, not a \term{DDR} address.
+\ccode{Vga} is a singleton that owns two collaborators, by composition, not inheritance: \ccode{PrefetchedMSGDMA}, driving the \hw{vga_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{vga_prefercher_descriptor_mem}). Unlike \ccode{Camera}, it has nothing external to configure over a control bus: \hw{vga_controller} is fixed-function, with no equivalent of \ccode{AvalonSCCB}. Instead, \ccode{Vga} generates its own 8-bar color test pattern internally, so \gterm{vga}{VGA} output is already running the moment \ccode{init()} returns, before any real frame exists. \ccode{desc0}/\ccode{desc1} each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: \lstinline[style=inlineFsRepo]!src/Vga.{h,cpp}!.
 
 \begin{itemize}
     \item \ccode{getInstance()}: returns the singleton instance.
-    \item \ccode{init(pool)}: requires an \term{RGB24} \ccode{FramePool} sized to the \term{VGA} output resolution (\ccode{FRAME_WIDTH*FRAME_HEIGHT}) (throws \ccode{ExceptionMsgdma} otherwise); generates an internal test pattern at that same resolution (8 vertical color bars: white, red, green, blue, cyan, magenta, yellow, black) and starts two descriptors in ping-pong fashion, both initially reading from the test pattern, so \term{VGA} output is live from \ccode{init()} even before any camera frame is ready.
-    \item \ccode{deInit()}: stops \term{VGA} output and de-initializes the \term{DMA}.
-    \item \ccode{hasIsrFault()}: returns whether the \term{ISR} (below) caught an exception; \term{VGA} output freezes on the last frame while a fault is set.
-    \item \ccode{getIsrFaultType()}: returns the type of the exception the \term{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
+    \item \ccode{init(pool)}: requires an \term{RGB24} \ccode{FramePool} sized to the \gterm{vga}{VGA} output resolution (\ccode{FRAME_WIDTH*FRAME_HEIGHT}) (throws \ccode{ExceptionMsgdma} otherwise); generates an internal test pattern at that same resolution (8 vertical color bars: white, red, green, blue, cyan, magenta, yellow, black) and starts two descriptors in ping-pong fashion, both initially reading from the test pattern, so \gterm{vga}{VGA} output is live from \ccode{init()} even before any camera frame is ready.
+    \item \ccode{deInit()}: stops \gterm{vga}{VGA} output and de-initializes the \gterm{dma}{DMA}.
+    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an exception; \gterm{vga}{VGA} output freezes on the last frame while a fault is set.
+    \item \ccode{getIsrFaultType()}: returns the type of the exception the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
     \item \ccode{clearIsrFault()}: clears the fault flag.
-    \item \ccode{onTransferComplete()} (private, the \term{ISR}): runs every time a transfer completes, and checks whether \ccode{vgaPool} has a new frame ready (\ccode{pop()}): if there is one available, it writes the new frame's buffer address into the source field of the descriptor that's about to run next, and gives the old frame, the one that had just finished being shown, back to the pool (\ccode{giveBack()}); if none is available, it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it (that frame is never given back to the pool, since it's still the one in use). Either way, it then commits that descriptor (\ccode{commitMMtoST}), reactivating it. This is what lets the display keep showing the last converted frame indefinitely if the main loop temporarily falls behind, instead of underrunning.
+    \item \ccode{onTransferComplete()} (private, the \gterm{isr}{ISR}): runs every time a transfer completes, and checks whether \ccode{vgaPool} has a new frame ready (\ccode{pop()}): if there is one available, it writes the new frame's buffer address into the source field of the descriptor that's about to run next, and gives the old frame, the one that had just finished being shown, back to the pool (\ccode{giveBack()}); if none is available, it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it (that frame is never given back to the pool, since it's still the one in use). Either way, it then commits that descriptor (\ccode{commitMMtoST}), reactivating it. This is what lets the display keep showing the last converted frame indefinitely if the main loop temporarily falls behind, instead of underrunning.
 \end{itemize}
 
 \subsection{SimpleFilters class}
@@ -366,13 +366,13 @@ Source: \lstinline[style=inlineFsRepo]!src/Vga.{h,cpp}!.
 Stateless, static-only class for converting one \ccode{Frame} to \term{RGB24} in software. Source: \lstinline[style=inlineFsRepo]!src/SimpleFilters.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{convert(src, dst)}, the only public method: converts \ccode{src}, a \ccode{Frame} in any \ccode{Frame::ColorScheme} other than \term{RGB24}, into \ccode{dst}, which must already be \term{RGB24}. Each source format gets its own conversion: \ccode{Mosaic8} is a naive per-pixel demosaic (each pixel keeps only its own \term{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), \ccode{YUYV16} gets a full \term{YUV422}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (\ccode{RGB565}, \ccode{RGB555}, \ccode{RGB444}) are straight bit-unpacked to \term{RGB24}. Throws an exception if \ccode{dst} isn't \term{RGB24}, or if \ccode{src} is a format \ccode{convert} doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use \ccode{memcpy} instead).
+    \item \ccode{convert(src, dst)}, the only public method: converts \ccode{src}, a \ccode{Frame} in any \ccode{Frame::ColorScheme} other than \term{RGB24}, into \ccode{dst}, which must already be \term{RGB24}. Each source format gets its own conversion: \ccode{Mosaic8} is a naive per-pixel demosaic (each pixel keeps only its own \term{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), \ccode{YUYV16} gets a full \gterm{yuv422}{YUV422}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (\ccode{RGB565}, \ccode{RGB555}, \ccode{RGB444}) are straight bit-unpacked to \term{RGB24}. Throws an exception if \ccode{dst} isn't \term{RGB24}, or if \ccode{src} is a format \ccode{convert} doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use \ccode{memcpy} instead).
 \end{itemize}
 
 \subsection{HexDisplay class}
 \label{subsec:fpgasteel-hex-display}
 
-Singleton driving the custom \hw{hex_display_controller} \term{IP} over a single \term{Avalon-MM} register (bit 31: enabled; bits[19:0]: value 0--999999). Source: \lstinline[style=inlineFsRepo]!src/HexDisplay.{h,cpp}!.
+Singleton driving the custom \hw{hex_display_controller} \term{IP} over a single \gterm{avalonmm}{Avalon-MM} register (bit 31: enabled; bits[19:0]: value 0--999999). Source: \lstinline[style=inlineFsRepo]!src/HexDisplay.{h,cpp}!.
 
 \begin{itemize}
     \item \ccode{getInstance()}: returns the singleton instance.
@@ -420,14 +420,14 @@ while (true) {
 }
 \end{lstlisting}
 
-\ccode{camPool} and \ccode{vgaPool} are each shared between the main loop and one \term{ISR}: \ccode{Camera}'s \term{ISR} produces into \ccode{camPool}, the main loop consumes; the main loop produces into \ccode{vgaPool}, \ccode{Vga}'s \term{ISR} consumes. \ccode{FramePool}'s lock-free design is what makes this safe without disabling interrupts around the main loop's \ccode{pop()}/\ccode{borrow()} calls.
+\ccode{camPool} and \ccode{vgaPool} are each shared between the main loop and one \gterm{isr}{ISR}: \ccode{Camera}'s \gterm{isr}{ISR} produces into \ccode{camPool}, the main loop consumes; the main loop produces into \ccode{vgaPool}, \ccode{Vga}'s \gterm{isr}{ISR} consumes. \ccode{FramePool}'s lock-free design is what makes this safe without disabling interrupts around the main loop's \ccode{pop()}/\ccode{borrow()} calls.
 
 Every exception the code in this snippet can throw (\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer}, \ccode{ExceptionI2C}, \ccode{ExceptionCamera}, \ccode{ExceptionMsgdma}, \ccode{ExceptionHexDisplay}, \ccode{ExceptionFramePool}) is caught around this block and reported over \ccode{Serial}, exactly as in \nameref{chap:fpgasteel-hello-world} and \nameref{chap:fpgasteel-i2c-example}.
 
 \section{Debug tooling}
 \label{sec:fpgasteel-simple-forwarding-debug-tooling}
 
-\repopath{debugTools/view_frame.py} decodes a raw frame buffer dumped from target memory (e.g.\ retrieved with the \term{Eclipse} \term{IDE}'s debug tools) into a viewable image, for any of the six \ccode{ColorScheme} formats; see its \cmdpath{--help} for options. Useful to check what the camera actually captured, or what \ccode{SimpleFilters::convert()} produced, independently of the \term{VGA} output.
+\repopath{debugTools/view_frame.py} decodes a raw frame buffer dumped from target memory (e.g.\ retrieved with the \term{Eclipse} \term{IDE}'s debug tools) into a viewable image, for any of the six \ccode{ColorScheme} formats; see its \cmdpath{--help} for options. Useful to check what the camera actually captured, or what \ccode{SimpleFilters::convert()} produced, independently of the \gterm{vga}{VGA} output.
 
 |ImageJ|\footnote{\term{ImageJ} --- \url{https://imagej.net/ij/}} is an optional alternative for a quick look at the same dump without running the script: File $>$ Import $>$ Raw..., image type ``8-bit'' for a \ccode{Mosaic8} dump or ``RGB (24-bit)'' for an \term{RGB24} one, with the frame's width, height, and an offset of 0.
 

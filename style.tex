@@ -52,17 +52,12 @@
 
 \usepackage{xcolor}
 \newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
-\newcommand{\term}[1]{\textsf{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
+\newcommand{\term}[1]{\textit{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
 \newcommand{\prjname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
-
-% Glossary (Appendix C): the key (term) and the body (definition) of each entry
-% are styled centrally here, so a global look change needs editing only this file.
-\newcommand{\glossaryKey}[1]{\textsf{\textbf{#1}}}   % glossary entry key (the term)
-\newcommand{\glossaryDescription}[1]{\normalfont #1} % glossary entry body (the definition)
 
 \usepackage[normalem]{ulem}
 \newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review
-\newcommand{\unresolved}[1]{\textcolor{red}{#1}}   % marks citations NOT in the global bibliography (Appendix B); decide what to do with them on reread
+\newcommand{\unresolved}[1]{\textcolor{red}{#1}}   % marks citations NOT in the global bibliography; decide what to do with them on reread
 
 \newcommand{\longsection}[2]{%
     \section[#1]{#1}%
@@ -93,6 +88,26 @@
     urlcolor=blue,
     bookmarksnumbered=true,
 }
+
+\makeatletter
+\let\ltx@url\url
+\renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
+\makeatother
+
+\usepackage{glossaries}    % must load after hyperref
+\makeglossaries
+\input{03_appendices/glossary-entries}
+
+% Usage: \gls{key} / \Gls{key} print the entry's canonical name, linked to its
+% glossary definition; \gterm{key}{text} links custom display text to the
+% same definition (used wherever the body's wording differs from the
+% canonical name, e.g. a plural or a synonym already covered by one entry).
+\newsavebox{\gtermbox}
+\newcommand{\gterm}[2]{%
+    \sbox{\gtermbox}{\glslink{#1}{#2}}%
+    \usebox{\gtermbox}\kern-\wd\gtermbox
+    {\color[gray]{0.6}\rule[-0.15em]{\wd\gtermbox}{0.5pt}}%
+}   % body-text color, with a light gray underline (less visually heavy than black) marking it as a glossary link
 
 \let\urlpath\path   % \path (from the url package, via hyperref) under a clearer name:
                      % typesets an identifier/token verbatim in tt style, e.g. a VS Code

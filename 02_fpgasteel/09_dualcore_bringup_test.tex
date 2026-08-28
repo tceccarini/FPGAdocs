@@ -4,26 +4,26 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-about}
 
-\textit{``Dual-Core Bring-up Test''} (under \repopath{sw/dualcore_bringup_test}) is the smallest possible test that gets both \term{Cortex-A9} cores on the \term{Cyclone V SoC} running at the same time: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \term{VGA}, no interrupts, no \term{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. \nameref{chap:fpgasteel-dualcore-forwarding} builds on top of this same bring-up sequence to add cache, \term{SCU}, \term{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
+\textit{``Dual-Core Bring-up Test''} (under \repopath{sw/dualcore_bringup_test}) is the smallest possible test that gets both \term{Cortex-A9} cores on the \gterm{cyclonevsoc}{Cyclone V SoC}\footnote{\glsentrydesc{cyclonevsoc}} running at the same time: \term{CPU0} turns on an alternating \term{LED} pattern and then boots \term{CPU1}; \term{CPU1}, once running, shows 123 on the \term{7-segment display} and loops forever. There is no camera, no \gterm{vga}{VGA}, no interrupts, no \gterm{cpp}{C++}: the whole project is two small \term{C} functions and one assembly stub, on purpose, so that the only thing being exercised is the act of bringing \term{CPU1} up at all. \nameref{chap:fpgasteel-dualcore-forwarding} builds on top of this same bring-up sequence to add cache, \gterm{scu}{SCU}, \gterm{mmu}{MMU} configuration, and actual work dispatched to \term{CPU1}; this project is its minimal foundation.
 
-The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \term{hwlib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence the \term{Linux} kernel uses to bring up its second core, implemented in \extpath{arch/arm/mach-socfpga/platsmp.c}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in \repopath{main.c} was arrived at by using \term{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
+The sequence used to bring \term{CPU1} up is not documented step-by-step anywhere in Intel's own \term{TRM} \cite{CV-TRM} or \gterm{hwlib}{hwlib}: the \term{TRM} explains the reset architecture in general terms, but not as a ready-made recipe. The exact order of operations implemented here, reset-assert, trampoline write, start-address write, cache clean, reset-deassert, is the same sequence the \term{Linux} kernel uses to bring up its second core, implemented in \extpath{arch/arm/mach-socfpga/platsmp.c}. This repository does not vendor a copy of the \term{Linux} kernel source; the sequence in \repopath{main.c} was arrived at by using \gterm{claudecode}{Claude Code} (Anthropic's \term{AI} coding assistant) to read and explain the relevant parts of that kernel file.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-dualcore-prerequisites}
 
-Same toolchain, \term{SD card} and \term{Eclipse}/\term{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, including the \repopath{boot.script.jtag_debug} script, the same one used by every example in this project.
+Same toolchain, \term{SD card} and \term{Eclipse}/\gterm{openocd}{OpenOCD} debug setup as \nameref{chap:fpgasteel-hello-world}, including the \repopath{boot.script.jtag_debug} script, the same one used by every example in this project.
 
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-hardware}
 
-Only two \term{Qsys}/\term{Platform Designer} peripherals are used, both reached through the lightweight \term{HPS}-to-\term{FPGA} bridge:
+Only two \term{Qsys}/\gterm{platformdesigner}{Platform Designer} peripherals are used, both reached through the lightweight \gterm{hps}{HPS}-to-\gterm{fpga}{FPGA} bridge:
 
 \begin{itemize}
     \item \hw{hex_display_controller}, the same core and address documented in Paragraph~\ref{subsec:fpgasteel-hex-display}. \term{CPU1} writes 123 to it once it starts running.
-    \item An \term{LED} \term{PIO} core, driving the \term{DE1-SoC}'s ten \term{LED}s: \term{CPU0} writes 0x2AA (binary 1010101010) to it once, right after boot, to show it is alive.
+    \item An \term{LED} \gterm{pio}{PIO}\footnote{\glsentrydesc{pio}} core, driving the \term{DE1-SoC}'s ten \term{LED}s: \term{CPU0} writes 0x2AA (binary 1010101010) to it once, right after boot, to show it is alive.
 \end{itemize}
 
-Neither the camera capture nor the \term{VGA} output datapaths are used here.
+Neither the camera capture nor the \gterm{vga}{VGA} output datapaths are used here.
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-operating-principles}
@@ -34,16 +34,16 @@ Neither the camera capture nor the \term{VGA} output datapaths are used here.
 On the \term{Cyclone V HPS}, only one core ever comes out of reset by itself. This behavior is documented in \cite[Chapter 10, ``\term{Cortex-A9} Microprocessor Unit Subsystem'', p.~10-6]{CV-TRM}, which states:
 
 \begin{quote}
-    ``When a cold or warm reset is issued in the \term{MPU}, \term{CPU0} is released from reset automatically. If \term{CPU1} is present, then its reset signals are left asserted when a cold or warm reset is issued. After \term{CPU0} comes out of reset, it can deassert \term{CPU1}'s reset signals by clearing the \term{CPU1} bit in the \term{MPU} Module Reset (\hw{mpumodrst}) register in the \term{Reset Manager}.''
+    ``When a cold or warm reset is issued in the \gterm{mpu}{MPU}\footnote{\glsentrydesc{mpu}}, \term{CPU0} is released from reset automatically. If \term{CPU1} is present, then its reset signals are left asserted when a cold or warm reset is issued. After \term{CPU0} comes out of reset, it can deassert \term{CPU1}'s reset signals by clearing the \term{CPU1} bit in the \gterm{mpu}{MPU} Module Reset (\hw{mpumodrst}) register in the \gterm{resetmanager}{Reset Manager}\footnote{\glsentrydesc{resetmanager}}.''
 \end{quote}
 
-The \term{Reset Manager} chapter \cite[Chapter 4, ``Reset Sequencing'', p.~4-11]{CV-TRM} states the same fact from the reset controller's own point of view:
+The \gterm{resetmanager}{Reset Manager} chapter \cite[Chapter 4, ``Reset Sequencing'', p.~4-11]{CV-TRM} states the same fact from the reset controller's own point of view:
 
 \begin{quote}
-    ``After the reset manager releases the \term{MPU} subsystem from reset, \term{CPU1} is left in reset and \term{CPU0} begins executing code from the reset vector address. Software is responsible for deasserting \term{CPU1}[...]''.
+    ``After the reset manager releases the \gterm{mpu}{MPU} subsystem from reset, \term{CPU1} is left in reset and \term{CPU0} begins executing code from the reset vector address. Software is responsible for deasserting \term{CPU1}[...]''.
 \end{quote}
 
-So \term{CPU1} is not merely idle, parked, or spinning after boot: it is held in actual hardware reset, executing nothing, from the moment the board powers on until some piece of software running on \term{CPU0}, \term{U-Boot}, \term{Linux}, or, as here, this bare-metal test, explicitly clears the \term{CPU1} bit of the \hw{mpumodrst} register (\hw{RSTMGR_MPUMODRST}, 0xFFD05010, \repopath{main.c}, Paragraph~\ref{subsec:fpgasteel-dualcore-main-c}). Nothing in \term{U-Boot}'s own boot process does this on its own; \term{U-Boot} itself runs single-core and simply never touches that bit, which is exactly why \term{CPU1} is still sitting in reset, untouched, by the time this project's \ccode{main()} gets control.
+So \term{CPU1} is not merely idle, parked, or spinning after boot: it is held in actual hardware reset, executing nothing, from the moment the board powers on until some piece of software running on \term{CPU0}, \gterm{uboot}{U-Boot}, \term{Linux}, or, as here, this bare-metal test, explicitly clears the \term{CPU1} bit of the \hw{mpumodrst} register (\hw{RSTMGR_MPUMODRST}, 0xFFD05010, \repopath{main.c}, Paragraph~\ref{subsec:fpgasteel-dualcore-main-c}). Nothing in \gterm{uboot}{U-Boot}'s own boot process does this on its own; \gterm{uboot}{U-Boot} itself runs single-core and simply never touches that bit, which is exactly why \term{CPU1} is still sitting in reset, untouched, by the time this project's \ccode{main()} gets control.
 
 \subsection{The boot address and the remap trick}
 \label{subsec:fpgasteel-dualcore-boot-address}
@@ -59,9 +59,9 @@ trampoline[1] = (uint32_t)&_start_core1; /* target address */
 
 0xE51FF004 is the \term{ARM} encoding of {\catcode`\#=12 \ccode{ldr pc, [pc, #-4]}}\footnote{\texttt{ldr} = load, \texttt{pc} = program counter, \texttt{\#-4} = next instruction.}: loaded at address 0, this instruction reads the 32-bit word stored 4 bytes behind the current program counter, i.e.\ the second trampoline word, and branches to it. This two-instruction idiom is the standard way to perform a long, absolute jump to an address that a plain relative branch instruction cannot reach on its own.
 
-This only works because address 0x0 is not, on this board at this moment, what it is by default. The system interconnect address map \cite[Chapter 8, Figure 8-4, p.~8-6]{CV-TRM} shows that for the \term{MPU}, address 0x0 normally maps to the on-chip \term{Boot ROM}, not \term{SDRAM}. \term{U-Boot}, however, reconfigures the system's interconnect remap register early in its own boot process so that address 0x0 maps to \term{SDRAM} instead (needed for \term{U-Boot}'s own exception vectors); this project's trampoline write relies entirely on that remap already being in place by the time \ccode{main()} runs.
+This only works because address 0x0 is not, on this board at this moment, what it is by default. The system interconnect address map \cite[Chapter 8, Figure 8-4, p.~8-6]{CV-TRM} shows that for the \gterm{mpu}{MPU}, address 0x0 normally maps to the on-chip \gterm{bootrom}{Boot ROM}, not \term{SDRAM}. \gterm{uboot}{U-Boot}, however, reconfigures the system's interconnect remap register early in its own boot process so that address 0x0 maps to \term{SDRAM} instead (needed for \gterm{uboot}{U-Boot}'s own exception vectors); this project's trampoline write relies entirely on that remap already being in place by the time \ccode{main()} runs.
 
-\term{CPU1}'s start address register, \hw{cpu1startaddr}, is written too, with the same target address. According to \cite[Chapter 6, ``\term{L3 Interconnect}'', p.~6-7]{CV-TRM}, this register is what the \term{Boot ROM}'s own reset handler reads to know where to jump, in the ordinary case where \term{CPU1} actually restarts execution from the \term{Boot ROM}. Since the remap above means \term{CPU1} will execute the trampoline at 0x0 directly instead, this write is redundant in this specific setup.
+\term{CPU1}'s start address register, \hw{cpu1startaddr}, is written too, with the same target address. According to \cite[Chapter 6, ``\term{L3 Interconnect}'', p.~6-7]{CV-TRM}, this register is what the \gterm{bootrom}{Boot ROM}'s own reset handler reads to know where to jump, in the ordinary case where \term{CPU1} actually restarts execution from the \gterm{bootrom}{Boot ROM}. Since the remap above means \term{CPU1} will execute the trampoline at 0x0 directly instead, this write is redundant in this specific setup.
 
 \subsection{Cache maintenance for the trampoline}
 \label{subsec:fpgasteel-dualcore-cache-maintenance}
@@ -91,7 +91,7 @@ Plain \term{C}, no classes. Source: \repopath{main.c}.
 \subsection{startup\_core1}
 \label{subsec:fpgasteel-dualcore-startup-core1}
 
-\term{CPU1}'s own minimal entry stub, since \term{CPU1} starts with no stack and no runtime set up at all, unlike \term{CPU0} (which inherits \term{U-Boot}'s stack until its own \term{C} runtime takes over). Source: \repopath{startup_core1.S}.
+\term{CPU1}'s own minimal entry stub, since \term{CPU1} starts with no stack and no runtime set up at all, unlike \term{CPU0} (which inherits \gterm{uboot}{U-Boot}'s stack until its own \term{C} runtime takes over). Source: \repopath{startup_core1.S}.
 
 \begin{itemize}
     \item \ccode{_start_core1}: sets the stack pointer to \ccode{_stack1}, then calls \ccode{main1()}. If \ccode{main1()} ever returned, which it does not, execution would fall into a \ccode{wfe}/branch-to-self trap loop immediately after.
@@ -125,7 +125,7 @@ Identical to the single-core project template (the same one \nameref{chap:fpgast
 The full sequence, \term{CPU0}'s and \term{CPU1}'s sides together:
 
 \begin{enumerate}
-    \item \term{OpenOCD} debugger halts \term{CPU0} over \term{JTAG} and loads the \term{ELF} file. \term{CPU1} is still held in hardware reset and has not executed anything at all yet.
+    \item \gterm{openocd}{OpenOCD} debugger halts \term{CPU0} over \gterm{jtag}{JTAG} and loads the \term{ELF} file. \term{CPU1} is still held in hardware reset and has not executed anything at all yet.
     \item \term{CPU0} runs \ccode{main()}: \term{LED}s turn on, dashes show on the hex display.
     \item \term{CPU0} runs the five-step bring-up sequence (Paragraphs~\ref{subsec:fpgasteel-dualcore-boot-address}--\ref{subsec:fpgasteel-dualcore-releasing-cpu1}).
     \item \term{CPU1} comes out of reset, executes the trampoline at 0x0, and lands in \ccode{_start_core1}, which sets up its stack and calls \ccode{main1()}.

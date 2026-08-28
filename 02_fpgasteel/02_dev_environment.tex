@@ -3,19 +3,19 @@
 
 \section{Introduction}
 
-This chapter covers how to set up the host used throughout this part of the work. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \term{USB-Blaster II} and serial console access.
+This chapter covers how to set up the host used throughout this part of the work. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \gterm{usbblaster}{USB-Blaster II}\footnote{\glsentrydesc{usbblaster}} and serial console access.
 
-Unlike \prjname{FPGAlix}, which can debug most of its software remotely over the network, \prjname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface. This is why the \term{VM} caveat below matters more here than it did for \prjname{FPGAlix}, where only one specific task had no alternative to a reliable \term{JTAG} connection: on \prjname{FPGAsteel}, every debug session has none.
+Unlike \prjname{FPGAlix}, which can debug most of its software remotely over the network, \prjname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface. This is why the \gterm{vm}{VM}\footnote{\glsentrydesc{vm}} caveat below matters more here than it did for \prjname{FPGAlix}, where only one specific task had no alternative to a reliable \gterm{jtag}{JTAG}\footnote{\glsentrydesc{jtag}} connection: on \prjname{FPGAsteel}, every debug session has none.
 
 \section{Host requirements}
 
-\prjname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \term{Quartus Prime}, the \term{ARM} bare-metal toolchain, \term{OpenOCD}, and \term{Eclipse Embedded CDT}.
+\prjname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \gterm{quartusprime}{Quartus Prime}, the \term{ARM} bare-metal toolchain, \gterm{openocd}{OpenOCD}\footnote{\glsentrydesc{openocd}}, and \gterm{eclipseembeddedcdt}{Eclipse Embedded CDT}\footnote{\glsentrydesc{eclipseembeddedcdt}}.
 
-Developing inside a \term{VM} is discouraged. Forwarding the \term{USB-Blaster II}\footnote{I.e., the \term{JTAG} debug interface mentioned in the Introduction.} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \term{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
+Developing inside a \gterm{vm}{VM} is discouraged. Forwarding the \gterm{usbblaster}{USB-Blaster II}\footnote{I.e., the \gterm{jtag}{JTAG} debug interface mentioned in the Introduction.} from host to guest through the hypervisor's own \term{USB} redirection (\term{VirtualBox}/\term{VMware} ``USB passthrough'', \term{Hyper-V}'s basic \term{USB} support) is a long-standing, widely reported source of failures: corrupted transfers, \gterm{jtag}{JTAG} chains that fail to enumerate. Basic \term{USB} forwarding was never designed for a device this timing sensitive.
 
-The one setup known to avoid this reliably is \term{PCI(e)} passthrough (\term{VT-d}/\term{AMD-Vi} with \term{IOMMU}): assigning the entire \term{USB} controller, not just the \term{USB-Blaster} device, directly to the guest, bypassing the host's \term{USB} stack entirely. It is not a simple option, though: it needs \term{IOMMU} support enabled in the host's firmware and kernel, not every \term{USB} controller's \term{IOMMU} grouping supports it, and it depends on the host \term{OS}. On \term{Linux}, it is supported directly: the kernel's \term{VFIO} framework, together with \term{QEMU}, can assign the \term{USB} controller straight to a \term{QEMU}/\term{KVM} guest. On \term{Windows}, this is \term{Hyper-V}'s \term{Discrete Device Assignment} (\term{DDA}), documented for \term{Windows Server} editions, not for \term{Windows 11}'s client \term{Hyper-V}. \term{macOS} has no path to this at all: \term{Quartus} is only distributed for \term{Windows} and \term{Linux}, and \term{Apple Silicon} Macs are \term{ARM}, not \term{x86\_64}, so even a \term{Linux} \term{VM} on one would need to emulate the target architecture, moot anyway since \term{Quartus} does not run on that architecture either way.
+The one setup known to avoid this reliably is \term{PCI(e)} passthrough (\gterm{vtd}{VT-d}/\gterm{vtd}{AMD-Vi} with \gterm{vtd}{IOMMU}\footnote{\glsentrydesc{vtd}}): assigning the entire \term{USB} controller, not just the \gterm{usbblaster}{USB-Blaster} device, directly to the guest, bypassing the host's \term{USB} stack entirely. It is not a simple option, though: it needs \gterm{vtd}{IOMMU} support enabled in the host's firmware and kernel, not every \term{USB} controller's \gterm{vtd}{IOMMU} grouping supports it, and it depends on the host \term{OS}. On \term{Linux}, it is supported directly: the kernel's \term{VFIO} framework, together with \term{QEMU}, can assign the \term{USB} controller straight to a \term{QEMU}/\term{KVM} guest. On \term{Windows}, this is \term{Hyper-V}'s \term{Discrete Device Assignment} (\term{DDA}), documented for \term{Windows Server} editions, not for \term{Windows 11}'s client \term{Hyper-V}. \term{macOS} has no path to this at all: \term{Quartus} is only distributed for \term{Windows} and \term{Linux}, and \term{Apple Silicon} Macs are \term{ARM}, not \term{x86\_64}, so even a \term{Linux} \gterm{vm}{VM} on one would need to emulate the target architecture, moot anyway since \term{Quartus} does not run on that architecture either way.
 
-Given all this, developing directly on physical \term{Ubuntu 22.04} hardware, not inside a \term{VM}, is what is documented and known to work.
+Given all this, developing directly on physical \term{Ubuntu 22.04} hardware, not inside a \gterm{vm}{VM}, is what is documented and known to work.
 
 \section{Required software}
 
@@ -38,7 +38,7 @@ sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-
     \item |pkg-config|, |libopencv-dev|: needed to build \cmd{debugTools/linux_dualcore_emulator}, the host-side emulator described in Section~\ref{sec:fpgasteel-dualcore-dip-debug-tooling}.
 \end{itemize}
 
-The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
+The \term{ARM} toolchain and \gterm{openocd}{OpenOCD} need no |apt| packages: both are prebuilt \term{xPack} tarballs bundling their own shared libraries. \term{Quartus} needs none either: its binaries are \term{64-bit} and it ships its own private \term{JRE}.
 
 \subsection{Install the software, and where it lives}
 \label{subsec:fpgasteel-install-paths}
@@ -49,11 +49,11 @@ The \term{ARM} toolchain and \term{OpenOCD} need no |apt| packages: both are pre
 \toprule
 \textbf{Software} & \textbf{Version} & \textbf{Install path} \\
 \midrule
-\term{Quartus Prime} & \texttt{22.1} & \texttt{\seqsplit{\textasciitilde{}/Programs/Altera/22.1/}} \\
+\gterm{quartusprime}{Quartus Prime} & \texttt{22.1} & \texttt{\seqsplit{\textasciitilde{}/Programs/Altera/22.1/}} \\
 \lightmidrule
 \term{ARM} toolchain (\term{Embedded GCC}) & \texttt{15.2.1-1.1} & \texttt{\seqsplit{\textasciitilde{}/Programs/Arm/toolchain/xpack-arm-none-eabi-gcc-15.2.1-1.1/}} \\
 \lightmidrule
-\term{OpenOCD} & \texttt{0.12.0-7} & \texttt{\seqsplit{\textasciitilde{}/Programs/openocd/xpack-openocd-0.12.0-7/}} \\
+\gterm{openocd}{OpenOCD} & \texttt{0.12.0-7} & \texttt{\seqsplit{\textasciitilde{}/Programs/openocd/xpack-openocd-0.12.0-7/}} \\
 \lightmidrule
 \term{Eclipse IDE for Embedded C/C++} & \texttt{2026-03 R} & \texttt{\seqsplit{\textasciitilde{}/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86\_64/}} \\
 \bottomrule
@@ -79,9 +79,9 @@ export PATH="$HOME/Programs/openocd/xpack-openocd-0.12.0-7/bin:$PATH"
 export PATH="$HOME/Programs/Eclipse/embedcpp-2026-03-R-linux-gtk-x86_64:$PATH"
 \end{shellcodepath}
 
-Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: \cmdpath{openocd} and \cmdpath{arm-none-eabi-gcc} both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \term{OpenOCD} (0.11.0) at \extpath{quartus/bin/openocd}. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including \extpath{/usr/bin}, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \term{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of \lstinline[style=inlineFsExt]!${QUARTUS_ROOTDIR}/bin!.
+Each line prepends to \term{PATH} rather than appending, and in this specific order, on purpose: \cmdpath{openocd} and \cmdpath{arm-none-eabi-gcc} both exist as regular \term{Ubuntu} packages, and \term{Quartus 22.1} additionally bundles its own, older \gterm{openocd}{OpenOCD} (0.11.0) at \extpath{quartus/bin/openocd}. Appending would only fix the ordering among these lines themselves; anything already on \term{PATH} before this block runs, including \extpath{/usr/bin}, would still be found first. Prepending, instead, guarantees the \term{xPack} builds this chapter installs always win, over both \term{Quartus}'s bundled \gterm{openocd}{OpenOCD} and any distro package of the same name, whether or not either is installed. Since the last line to run ends up first on \term{PATH}, the order above puts the \term{xPack OpenOCD} ahead of \lstinline[style=inlineFsExt]!${QUARTUS_ROOTDIR}/bin!.
 
-\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \term{OpenOCD}'s own \term{JTAG} config script (\repopath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \term{USB-Blaster II} firmware file it needs to talk to the \term{JTAG} adapter.
+\term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \gterm{openocd}{OpenOCD}'s own \gterm{jtag}{JTAG} config script (\repopath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \gterm{usbblaster}{USB-Blaster II} firmware file it needs to talk to the \gterm{jtag}{JTAG} adapter.
 
 Reload the updated environment variables with the following command, or open a new shell:
 
@@ -92,7 +92,7 @@ source ~/.bashrc
 \subsection{USB-Blaster II and serial console access}
 \label{subsec:fpgasteel-usb-blaster}
 
-Beyond the packages installed in Paragraph~\ref{subsec:fpgasteel-apt-packages}, the board itself requires access to two \term{USB} devices: the \term{USB-Blaster II}, used for \term{JTAG} programming and debugging, and the \term{UART-to-USB} serial console. By default, \term{udev} restricts both device nodes to root, which would force every \term{OpenOCD} invocation and every serial connection to run as root. The following rule grants the invoking user's group access to the \term{USB-Blaster II} instead:
+Beyond the packages installed in Paragraph~\ref{subsec:fpgasteel-apt-packages}, the board itself requires access to two \term{USB} devices: the \gterm{usbblaster}{USB-Blaster II}, used for \gterm{jtag}{JTAG} programming and debugging, and the \term{UART-to-USB} serial console. By default, \gterm{udev}{udev}\footnote{\glsentrydesc{udev}} restricts both device nodes to root, which would force every \gterm{openocd}{OpenOCD} invocation and every serial connection to run as root. The following rule grants the invoking user's group access to the \gterm{usbblaster}{USB-Blaster II} instead:
 
 \begin{shellcode}
 sudo tee /etc/udev/rules.d/51-usbblaster.rules << 'EOF'
@@ -118,12 +118,12 @@ Log out and back in for both group changes to take effect.\footnote{Or run \cmdp
 \subsection{Editor and debugger roles}
 \label{subsec:fpgasteel-editor-roles}
 
-\term{Eclipse} is used exclusively to debug over \term{JTAG}/\term{OpenOCD}: it never compiles anything, and it is not used to write \term{VHDL} either. Both the \term{VHDL} sources under \repopath{hw/} and the \term{C/C++} sources under \repopath{sw/} are written in \term{Visual Studio Code}, with the following extensions:
+\term{Eclipse} is used exclusively to debug over \gterm{jtag}{JTAG}/\gterm{openocd}{OpenOCD}: it never compiles anything, and it is not used to write \gterm{vhdl}{VHDL} either. Both the \gterm{vhdl}{VHDL} sources under \repopath{hw/} and the \term{C/C++} sources under \repopath{sw/} are written in \gterm{visualstudiocode}{Visual Studio Code}\footnote{\glsentrydesc{visualstudiocode}}, with the following extensions:
 
 {\footnotesize
 \begin{itemize}
-    \item \term{VHDL}/\term{Verilog} linting, snippets, project awareness --- \urlpath{teros-technology.teroshdl} (\term{TerosHDL}).
-    \item \term{VHDL} syntax highlighting and language support --- \urlpath{rjyoung.vscode-modern-vhdl-support}.
+    \item \gterm{vhdl}{VHDL}/\term{Verilog} linting, snippets, project awareness --- \urlpath{teros-technology.teroshdl} (\term{TerosHDL}).
+    \item \gterm{vhdl}{VHDL} syntax highlighting and language support --- \urlpath{rjyoung.vscode-modern-vhdl-support}.
     \item \term{C/C++} \term{IntelliSense}, navigation --- \urlpath{ms-vscode.cpptools} (+ \urlpath{ms-vscode.cpptools-extension-pack}).
     \item Makefile awareness (every \repopath{sw/} project builds via \cmdpath{make}, Section~\ref{sec:fpgasteel-hello-building}) --- \urlpath{ms-vscode.makefile-tools}.
     \item Editing the \term{Python} debug tools shipped with some examples (e.g. \cmd{debugTools/view_frame.py}, Section~\ref{sec:fpgasteel-cache-forwarding-debug-tooling}) --- \urlpath{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
