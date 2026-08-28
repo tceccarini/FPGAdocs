@@ -60,7 +60,7 @@ The first two parts, however, can also be read separately, by a reader intereste
 
 \section{A note on inline code styling}
 
-Short code-styled text set in the running prose --- a file path, a command, a register name --- is colored by category throughout this document, so that the kind of thing being named is recognizable at a glance without having to read the surrounding sentence. Table~\ref{tab:preface-inline-styles} lists the eight categories used; each is numbered for quick reference when annotating a proof.
+Short code-styled text set in the running prose --- a file path, a command, a register name --- is colored by category throughout this document, so that the kind of thing being named is recognizable at a glance without having to read the surrounding sentence. Table~\ref{tab:preface-inline-styles} lists the eight color categories used, each numbered for quick reference when annotating a proof, plus two further style markers, lettered rather than numbered, that distinguish plain technical terms from ones linked to the Glossary (Appendix~\ref{app:glossary}).
 
 \begin{table}[H]
 \centering
@@ -83,6 +83,10 @@ Short code-styled text set in the running prose --- a file path, a command, a re
 7 & System & \sysid{PATH} & environment variables, users, groups \\
 \lightmidrule
 8 & Generic & {\ttfamily\small python3-numpy} & everything else set in code style without a more specific category, e.g.\ \gterm{apt}{apt}/library package names \\
+\midrule
+A & Term & \term{IDE} & a generic technical term, explained inline or assumed known, not linked to the Glossary \\
+\lightmidrule
+B & Glossary term & \gterm{jtag}{JTAG} & a term whose definition is in the Glossary (Appendix~\ref{app:glossary}); underlined, and footnoted with that definition at its first occurrence in each part \\
 \bottomrule
 \end{tabularx}
 \caption{Color categories used for inline code-styled text.}
