@@ -21,23 +21,17 @@ sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-
 \end{shellcode}
 
 \begin{itemize}
-    \item |build-essential|, \cmdpath{bison}, \cmdpath{flex}, |libssl-dev|, |libncurses-dev|, |u-boot-tools|: building \repopath{repos/u-boot-socfpga} and the Linux kernel, and compiling \repopath{sw/boot.script} with \cmdpath{mkimage}.
-    \item \cmdpath{cpio}, \cmdpath{unzip}, \cmdpath{rsync}, \cmdpath{bc}, \cmdpath{patch}: mandatory host packages for \term{Buildroot} itself, not covered by the group above; cross-checked against \repopath{repos/buildroot/docs/manual/prerequisite.adoc} and \repopath{repos/buildroot/support/dependencies/dependencies.sh} rather than assumed, since most of \term{Buildroot}'s other mandatory tools (\cmdpath{tar}, \cmdpath{sed}, \cmdpath{find}, \cmdpath{perl}, \cmdpath{gzip}, ...) already ship with a stock \term{Ubuntu} install.
-    \item \cmdpath{git}, |git-lfs|: cloning this repository and its submodules. No file in the repository is currently tracked with LFS, but the tooling is installed for forward compatibility.
-    \item \cmdpath{curl}, \cmdpath{wget}: fetching installers and, on the board itself, general network testing.
-    \item |openssh-server|, \cmdpath{iperf3}: verifying \term{SSH} access and bandwidth to the board once it is on the network.
-    \item \cmdpath{picocom}: terminal emulator for the board's serial console.
-    \item |pkg-config|, |libopencv-dev|, |libgstreamer1.0-dev|, |libgstreamer-plugins-base1.0-dev|, |libgstrtspserver-1.0-dev|: needed to build \repopath{sw/vision_core} natively on the host (\cmdpath{make intel}), which lets its capture/filter/streaming pipeline be exercised without the board, before cross-compiling it (\cmdpath{make arm}); see \repopath{sw/vision_core/README.md}.
-    \item |gstreamer1.0-plugins-base|, |gstreamer1.0-plugins-good|, |gstreamer1.0-plugins-bad|: the dev packages above only provide headers for linking; actually running an intel-built \cmd{vision_core} needs the matching runtime plugins loaded at pipeline-construction time: \cmdpath{appsrc}/\cmdpath{videoconvert} (base), \cmdpath{rtpjpegpay}/\cmdpath{rtpvrawpay}/\cmdpath{rtph264pay} via \cmdpath{rtpmanager} (good), \cmdpath{openh264enc} (bad), matching the sub-plugin table in \repopath{sw/vision_core/README.md}.
-    \item \cmdpath{python3}, |python3-numpy|, |python3-opencv|: required by \repopath{sw/camera_driver_2/utils/debug/view.py}, the raw-frame viewer used to debug the \term{V4L2} driver.
-    \item |default-jdk|: \repopath{repos/sopc2dts} is a plain \term{Java} tool, built with \cmdpath{javac}/\cmdpath{jar} via its own Makefile.
-    \item \cmdpath{ffmpeg}: provides \cmdpath{ffplay}, used on the host to view \cmd{vision_core}'s \term{RTSP} output with minimal latency:
-
-\begin{shellcode}
-ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
-\end{shellcode}
-
-\term{VLC} was tried first and dropped; \cmdpath{ffplay} with these flags is what actually got used going forward.
+    \item |build-essential|, |bison|, |flex|, |libssl-dev|, |libncurses-dev|, |u-boot-tools|: building the \term{Linux} kernel, the \term{U-Boot} bootloader, and its boot script.
+    \item |cpio|, |unzip|, |rsync|, |bc|, |patch|: mandatory host packages for \term{Buildroot} itself, not covered by the group above or already present in the stock \term{Ubuntu} installation, like \cmdpath{tar}, \cmdpath{sed}, \cmdpath{find}, \cmdpath{perl}, \cmdpath{gzip}, etc.
+    \item |git|, |git-lfs|: cloning this repository and its submodules. No file in the repository is currently tracked with LFS, but the tooling is installed for forward compatibility.
+    \item |curl|, |wget|: fetching installers and, on the board itself, general network testing.
+    \item |openssh-server|, |iperf3|: verifying \term{SSH} access and bandwidth to the board once it is on the network.
+    \item |picocom|: terminal emulator for the board's serial console.
+    \item |pkg-config|, |libopencv-dev|, |libgstreamer1.0-dev|, |libgstreamer-plugins-base1.0-dev|, |libgstrtspserver-1.0-dev|: needed to build \repopath{sw/vision_core} natively on the host (\cmdpath{make intel}), which lets its capture/filter/streaming pipeline be exercised without the board, before cross-compiling it (\cmdpath{make arm}).
+    \item |gstreamer1.0-plugins-base|, |gstreamer1.0-plugins-good|, |gstreamer1.0-plugins-bad|: the dev packages above only provide headers for linking the \cmd{vision_core} example; running its intel build additionally needs these plugins loaded at runtime.
+    \item |python3|, |python3-numpy|, |python3-opencv|: required by \repopath{sw/camera_driver_2/utils/debug/view.py}, the raw-frame viewer used to debug the \term{V4L2} driver.
+    \item |default-jdk|: |sopc2dts|, provided as the \repopath{repos/sopc2dts} submodule, is a plain \term{Java} tool that needs to be compiled before it can be run.
+    \item |ffmpeg|: provides \cmdpath{ffplay}, used on the host to view the \term{RTSP} video stream produced by \cmd{vision_core}. \term{VLC} was tried first and dropped due to compatibility problems.
 \end{itemize}
 
 \subsection{Install the software, and where it lives}
@@ -71,7 +65,7 @@ export PATH="$HOME/Programs/Arm/toolchain/arm-gnu-toolchain-12.3.rel1-x86_64-arm
 export PATH="${QSYS_ROOTDIR}:$PATH"
 \end{shellcodepath}
 
-Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new shell) after editing.
+Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new shell) to apply the changes just made to the file.
 
 Each line prepends to \term{PATH} rather than appending, so these installs are always found first, ahead of anything already on \term{PATH}, whether or not a same-named tool exists elsewhere on the system.
 
@@ -107,13 +101,13 @@ jtagconfig
 
 which should print something like |1) USB-Blaster [...]|.
 
-The serial console needs no equivalent custom rule: the board's \term{UART-to-USB} connector enumerates as \extpath{/dev/ttyUSB0}, and \term{Ubuntu}'s own default rule already assigns every \sysid{ttyUSB*}/\sysid{ttyACM*} device to the \sysid{dialout} group. The user still needs to be added to it:
+The serial console needs no equivalent custom rule: the board's \term{UART-to-USB} connector enumerates as \extpath{/dev/ttyUSB0}, and \term{Ubuntu}'s own default rule already assigns every serial device to the \sysid{dialout} group. The user still needs to be added to it:
 
 \begin{shellcode}
 sudo usermod -aG dialout "$USER"
 \end{shellcode}
 
-Log out and back in (or \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout}) for both group changes to take effect.
+Log out and back in for both group changes to take effect.\footnote{Or run \cmdpath{newgrp plugdev} / \cmdpath{newgrp dialout} on the already-open console to apply the change immediately, without logging out.}
 
 \subsection{Editor}
 
@@ -124,9 +118,9 @@ Both the \term{VHDL} sources under \repopath{hw/} and the \term{C/C++} and \term
     \item \term{VHDL} linting, snippets, project awareness --- \urlpath{teros-technology.teroshdl} (\term{TerosHDL}).
     \item \term{VHDL} syntax highlighting and language support --- \urlpath{rjyoung.vscode-modern-vhdl-support}.
     \item \term{C/C++} \term{IntelliSense} for \texttt{camera\_driver\_2}, \texttt{hexip\_daemon}, and \texttt{vision\_core} --- \urlpath{ms-vscode.cpptools} (+ \urlpath{ms-vscode.cpptools-extension-pack}).
-    \item Makefile awareness (every \texttt{sw/} project builds via \texttt{make}) --- \urlpath{ms-vscode.makefile-tools}.
-    \item editing/debugging \urlpath{sw/camera_driver_2/utils/debug/view.py} --- \urlpath{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
-    \item viewing the datasheet/manual PDFs under \texttt{docs/} without leaving the editor --- \urlpath{tomoki1207.pdf}.
+    \item Makefile awareness (every \repopath{sw/} project builds via \cmdpath{make}) --- \urlpath{ms-vscode.makefile-tools}.
+    \item editing/debugging \repopath{sw/camera_driver_2/utils/debug/view.py} --- \urlpath{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
+    \item viewing the datasheet/manual PDFs under \repopath{docs/} without leaving the editor --- \urlpath{tomoki1207.pdf}.
 \end{itemize}
 }
 

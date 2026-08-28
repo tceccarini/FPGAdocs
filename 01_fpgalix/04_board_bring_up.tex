@@ -3,7 +3,7 @@
 
 \section{Introduction}
 
-This chapter brings up the \term{DE1-SoC} board and builds every component the programs of the following chapters depend on. The discussion begins with an overview of the board's boot chain, from reset to a running \term{U-Boot} (Section~\ref{sec:fpgalix-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Once \term{U-Boot} is built, the chapter covers the configuration and the building of the \term{Linux} kernel. \term{U-Boot} loads and boots this kernel, which in turn provides the driver support and core OS services, such as process scheduling, memory management, and the \term{V4L2} subsystem later used by the camera driver. The \term{Buildroot} root filesystem is built next: a complete embedded \term{Linux} userspace, from the \term{C} library and the \term{BusyBox}-provided \ccode{init} system and shell utilities, to the user space programs and libraries, \term{OpenCV} and \term{GStreamer} among them, needed to build and run \cmd{camera_driver_2} and \cmd{vision_core}. The chapter closes by assembling the bootloader, the kernel, the root filesystem and the \term{FPGA} bitstream onto a bootable \term{SD} card, producing a working baseline system ready for the examples developed in the remaining chapters.
+This chapter brings up the \term{DE1-SoC} board and builds every component the programs of the following chapters depend on. The discussion begins with an overview of the board's boot chain, from reset to a running \term{U-Boot} (Section~\ref{sec:fpgalix-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Once \term{U-Boot} is built, the chapter covers the configuration and the building of the \term{Linux} kernel. \term{U-Boot} loads and boots this kernel, which in turn provides the driver support and core OS services, such as process scheduling, memory management, and the \term{V4L2} subsystem later used by the camera driver. The \term{Buildroot} root filesystem is built next: a complete embedded \term{Linux} userspace, from the \term{C} library and the \term{BusyBox}-provided |init| system and shell utilities, to the user space programs and libraries, \term{OpenCV} and \term{GStreamer} among them, needed to build and run \cmd{camera_driver_2} and \cmd{vision_core}. The chapter closes by assembling the bootloader, the kernel, the root filesystem and the \term{FPGA} bitstream onto a bootable \term{SD} card, producing a working baseline system ready for the examples developed in the remaining chapters.
 
 \begin{table}[htbp]
 \centering
@@ -88,7 +88,7 @@ git clone --recurse-submodules https://github.com/tceccarini/FPGAlix.git
 cd FPGAlix
 \end{shellcode}
 
-The \cmdpath{--recurse-submodules} flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under \repopath{repos/} (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and \cmdpath{buildroot} \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
+The |--recurse-submodules| flag causes \term{Git} to additionally clone every submodule belonging to the project at the same time; these are located under \repopath{repos/} (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and |buildroot| \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
 
 \section{Building the bootloader}
 \label{sec:fpgalix-bootloader}
@@ -97,7 +97,7 @@ The following commands implement the flow shown in Figure~\ref{fig:fpgalix-boot-
 
 \subsection{Generate the BSP headers from the Quartus handoff}
 
-Compilation of the hardware project causes \term{Quartus} to export the \term{HPS} configuration as \term{XML} files under \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. This configuration is then converted into the \term{C} header files required by \term{U-Boot} by means of the following command:
+Compilation of the hardware project causes \term{Quartus} to export the \term{HPS} configuration as \term{XML} files under the handoff folder \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. This configuration is then converted into the \term{C} header files required by \term{U-Boot} by means of the following command:
 
 \begin{shellcodepath}
 python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py 
@@ -105,7 +105,7 @@ python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_gener
     -o repos/u-boot-socfpga/board/terasic/de1-soc/qts/
 \end{shellcodepath}
 
-This step must be repeated whenever the \term{HPS} subsystem is modified in \term{QSys} (\term{Platform Designer}); otherwise, \term{U-Boot} initializes the hardware according to stale configuration data.
+This step must be repeated whenever the \term{HPS} subsystem is modified in \term{Platform Designer}; otherwise, \term{U-Boot} initializes the hardware according to stale configuration data.
 
 \subsection{Configure and build U-Boot}
 
@@ -174,23 +174,23 @@ The following options are required specifically by \repopath{sw/camera_driver_2}
 \begin{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{Multimedia support}
     \begin{itemize}
-        \item \texttt{Multimedia support} $\rightarrow$ * (built-in, \hw{CONFIG_MEDIA_SUPPORT}). The option ``Filter media drivers'' should be left unchecked, as a consequence of which \hw{MEDIA_CAMERA_SUPPORT} and \ccode{VIDEO_DEV} are enabled automatically.
+        \item \texttt{Multimedia support} $\rightarrow$ * (built-in, |CONFIG_MEDIA_SUPPORT|). The option ``Filter media drivers'' should be left unchecked, as a consequence of which |MEDIA_CAMERA_SUPPORT| and |VIDEO_DEV| are enabled automatically.
     \end{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{Multimedia support} $\rightarrow$ \texttt{Media drivers} $\rightarrow$ \texttt{V4L platform devices}
     \begin{itemize}
-        \item \texttt{Aspeed AST2400/AST2500 Video Engine} $\rightarrow$ * (built-in, \hw{CONFIG_VIDEO_ASPEED}). \hw{CONFIG_VIDEOBUF2_DMA_CONTIG} does not possess a corresponding |menuconfig| entry, being a hidden symbol; enabling this otherwise unrelated platform driver causes it to be selected as a side effect, since the driver itself depends on it. It is \extpath{videobuf2-dma-contig.ko} that is actually required by \cmd{camera_driver_2}; the \term{Aspeed} driver itself is never loaded on the target.
+        \item \texttt{Aspeed AST2400/AST2500 Video Engine} $\rightarrow$ * (built-in, |CONFIG_VIDEO_ASPEED|). |CONFIG_VIDEOBUF2_DMA_CONTIG| does not possess a corresponding |menuconfig| entry, being a hidden symbol; enabling this otherwise unrelated platform driver causes it to be selected as a side effect, since the driver itself depends on it. It is \extpath{videobuf2-dma-contig.ko} that is actually required by \cmd{camera_driver_2}; the \term{Aspeed} driver itself is never loaded on the target.
     \end{itemize}
     \item \texttt{Device Drivers} $\rightarrow$ \texttt{I\textsuperscript{2}C support} $\rightarrow$ \texttt{I\textsuperscript{2}C Hardware Bus support}
     \begin{itemize}
-        \item \texttt{Altera Soft IP I\textsuperscript{2}C} $\rightarrow$ * (built-in, \hw{CONFIG_I2C_ALTERA}). In the absence of this option, the \hw{altera_avalon_i2c} \term{Qsys} component (\texttt{compatible = "altr,softip-i2c-v1.0"}) remains invisible to \term{Linux}, preventing the camera from being configured over \term{I\textsuperscript{2}C} whenever the bus is routed through the \term{FPGA} rather than the \term{HPS}.
+        \item \texttt{Altera Soft IP I\textsuperscript{2}C} $\rightarrow$ * (built-in, |CONFIG_I2C_ALTERA|). In the absence of this option, the \hw{altera_avalon_i2c} \term{Platform Designer} component (\texttt{compatible = "altr,softip-i2c-v1.0"}) remains invisible to \term{Linux}, preventing the camera from being configured over \term{I\textsuperscript{2}C} whenever the bus is routed through the \term{FPGA} rather than the \term{HPS}.
     \end{itemize}
     \item \texttt{Memory Management options}
     \begin{itemize}
-        \item \texttt{Contiguous Memory Allocator} $\rightarrow$ * (\hw{CONFIG_CMA})
+        \item \texttt{Contiguous Memory Allocator} $\rightarrow$ * (|CONFIG_CMA|)
     \end{itemize}
     \item \texttt{Library routines}
     \begin{itemize}
-        \item \texttt{DMA Contiguous Memory Allocator} $\rightarrow$ * (\hw{CONFIG_DMA_CMA}), \texttt{Size in Mega Bytes} $\rightarrow$ 16. This setting is recommended rather than strictly mandatory: the requirement of three buffers of 640$\times$480$\times$1 byte amounts to under 1 MB, so the 16 MB default provides an ample margin.
+        \item \texttt{DMA Contiguous Memory Allocator} $\rightarrow$ * (|CONFIG_DMA_CMA|), \texttt{Size in Mega Bytes} $\rightarrow$ 16. This setting is recommended rather than strictly mandatory: the requirement of three buffers of 640$\times$480$\times$1 byte amounts to under 1 MB, so the 16 MB default provides an ample margin.
     \end{itemize}
 \end{itemize}
 
@@ -235,11 +235,11 @@ This section only applies when the \term{HPS} subsystem has been modified in \te
 
 \subsubsection{Using sopc2dts as a reference}
 
-\repopath{sopc2dts} is \term{Altera}'s own tool for generating a device tree from a \repopath{.sopcinfo} file, tracked in this project as the \repopath{repos/sopc2dts} submodule (a fork of \extpath{altera-opensource/sopc2dts}). It cannot, however, be employed as a direct \term{DTS} source for the kernel: its output is a standalone file that does not include \repopath{socfpga_cyclone5.dtsi} and is therefore incompatible with the modern \term{Linux} \term{SoCFPGA} \term{DTS} infrastructure.
+|sopc2dts| is \term{Altera}'s own tool for generating a device tree from a |.sopcinfo| file, tracked in this project as the \repopath{repos/sopc2dts} submodule (a fork of \extpath{altera-opensource/sopc2dts}). It cannot, however, be employed as a direct \term{DTS} source for the kernel: its output is a standalone file that does not include \repopath{socfpga_cyclone5.dtsi} and is therefore incompatible with the modern \term{Linux} \term{SoCFPGA} \term{DTS} infrastructure.
 
 It remains useful, however, as a reference: its output reflects the current \term{Platform Designer} configuration, and is compared against \repopath{socfpga_cyclone5_fpgalix.dts} to identify which addresses, interrupt numbers and compatible strings changed, updating the latter accordingly.
 
-The \repopath{sopc2dts} utility itself is not prebuilt: it is a plain \term{Java} tool (\cmdpath{javac}/\cmdpath{jar}, no \term{Quartus} or \term{Buildroot} toolchain involved); compile it from source once, the first time it is used:
+The \repopath{sopc2dts} utility itself is not prebuilt: it must be compiled from source once, the first time it is used:
 
 \begin{shellcode}
 cd repos/sopc2dts
@@ -254,7 +254,7 @@ java -jar sopc2dts.jar --input ../../hw/quartus/soc_system.sopcinfo --output /tm
 
 \subsubsection{Authoring the Device Tree Source from the reference}
 
-In this project, \repopath{socfpga_cyclone5_fpgalix.dts} was authored from the \repopath{sopc2dts} reference output using \term{Claude Code}, an \term{AI} coding assistant, rather than written by hand. The reference \term{DTS} generated by \repopath{sopc2dts} (\extpath{/tmp/socfpga_ref.dts} above) was given as input, not the raw \repopath{soc_system.sopcinfo}: providing the latter directly led to significantly less accurate results, since it left the extraction of addresses, interrupt numbers and compatible strings to the \term{AI} assistant itself, rather than to \repopath{sopc2dts}. Manual authoring remains entirely possible: \repopath{socfpga_cyclone5_fpgalix.dts} is a plain text file, and the task consists solely of transcribing addresses, interrupt numbers and compatible strings from the reference output, for those who prefer to do so directly.
+In this project, \repopath{socfpga_cyclone5_fpgalix.dts} was authored from the \repopath{sopc2dts} reference output using \term{Claude Code}, an \term{AI} coding assistant, rather than written by hand. The reference \term{DTS} generated by \repopath{sopc2dts} (\extpath{/tmp/socfpga_ref.dts} above) was given as input, not the raw \repopath{soc_system.sopcinfo}, generated by \term{Quartus}: providing the latter directly led to significantly less accurate results, since it left the extraction of addresses, interrupt numbers and compatible strings to the \term{AI} assistant itself, rather than to \repopath{sopc2dts}. Manual authoring remains entirely possible: \repopath{socfpga_cyclone5_fpgalix.dts} is a plain text file, and the task consists solely of transcribing addresses, interrupt numbers and compatible strings from the reference output, for those who prefer to do so directly.
 
 \section{Building the root filesystem (Buildroot)}
 \label{sec:fpgalix-buildroot}
@@ -341,8 +341,6 @@ The base configuration required by this project is as follows:
 
 This last setting is not selected automatically: enabling ``Enable VFP extension support'' makes several floating-point strategies available (\term{VFPv3}, \term{NEON}, among others), and since the default chosen by \term{Buildroot} is not \term{NEON}, it must be selected explicitly. The \term{NEON}-accelerated \term{OpenCV} and \term{libjpeg-turbo} code of \repopath{sw/vision_core} depends on this setting.
 
-\cmdpath{ifconfig} needs no package of its own: it is provided by \term{BusyBox} (\hw{CONFIG_IFCONFIG}), already enabled by default in this project's \term{BusyBox} configuration. \cmdpath{ip addr}/\cmdpath{ip route}, from \term{iproute2} above, are also available.
-
 \subsubsection{Configuration required by camera\_driver\_2 and vision\_core}
 
 The following packages, in addition to those already listed, are required specifically by \repopath{sw/camera_driver_2} and \repopath{sw/vision_core}:\footnote{Their respective \texttt{README}s document the rationale for each; they are consolidated here so that a single build suffices.}
@@ -379,11 +377,11 @@ Upon exiting |menuconfig|, confirm \term{Yes} when prompted to save.
 make
 \end{shellcode}
 
-Do not use the \lstinline[style=inlineCmd]!-j$(nproc)! flag: \term{Buildroot} manages parallelism internally. The default settings already instruct \term{Buildroot} to employ all available \term{CPU} cores throughout the entire build (toolchain, packages, and root filesystem).
+Do not use the |-j$(nproc)| flag: \term{Buildroot} manages parallelism internally. The default settings already instruct \term{Buildroot} to employ all available \term{CPU} cores throughout the entire build (toolchain, packages, and root filesystem).
 
 The root filesystem image is generated at \repopath{repos/buildroot/output/images/rootfs.tar}, accessible via the symlink \repopath{sdcard/rootfs.tar}, alongside the remaining \term{SD} card artifacts.
 
-This same build also produces the toolchain used by the \cmdpath{make arm} target of \repopath{sw/vision_core}, at \repopath{repos/buildroot/output/host/bin/}; this \term{Buildroot} build must therefore complete before the \cmd{vision_core} program can be cross-compiled.
+This same build also produces the toolchain used by the \cmdpath{make arm} target of \repopath{sw/vision_core}; this \term{Buildroot} build must therefore complete before the \cmd{vision_core} program can be cross-compiled.
 
 \section{Generating the FPGA bitstream (RBF)}
 \label{sec:fpgalix-bitstream}
@@ -419,7 +417,7 @@ Set the six \term{SW10} switches, on the underside of the board, to the position
 
 \subsection{Converting the SOF to RBF}
 
-\term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM Object File}), the complete \term{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\term{JTAG} tools. The \term{FPGA Manager} instead requires an \repopath{.rbf} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
+\term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM Object File}), the complete \term{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\term{JTAG} tools. The \term{FPGA Manager} mechanism, used by \term{U-Boot}, instead requires an \repopath{.rbf} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
 
 \begin{shellcode}
 quartus_cpf -c hw/quartus/output_files/FPGAlix.sof sdcard/boot_partition/soc_system.rbf
@@ -430,7 +428,7 @@ The resulting output is placed directly under \repopath{sdcard/boot_partition/},
 \section{Boot script}
 \label{sec:fpgalix-boot-script}
 
-\repopath{sw/boot.script} was authored for this project: a human-readable \term{U-Boot} script that defines the boot sequence. It persists the automatically generated \term{MAC} address on first boot, sets the kernel command line (serial console on \sysid{ttyS0} at 115200 baud, root filesystem on the \term{SD} card's second partition, mounted read-write), loads and programs the \term{FPGA} bitstream generated in Section~\ref{sec:fpgalix-bitstream}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and finally loads the \term{Linux} kernel (\texttt{zImage}) and the \term{Device Tree Blob} (\repopath{socfpga.dtb}), booting the system.
+\repopath{sw/boot.script} was authored for this project: a human-readable \term{U-Boot} script that defines the boot sequence. It persists the automatically generated \term{Ethernet MAC} address on first boot, sets the kernel command line (serial console at 115200 baud, root filesystem on the \term{SD} card's second partition, mounted read-write), loads and programs the \term{FPGA} bitstream generated in Section~\ref{sec:fpgalix-bitstream}, enables the \term{HPS}-to-\term{FPGA} and \term{FPGA}-to-\term{HPS} bridges, and finally loads the \term{Linux} kernel (\texttt{zImage}) and the \term{Device Tree Blob} (\repopath{socfpga.dtb}), booting the system.
 
 Compile this script into the binary image that \term{U-Boot} expects to find on the boot partition:
 
@@ -648,7 +646,7 @@ mkdir -p /home
 adduser <username>
 \end{shellcode}
 
-The \cmdpath{mkdir -p /home} is necessary first: \term{Buildroot}'s base skeleton does not include a \extpath{/home} directory, and \term{BusyBox}'s \cmdpath{adduser} only creates the new user's home directory with a plain \ccode{mkdir()}, not \cmdpath{mkdir -p}. Without \extpath{/home} already in place, that \ccode{mkdir()} fails, silently, with nothing beyond a warning on the console; \cmdpath{adduser} still succeeds, but the new user is left with no home directory at all.
+The \cmdpath{mkdir -p /home} is necessary first: \term{Buildroot}'s base skeleton does not include a \extpath{/home} directory, and if it is not already present, \term{BusyBox}'s \cmdpath{adduser} fails silently, leaving the new user without a home directory.
 
 Read the board's \term{IP} address, obtained automatically over \term{Ethernet} by \cmdpath{dhcpcd} (Paragraph~\ref{subsec:fpgalix-buildroot-base}), with either:
 

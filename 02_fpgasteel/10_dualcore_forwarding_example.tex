@@ -35,7 +35,7 @@ Two additional requirements, inherited from \nameref{chap:fpgasteel-dualcore-bri
 \section{FPGA Hardware Involved}
 \label{sec:fpgasteel-dualcore-forwarding-hardware}
 
-Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardware is exactly that of Cache Forwarding Example (the \term{Avalon-ST}/\term{Avalon-MM} conventions are those defined in \cite{AVALON-SPEC}, the \term{mSGDMA} extended descriptor format is documented in \cite{EP-IPUG}).
+Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardware is exactly that of Cache Forwarding Example.
 
 \section{Operating principles}
 \label{sec:fpgasteel-dualcore-forwarding-operating-principles}
@@ -43,14 +43,23 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardwa
 \subsection{Bringing CPU1 up}
 \label{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}
 
-The mechanism is exactly the one described in \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}): assert \term{CPU1}'s reset, write the two-word trampoline to address 0x0, write \hw{cpu1startaddr} for good measure, clean the trampoline out of \term{L1} and \term{L2}, release the reset. \ccode{Core1::start()} (\repopath{Core1.cpp}) is that same sequence, with two differences worth noting, neither of which changes the underlying mechanism:
+Bringing \term{CPU1} up uses the exact same mechanism as \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}), just packaged differently: everything specific to \term{CPU1} now lives in one singleton class called \ccode{Core1}, whose methods both start the core and manage the work later handed to it. At hardware reset \term{CPU1} stays held in reset, which is why \ccode{Core1}'s status defaults to \ccode{Offline}. Calling \ccode{Core1::start()} moves it to \ccode{Starting} status and runs the already-shown release sequence, finishing with \term{CPU1} landing in \ccode{Core1::run()}, which is the main loop that will later accept dispatched work. Once \ccode{run()} finishes its own setup, \ccode{Core1} moves to \ccode{Ready}.
 
-\begin{itemize}
- \item registers are written through \term{hwlib}'s accessors (\ccode{alt_setbits_word(ALT_RSTMGR_MPUMODRST_ADDR, ...)}, \ccode{alt_write_word(ALT_SYSMGR_ROMCODE_CPU1STARTADDR_ADDR, ...)}) instead of the hand-written pointer casts Dual-Core Bring-up Test uses directly on the same addresses; this only changes how the registers are named and accessed in source, not which bits get written where.
- \item an \ccode{sev} (send event) instruction follows the reset release, absent from Dual-Core Bring-up Test. This is carried over unconditionally from \term{Linux}'s own \texttt{platsmp.c} sequence, the same source Dual-Core Bring-up Test credits for the mechanism itself; it is not required by anything in this project's own worker-dispatch loop, which never waits in \ccode{wfe} (wait for event).
-\end{itemize}
+\subsection{The Worker/DualCoreJob dispatch mechanism}
+\label{subsec:fpgasteel-dualcore-forwarding-dispatch}
 
-\term{CPU1} lands in \ccode{_start_core1} (\repopath{startup_core1.S}, identical to Dual-Core Bring-up Test's own copy), which sets up its stack and calls \ccode{main1()}, defined in \repopath{Core1.cpp} as a thin wrapper around \ccode{Core1::run()}.
+This project's scheduler is built to manage jobs that need both cores. It rests on two abstract (i.e., interface) classes, \ccode{DualCoreJob} and \ccode{Worker}. Any task that needs to use both cores must override \ccode{DualCoreJob}'s interface methods: \ccode{start()}, which launches the job on both cores; \ccode{getWorker0()} and \ccode{getWorker1()}, which return the workers that will be assigned to each \term{CPU}; \ccode{awaitDone()}, which blocks the calling flow until both workers have finished; and \ccode{isErrorOccured()}/\ccode{whatError()}, which let the caller check whether an error occurred during the computation. The abstract class \ccode{Worker} exposes the \ccode{run()} method, executed by whichever core it is assigned to, and a \ccode{status} field that defaults to \ccode{Stopped}.
+
+As a concrete example, \ccode{DualCoreFormatConverter} implements \ccode{DualCoreJob} to split one frame's pixel-format conversion across the two cores, as shown in Figure~\ref{fig:fpgasteel-dualcore-forwarding-dispatch-sequence}: \term{CPU0} converts the top half, \term{CPU1} the bottom half. The workers are instances of the class \ccode{HalfFrameWorker}: each one contains the format-conversion code itself, plus a few fields that set what to operate on -- the source/destination pointers, the frame's width and height, and the source color scheme. These instances are exactly what \ccode{getWorker0()} and \ccode{getWorker1()} return. \ccode{DualCoreFormatConverter::start()} dispatches the bottom-half worker (\ccode{m_worker1}) to \term{CPU1} through the \ccode{Core1::dispatch()} method, which first waits for any previous job to finish, then hands the worker off, setting its status to \ccode{Ready} and storing its pointer in \ccode{Core1}'s own worker slot. Inside \ccode{Core1::run()}, the polling loop notices the newly assigned worker, switches its status to \ccode{Running}, and calls the worker's own \ccode{run()} method -- the bottom half's conversion, in this case. Meanwhile, \term{CPU0} runs the top-half worker sequentially, right there inside \ccode{start()} itself. At this point, the main execution flow, running on \term{CPU0}, calls \ccode{awaitDone()}, which simply polls the bottom-half worker's status until it reaches \ccode{Completed} or \ccode{Error}, set by \ccode{Core1::run()}. \ccode{isErrorOccured()} and \ccode{whatError()} can now check each worker's own status and error message. \ccode{HalfFrameWorker::run()} is where the real work happens: it converts its half of the frame to \term{RGB24} and, since it may run on either core, ends by cleaning its own \term{L1} cache lines for the half it just wrote, so the result is visible to whichever core reads it next.
+
+\begin{figure}[htbp]
+ \centering
+ \includesvg[width=\linewidth]{FPGAsteelWorkerDispatchSequence}
+ \caption{One call to \texttt{DualCoreFormatConverter::convert()}, seen as a fork/join sequence between the two cores. \texttt{start()} (top bar) forks the two halves apart via the hand-off into that slot; \texttt{awaitDone()} (bottom bar) joins them back together once \term{CPU0}'s own poll of \texttt{worker1.status} succeeds.}
+ \label{fig:fpgasteel-dualcore-forwarding-dispatch-sequence}
+\end{figure}
+
+This whole scheme stays safe without a mutex or semaphore because exactly one core ever writes to each shared field: only \term{CPU0} calls \ccode{Core1::dispatch()}, and only \term{CPU1}, inside \ccode{Core1::run()}, ever clears \ccode{Core1}'s worker slot back to \ccode{nullptr}. With a single writer per field, and \ccode{dispatch()}'s own wait ensuring only one job is ever in flight at a time, plain atomic reads and writes are all the synchronization this needs -- the same reasoning that already lets \ccode{FramePool} work lock-free.
 
 \subsection{Shared MMU, per-core caches}
 \label{subsec:fpgasteel-dualcore-forwarding-shared-mmu}
@@ -63,33 +72,6 @@ The \term{SCU}/\term{L1}/\term{L2} architecture is the one in Figure~\ref{fig:fp
 \end{itemize}
 
 Both cores' \term{MMU}s are pointed, via \ccode{alt_mmu_va_space_enable()}, at the exact same translation table (\ccode{s_ttb1}, built once by \term{hwlib} inside \ccode{prepareCacheSubsystem()}): each core has its own private \term{TLB} caching entries from it, but the entries themselves, and therefore the memory attributes every address gets, are identical on both cores. This matters for Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency}: if the two cores disagreed on which regions were cacheable, keeping them coherent with each other would not even be well-defined.
-
-\subsection{The Worker/DualCoreJob dispatch mechanism}
-\label{subsec:fpgasteel-dualcore-forwarding-dispatch}
-
-This is the actual ``scheduler'' this project uses to hand work to \term{CPU1}, and it is deliberately as small as it can be: a single job slot, polled with atomic variables, never more than one job in flight to \term{CPU1} at a time.
-
-The whole mechanism rests on two abstract classes, \ccode{Worker} and \ccode{DualCoreJob} (Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-worker}, Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-dualcore-job}). Any task that needs to run split across the two cores must extend \ccode{DualCoreJob}, and must be able to hand back two \ccode{Worker} objects through \ccode{getWorker0()}, the one \term{CPU0} will run, and \ccode{getWorker1()}, the one \term{CPU1} will run. Calling \ccode{start()} is what actually assigns \ccode{worker1} to \term{CPU1}, through \ccode{Core1::dispatch()}: from that moment on, \term{CPU1}'s own loop, which is constantly polling, notices that a worker with \ccode{status == Ready} is waiting for it, flips it to \ccode{Running}, and calls its \ccode{run()}. \ccode{awaitDone()}, the other half of the \ccode{DualCoreJob} interface, is what blocks the caller until both \term{CPU}s have actually finished: \term{CPU0}'s own worker, run synchronously inside \ccode{start()} itself, and \term{CPU1}'s, watched afterwards through its own status flag.
-
-\begin{figure}[htbp]
- \centering
- \includesvg[width=\linewidth]{FPGAsteelWorkerDispatchSequence}
- \caption{One call to \texttt{DualCoreFormatConverter::convert()}, seen as a fork/join sequence between the two cores. \texttt{start()} (top bar) forks the two halves apart via the hand-off into that slot; \texttt{awaitDone()} (bottom bar) joins them back together once \term{CPU0}'s own poll of \texttt{worker1.status} succeeds.}
- \label{fig:fpgasteel-dualcore-forwarding-dispatch-sequence}
-\end{figure}
-
-Two details the figure cannot show are worth spelling out, since both are exactly the kind of thing that looks arbitrary until it isn't.
-
-\begin{itemize}
- \item \textbf{The write order in \texttt{dispatch()} is not incidental.} It sets \ccode{worker.status} to \ccode{Ready} before storing {\catcode`\&=12 \ccode{&worker}} into \ccode{m_worker}, because \term{CPU1}'s loop only ever checks \ccode{status} after it has already seen a non-null \ccode{m_worker}; if the order were reversed, \term{CPU1} could see the pointer while \ccode{status} still said \ccode{Stopped}. Symmetrically, \ccode{Core1::run()} clears \ccode{m_worker} back to \ccode{nullptr} only after \ccode{status} has already reached its final value (\ccode{Completed} or \ccode{Error}), which is what makes it safe for the next \ccode{dispatch()} to reuse the slot.
- \item \textbf{Worker vs.\ job, and the states in between.} A \ccode{Worker} is a single, reusable object with a \ccode{Worker::status} field. A job is whatever piece of work \term{Core1} currently holds that \ccode{Worker} for; the same \ccode{Worker} object stands for a different job every time it is dispatched. This distinction matters here because the same \ccode{Worker} gets assigned to \term{Core1} again and again: the main loop (\repopath{main0.cpp}, Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works}) calls \ccode{DualCoreFormatConverter::convert()} once per frame, assigning a new job to \term{Core1} every time.
-\end{itemize}
-
-\ccode{Worker::status} moves through a fixed sequence: \ccode{Stopped} (idle, not yet committed to \term{Core1}) $\rightarrow$ \ccode{Ready} (committed by \ccode{Core1::dispatch()}, waiting for \term{CPU1} to notice it) $\rightarrow$ \ccode{Running} (\term{CPU1} is inside \ccode{Worker::run()}) $\rightarrow$ \ccode{Completed} or \ccode{Error} (this job is finished). \ccode{Core1::m_worker} answers a narrower, unrelated question: has any \ccode{Worker} currently been assigned to \term{Core1}, whichever job it happens to represent right now; \ccode{Core1::isIdle()} is exactly \ccode{Core1::m_worker == nullptr}.
-
-This is why polling \ccode{Core1::isIdle()} cannot tell a caller whether its own job has finished: by the time no \ccode{Worker} is assigned to \term{Core1} anymore, \term{Core1} may already be free to accept a completely different job assigned later. \ccode{DualCoreFormatConverter::awaitDone()} instead polls the specific \ccode{Worker} object it dispatched, watching its own \ccode{Worker::status} for \ccode{Completed}/\ccode{Error}, which stays correct no matter how many further jobs get assigned to \term{Core1} afterward.
-
-This split only stays safe because of one invariant, enforced everywhere: exactly one core ever writes each field. \term{CPU0} is the only core that ever calls \ccode{Core1::dispatch()}, and \term{CPU1} is the only core that ever clears \ccode{Core1::m_worker}; \ccode{Core1::dispatch()}'s own busy-wait further guarantees only one job is ever in flight at a time. With exactly one writer per field, and no second job to race against, plain atomics are enough: no mutex, no semaphore, the same reasoning that already lets \ccode{FramePool} work without locks.
 
 \subsection{Cache coherency across two cores, and into DMA}
 \label{subsec:fpgasteel-dualcore-forwarding-cache-coherency}
