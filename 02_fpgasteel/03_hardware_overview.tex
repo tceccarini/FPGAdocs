@@ -93,3 +93,74 @@ Clock generation is not drawn: \hw{vga_pll} and \hw{vga_reset_syncronizer} carry
     \label{fig:fpgasteel-system-overview}
 \end{figure}
 \end{landscape}
+
+\section{Resource utilization}
+\label{sec:fpgasteel-resource-utilization}
+
+Table~\ref{tab:fpgasteel-resource-utilization} reports the \gterm{fpga}{FPGA} fabric resources consumed by the complete system of Figure~\ref{fig:fpgasteel-system-overview}, as reported by \gterm{quartusprime}{Quartus Prime}'s fitter after place-and-route, on the same \term{DE1-SoC}'s \term{Cyclone V} \term{5CSEMA5F31C6} device as PART~I -- \prjname{FPGAlix} (Table~\ref{tab:fpgalix-resource-utilization}).
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{@{} l X X X @{}}
+\toprule
+\textbf{Resource} & \textbf{Used} & \textbf{Available} & \textbf{Utilization} \\
+\midrule
+\term{ALM}s & 5{,}873 & 32{,}070 & 18\% \\
+\lightmidrule
+Total registers & 9{,}103 & --- & --- \\
+\lightmidrule
+Total block memory bits & 2{,}225{,}240 & 4{,}065{,}280 & 55\% \\
+\lightmidrule
+\term{DSP} blocks & 0 & 87 & 0\% \\
+\lightmidrule
+\term{I/O} pins & 262 & 457 & 57\% \\
+\lightmidrule
+\term{PLL}s & 1 & 6 & 17\% \\
+\bottomrule
+\end{tabularx}
+\caption{\term{FPGA} resource utilization of the complete \prjname{FPGAsteel} system (source: \term{Quartus Prime} fitter report).}
+\label{tab:fpgasteel-resource-utilization}
+\end{table}
+
+Compared to \prjname{FPGAlix}, block memory usage drops from 70\% to 55\%: \hw{sc_fifo_0} has no counterpart here, since the hardware prefetcher's on-chip descriptor memory re-arms each transfer deterministically enough that the frame-loss mitigation it existed for is not needed (Paragraph~\ref{subsec:fpgasteel-msgdma-config}). Logic usage goes the other way, from 15\% to 18\% \term{ALM}s and from 7{,}434 to 9{,}103 registers: the extra components are the descriptor prefetcher itself (Paragraph~\ref{subsec:fpgasteel-msgdma-config}), enabled on both \gterm{msgdma}{mSGDMA} cores here against \prjname{FPGAlix}'s single, software-managed one, and the whole \gterm{vga}{VGA} output datapath (Section~\ref{sec:fpgasteel-vga-output}), which has no counterpart there at all. The \term{I/O} pin count rises correspondingly, from 51\% to 57\%, and this is also the only one of the two projects using a \term{PLL}, for the \gterm{vga}{VGA} clock.
+
+\section{Platform Designer project screenshots}
+\label{sec:fpgasteel-platformdesigner-screenshots}
+
+Figures~\ref{fig:fpgasteel-qsys-connections-1}--\ref{fig:fpgasteel-qsys-connections-4} show the component and connection listing of \repopath{hw/quartus/soc_system.qsys} directly from \gterm{platformdesigner}{Platform Designer}, for reference alongside the block diagram of Figure~\ref{fig:fpgasteel-system-overview}.
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelQSys_1}
+    \caption{\texttt{soc\_system.qsys} component connections in \term{Platform Designer}, part 1 of 4.}
+    \label{fig:fpgasteel-qsys-connections-1}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelQSys_2}
+    \caption{\texttt{soc\_system.qsys} component connections in \term{Platform Designer}, part 2 of 4.}
+    \label{fig:fpgasteel-qsys-connections-2}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelQSys_3}
+    \caption{\texttt{soc\_system.qsys} component connections in \term{Platform Designer}, part 3 of 4.}
+    \label{fig:fpgasteel-qsys-connections-3}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth,height=\textwidth,keepaspectratio]{FPGAsteelQSys_4}
+    \caption{\texttt{soc\_system.qsys} component connections in \term{Platform Designer}, part 4 of 4.}
+    \label{fig:fpgasteel-qsys-connections-4}
+\end{figure}
+\end{landscape}
