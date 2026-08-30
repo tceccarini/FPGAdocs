@@ -13,6 +13,7 @@
 \usepackage{indentfirst}   % also indent the first paragraph after a heading
 \setlength{\parindent}{1em}
 \setlength{\parskip}{0.6em}
+\raggedbottom
 
 % Lets TeX loosen a line as a last resort, instead of producing an overfull
 % \hbox, when an unbreakable inline |code| token (see \lstMakeShortInline
@@ -80,7 +81,8 @@
 }
 % Usage: \begin{warningbox} ... \end{warningbox}
 
-\usepackage[hypertexnames=false]{hyperref}
+\usepackage[hypertexnames=false, breaklinks=true]{hyperref}
+\usepackage{xurl} % allows breaking long URLs anywhere, not just at pre-set points
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
@@ -93,6 +95,11 @@
 \let\ltx@url\url
 \renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
 \makeatother
+
+% Usage in references.bib: labels a source inside a note/howpublished field,
+% for entries that distinguish the official source from where it's mirrored.
+\newcommand{\mainsource}[1]{\\Main source: \url{#1}}
+\newcommand{\mirroredsource}[1]{\\Mirrored source: \url{#1}}
 
 \usepackage{glossaries}    % must load after hyperref
 \makeglossaries

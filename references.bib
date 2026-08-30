@@ -13,16 +13,15 @@
 
 @misc{FPGALIX-REPO,
   author       = {Ceccarini, Tiziano},
-  title        = {FPGAlix --- embedded-Linux camera pipeline for the Terasic DE1-SoC},
-  howpublished = {\url{https://github.com/tceccarini/FPGAlix}},
-  note         = {Git repository}
+  title        = {FPGAlix --- embedded-Linux camera pipeline for the Terasic DE1-SoC -- Git repository},
+  howpublished = {\mainsource{https://github.com/tceccarini/FPGAlix}},
+  
 }
 
 @misc{FPGASTEEL-REPO,
   author       = {Ceccarini, Tiziano},
-  title        = {FPGAsteel --- bare-metal camera-to-VGA pipeline for the Terasic DE1-SoC},
-  howpublished = {\url{https://github.com/tceccarini/FPGAsteel}},
-  note         = {Git repository}
+  title        = {FPGAsteel --- bare-metal camera-to-VGA pipeline for the Terasic DE1-SoC -- Git repository},
+  howpublished = {\mainsource{https://github.com/tceccarini/FPGAsteel}},
 }
 
 % ------------------------------------------------------------
@@ -32,50 +31,55 @@
 @manual{OV7670-DS,
   author       = {OmniVision},
   title        = {OV7670/OV7171 CMOS VGA CameraChip Sensor},
-  note         = {Datasheet. Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  note         = {Datasheet. \mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @manual{OV7670-IG,
   author       = {OmniVision},
   title        = {OV7670 Implementation Guide},
   edition      = {v1.0},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @misc{OV7670-SCH,
   key          = {OV7670-SCH},
   title        = {OV7670 camera module schematic},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
-@manual{CV-TRM,
+@misc{CV-TRM,
   author       = {{Intel/Altera}},
-  title        = {Cyclone V Hard Processor System Technical Reference Manual},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  title        = {Cyclone V Hard Processor System Technical Reference Manual v. 21.2},
+  howpublished = {\mainsource{https://docs.altera.com/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
-@manual{EP-IPUG,
+@misc{EP-IPUG,
   author       = {{Intel/Altera}},
-  title        = {Embedded Peripherals IP User Guide},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  title        = {Embedded Peripherals IP User Guide v. 22.1},
+  howpublished = {\mainsource{https://docs.altera.com/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
-@manual{AVALON-SPEC,
+@misc{AVALON-SPEC,
   author       = {{Intel/Altera}},
-  title        = {Avalon Interface Specifications},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  title        = {Avalon Interface Specifications v. 22.3},
+  howpublished = {\mainsource{https://docs.altera.com/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @misc{DE1-SCH,
   author       = {Terasic},
   title        = {DE1-SoC board schematic},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  howpublished = {\mainsource{https://www.terasic.com.tw/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @misc{MACNICA-BOOT,
   author       = {Macnica},
   title        = {Bootloader generation flow for SoC EDS v19.1 Std / v19.3 Pro and later},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  howpublished = {\mainsource{https://malt.zendesk.com/hc/en-us/articles/900005300046-Bootloader-generation-flow-for-SoC-EDS-v19-1-std-v19-3-pro-or-later-Cyclone-V-SoC-Arria-V-SoC-edition}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @manual{UPM-DE1,
@@ -84,7 +88,49 @@
   edition      = {V1.9},
   organization = {Universidad Polit\'ecnica de Madrid},
   year         = {2017},
-  note         = {Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  note         = {\mainsource{https://oa.upm.es/45352/} \mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{ALTERA-QUARTUS,
+  author       = {{Intel/Altera}},
+  title        = {Quartus Prime Software v.22.1},
+  howpublished = {\mainsource{https://www.altera.com/downloads}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{ARM-GNU-TOOLCHAIN,
+  author       = {Arm},
+  title        = {Arm GNU Toolchain version 12.3.Rel1},
+  howpublished = {\mainsource{https://gitlab.arm.com/tooling/gnu-toolchains-for-arm}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{UBUNTU-2204,
+  author       = {Canonical},
+  title        = {Ubuntu 22.04.x LTS (Jammy Jellyfish)},
+  howpublished = {\mainsource{https://releases.ubuntu.com/22.04/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{XPACK-ARM-GCC,
+  author       = {{xPack project}},
+  title        = {xPack Arm Embedded GCC v. 15.2.1-1.1},
+  howpublished = {\mainsource{https://xpack.github.io/arm-none-eabi-gcc/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{XPACK-OPENOCD,
+  author       = {{xPack project}},
+  title        = {xPack OpenOCD version 0.12.0-7},
+  howpublished = {\mainsource{https://xpack.github.io/openocd/}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
+}
+
+@misc{ECLIPSE-EMBED-CDT,
+  author       = {{Eclipse Foundation}},
+  title        = {Eclipse Embed CDT for Embedded C/C++ Development},
+  howpublished = {\mainsource{https://projects.eclipse.org/projects/iot.embed-cdt}},
+  note         = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @book{PEDRONI-VHDL,
@@ -98,7 +144,8 @@
 @misc{GHRD,
   author       = {{Intel/Altera}},
   title        = {Golden Hardware Reference Design for Cyclone V SoC},
-  note         = {Tracked as the \texttt{ghrd-socfpga} git submodule under \texttt{repos/ghrd-socfpga} in the FPGAlix repository}
+  howpublished = {\mainsource{https://github.com/altera-opensource/ghrd-socfpga}},
+  note         = {\\ Tracked as the \texttt{ghrd-socfpga} git submodule under \texttt{repos/ghrd-socfpga} in the FPGAlix repository}
 }
 
 % ------------------------------------------------------------
@@ -106,43 +153,35 @@
 % ------------------------------------------------------------
 
 @misc{ADAPTER-HW,
+  author       = {Ceccarini, Tiziano},
   key          = {ADAPTER-HW},
-  title        = {Camera adapter board: schematics, bill of materials and photograph of the assembled system},
-  note         = {Reproduced in Appendix~A -- Camera Adapter Board; sources under \texttt{hw/camera\_adapter/}}
-}
-
-@misc{ADAPTER-PCB,
-  key          = {ADAPTER-PCB},
-  title        = {Camera adapter PCB layouts},
-  note         = {Not reproduced in this document. Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
-}
-
-@misc{ADAPTER-WARN,
-  key          = {ADAPTER-WARN},
-  title        = {Camera RESET/POWER-DOWN hardware bug: full analysis and the two permanent fixes},
-  note         = {Summarised in Appendix~A. Mirrored in the shared documentation folder linked from the \texttt{FPGAdocs} \href{https://github.com/tceccarini/FPGAdocs/blob/main/README.md}{README}}
+  title        = {Camera adapter board for the Terasic DE1-SoC},
+  howpublished = {\mirroredsource{https://github.com/tceccarini/FPGAdocs/}}
 }
 
 @misc{SUB-UBOOT,
   key          = {SUB-UBOOT},
-  title        = {\texttt{repos/u-boot-socfpga}, local submodule},
-  note         = {Bootloader and boot script sources}
+  title        = {U-Boot SoCFPGA},
+  howpublished = {\mainsource{https://github.com/altera-fpga/u-boot-socfpga}},
+  note         = {\\ Bootloader and boot script sources. Tracked as the \texttt{u-boot-socfpga} git submodule under \texttt{repos/u-boot-socfpga} in the FPGAlix repository}
 }
 
 @misc{SUB-LINUX,
   key          = {SUB-LINUX},
-  title        = {\texttt{repos/linux-socfpga}, local submodule},
-  note         = {Kernel source (FPGAlix only)}
+  title        = {Linux kernel, SoCFPGA fork},
+  howpublished = {\mainsource{https://github.com/altera-fpga/linux-socfpga}},
+  note         = {\\ Kernel source (FPGAlix only). Tracked as the \texttt{linux-socfpga} git submodule under \texttt{repos/linux-socfpga} in the FPGAlix repository}
 }
 
 @misc{SUB-BUILDROOT,
   key          = {SUB-BUILDROOT},
-  title        = {\texttt{repos/buildroot}, local submodule},
-  note         = {Root filesystem source (FPGAlix only)}
+  title        = {Buildroot},
+  howpublished = {\mainsource{https://buildroot.org}},
+  note         = {\\ Tracked as the \texttt{buildroot} git submodule under \texttt{repos/buildroot} in the FPGAlix repository}
 }
 
 @misc{DRV2-README,
   key          = {DRV2-README},
   title        = {The \texttt{camera\_driver\_2} documentation (FPGAlix only)},
-  note         = {\url{https://github.com/tceccarini/FPGAlix/blob/main/sw/camera_driver_2/README.md}}
+  howpublished = {\mainsource{https://github.com/tceccarini/FPGAlix/blob/main/sw/camera_driver_2/README.md}}
 }

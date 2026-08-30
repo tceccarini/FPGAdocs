@@ -1,9 +1,25 @@
 \chapter{References}
 \label{app:references}
 
-Every external document and project artefact cited anywhere in this documentation is listed here once, with a short key. The References section of each chapter cites the key together with the specific locator (chapter, table, page) that applies there, instead of repeating the full reference.
-
 \renewcommand{\bibname}{}
 \nocite{*}
+
+% Drop the underline from \url here only: underlined text cannot be broken
+% across lines, which made the longer URLs below overflow the right margin.
+% The thesis body keeps the underlined style.
+\makeatletter
+\renewcommand{\url}[1]{\ltx@url{#1}}
+
+% book.cls opens thebibliography with its own \chapter*, and every \chapter in
+% this class starts with \cleardoublepage. On top of the \chapter{References}
+% above that meant two chapter openings in a row: the second one had to land on
+% an odd page, leaving a blank one between the title and the list. Swallow the
+% starred \chapter (and the running head it would reset, so these pages keep the
+% chapter's own) -- nothing follows the bibliography, so this stays local to it.
+\let\bib@chapter\chapter
+\def\chapter{\@ifstar{\@gobble}{\bib@chapter}}
+\let\@mkboth\@gobbletwo
+\makeatother
+
 \bibliographystyle{plain}
 \bibliography{references}
