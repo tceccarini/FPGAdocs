@@ -88,10 +88,10 @@ On reset, the fixed-function \gterm{bootrom}{Boot ROM} samples the appropriate \
 
 The sections that follow assume the \prjname{FPGAsteel} repository is already cloned locally. Here's how, submodules included:
 
-\begin{shellcode}
+\begin{shellcodehost}
 git clone --recurse-submodules https://github.com/tceccarini/FPGAsteel.git
 cd FPGAsteel
-\end{shellcode}
+\end{shellcodehost}
 
 The option |--recurse-submodules| makes \cmdpath{git} also clone every submodule listed in \repopath{.gitmodules} right away --- these live under \repopath{repos/} (including |u-boot-socfpga|, needed in the next section). Without it, those folders would be created but left empty.
 
@@ -105,30 +105,28 @@ These are the concrete commands behind Figure~\ref{fig:fpgasteel-bootloader-gene
 
 Compiling the hardware project makes \term{Quartus} export the \gterm{hps}{HPS} configuration as \term{XML} under the handoff folder placed at \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. Convert this into the \term{C} headers \gterm{uboot}{U-Boot} needs by running:
 
-\begin{shellcode}
-python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py \
--i hw/quartus/hps_isw_handoff/soc_system_hps_0/ \
--o repos/u-boot-socfpga/board/terasic/de1-soc/qts/
-\end{shellcode}
+\begin{shellcodehost}
+python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py -i hw/quartus/hps_isw_handoff/soc_system_hps_0/ -o repos/u-boot-socfpga/board/terasic/de1-soc/qts/
+\end{shellcodehost}
 
 \subsection{Configure and build U-Boot}
 \label{subsec:fpgasteel-configure-build-uboot}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd repos/u-boot-socfpga
 export ARCH=arm
 export CROSS_COMPILE=arm-none-eabi-
 make socfpga_cyclone5_defconfig
 make menuconfig
-\end{shellcode}
+\end{shellcodehost}
 
 In \gterm{menuconfig}{menuconfig}\footnote{\glsentrydesc{menuconfig}}, select the board target: \term{ARM} architecture $\rightarrow$ \gterm{altera}{Altera} \term{SOCFPGA} board select $\rightarrow$ \term{Terasic} \term{DE1-SoC} (Cyclone V).
 
 Exit and confirm \term{Yes} when prompted to save --- skipping this leaves the wrong board selected and the build silently targets the wrong hardware.
 
-\begin{shellcode}
+\begin{shellcodehost}
 make -j$(nproc)
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Result}
 \label{subsec:fpgasteel-build-result}
@@ -176,10 +174,9 @@ With \term{MSEL[4:0]} = 00000, the \gterm{fpga}{FPGA} is configured by the \gter
 
 \term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM} Object File), the full \gterm{fpga}{FPGA} configuration, in a format only \term{Quartus}/\gterm{jtag}{JTAG} tools understand. The \gterm{fpgamanager}{FPGA Manager} instead needs an \repopath{.rbf} (Raw Binary File), a stripped-down version of the same configuration. Convert it from the root of the repository:
 
-\begin{shellcode}
-quartus_cpf -c hw/quartus/output_files/FPGAsteel.sof \
-sdcard/boot_partition/soc_system.rbf
-\end{shellcode}
+\begin{shellcodehost}
+quartus_cpf -c hw/quartus/output_files/FPGAsteel.sof sdcard/boot_partition/soc_system.rbf
+\end{shellcodehost}
 
 The output lands directly under \repopath{sdcard/boot_partition/}, next to the other files that will end up on the \term{SD} card's boot partition.
 
@@ -206,11 +203,10 @@ Both are self-installing: on first run they rewrite \gterm{uboot}{U-Boot}'s \sys
 
 Only one script can be active at a time, whichever one was last compiled to \repopath{u-boot.scr}, the fixed filename \gterm{uboot}{U-Boot} looks for on the boot partition. Compile the one needed:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/
-mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d multiboot.script \
-../sdcard/boot_partition/u-boot.scr
-\end{shellcode}
+mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d multiboot.script ../sdcard/boot_partition/u-boot.scr
+\end{shellcodehost}
 
 Replace \repopath{multiboot.script} with \repopath{boot.script.jtag_debug} to switch boot mode. This step must be repeated every time you switch to a different script.
 
@@ -235,29 +231,29 @@ To write the final image to the \term{SD} card, use:
 
 From the root of the repository, move into the \repopath{sdcard/} directory:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sdcard/
 mkdir -p images
-\end{shellcode}
+\end{shellcodehost}
 
 Create an empty image sized to fit any ``8 GB'' \term{SD} card. \term{SD} card manufacturers use decimal units (1 GB = 1{,}000{,}000{,}000 bytes), so an ``8 GB'' card has about 7629 MiB of actual space. Using 7400 MiB leaves a safe margin:
 
-\begin{shellcode}
+\begin{shellcodehost}
 dd if=/dev/zero of=images/sdcard.img bs=1M count=7400
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Partition the image}
 \label{subsec:fpgasteel-partition-image}
 
 Two partitions are needed: a \term{FAT32} boot partition (number 1) and a raw \term{A2} partition for \gterm{uboot}{U-Boot} (number 3). Partition number 2 is simply skipped; its space stays unallocated between the two.
 
-\begin{shellcode}
+\begin{shellcodehost}
 fdisk images/sdcard.img
-\end{shellcode}
+\end{shellcodehost}
 
 Within \cmdpath{fdisk}, enter the following commands in order:
 
-\begin{shellcode}
+\begin{shellcodehost}
 o       # new MBR partition table
 n       # new partition 1, FAT32 boot (500 MiB)
 p
@@ -267,7 +263,7 @@ p
 t       # change partition type
 c       # set type to W95 FAT32 LBA (partition 1, FAT32 boot, 500 MiB)
 p       # print disk info, note "Sectors" and "Sector size"
-\end{shellcode}
+\end{shellcodehost}
 
 Prior to creating partition 3, calculate its first sector:
 
@@ -287,7 +283,7 @@ Example, assuming 512-byte sectors and a 7400 \term{MiB} image (total sectors = 
 
 Create partition 3 at that position:
 
-\begin{shellcode}
+\begin{shellcodehost}
 n               # partition 3, raw A2, U-Boot SPL (10 MiB)
 p
 3
@@ -298,67 +294,67 @@ t
 a2              # set type to A2 (Altera SoCFPGA bootloader)
 p               # verify the partition table before writing
 w               # write and exit
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Attach the image to a loop device}
 \label{subsec:fpgasteel-attach-loop}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo losetup -fP images/sdcard.img
-\end{shellcode}
+\end{shellcodehost}
 
 Find out which loop device was assigned:
 
-\begin{shellcode}
+\begin{shellcodehost}
 losetup -l
-\end{shellcode}
+\end{shellcodehost}
 
 Look for the entry with \repopath{sdcard.img} and note the device name (e.g.\ \extpath{/dev/loop2}). In all the commands below, replace \ccode{N} with the actual number.
 
 \subsection{Format the partitions}
 \label{subsec:fpgasteel-format-partitions}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo mkfs.vfat -n BOOT /dev/loopNp1
 # loopNp3 is left unformatted, it will receive the raw U-Boot image with dd in the next step
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Mount and copy the files}
 \label{subsec:fpgasteel-mount-copy}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo mkdir -p /tmp/sdcard/boot
 sudo mount /dev/loopNp1 /tmp/sdcard/boot
-\end{shellcode}
+\end{shellcodehost}
 
 Copy the boot partition files: the bitstream, the compiled boot script and the example binaries.
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo cp -L sdcard/boot_partition/* /tmp/sdcard/boot/
-\end{shellcode}
+\end{shellcodehost}
 
 Write \gterm{uboot}{U-Boot} (\gterm{spl}{SPL} and \gterm{uboot}{U-Boot} proper, from Section~\ref{sec:fpgasteel-building-bootloader}) raw into the \term{A2} partition:
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo dd if=sdcard/u-boot-with-spl.sfp of=/dev/loopNp3 bs=64k seek=0
 sync
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Unmount, detach and clean up}
 \label{subsec:fpgasteel-unmount-detach}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo umount /tmp/sdcard/boot
 sudo losetup -d /dev/loopN
 sudo rm -rf /tmp/sdcard
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Write the image to the SD card (Linux)}
 \label{subsec:fpgasteel-write-sd}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo dd if=images/sdcard.img of=/dev/sdX bs=4M status=progress
 sync
-\end{shellcode}
+\end{shellcodehost}
 
 Replace \extpath{/dev/sdX} with the actual \term{SD} card device. Double-check the target device before running: this command will overwrite it completely.

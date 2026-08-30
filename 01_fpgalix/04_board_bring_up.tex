@@ -83,10 +83,10 @@ From this point, \gterm{uboot}{U-Boot}'s boot script (\repopath{sw/boot.script},
 
 The remainder of this chapter assumes that the \prjname{FPGAlix} repository has already been cloned locally, as follows, including submodules:
 
-\begin{shellcode}
+\begin{shellcodehost}
 git clone --recurse-submodules https://github.com/tceccarini/FPGAlix.git
 cd FPGAlix
-\end{shellcode}
+\end{shellcodehost}
 
 The |--recurse-submodules| flag causes \gterm{git}{Git}\footnote{\glsentrydesc{git}} to additionally clone every submodule belonging to the project at the same time; these are located under \repopath{repos/} (including |u-boot-socfpga| \cite{SUB-UBOOT}, required in the following section, and |linux-socfpga| \cite{SUB-LINUX} and |buildroot| \cite{SUB-BUILDROOT}, required in Sections~\ref{sec:fpgalix-kernel} and \ref{sec:fpgalix-buildroot}). In its absence, the corresponding directories would be created but left empty.
 
@@ -99,31 +99,31 @@ The following commands implement the flow shown in Figure~\ref{fig:fpgalix-boot-
 
 Compilation of the hardware project causes \term{Quartus} to export the \gterm{hps}{HPS} configuration as \term{XML} files under the handoff folder \repopath{hw/quartus/hps_isw_handoff/soc_system_hps_0/}. This configuration is then converted into the \term{C} header files required by \gterm{uboot}{U-Boot} by means of the following command:
 
-\begin{shellcodepath}
-python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py 
-    -i hw/quartus/hps_isw_handoff/soc_system_hps_0/ 
+\begin{shellcodehost}
+python3 repos/u-boot-socfpga/arch/arm/mach-socfpga/cv_bsp_generator/cv_bsp_generator.py
+    -i hw/quartus/hps_isw_handoff/soc_system_hps_0/
     -o repos/u-boot-socfpga/board/terasic/de1-soc/qts/
-\end{shellcodepath}
+\end{shellcodehost}
 
 This step must be repeated whenever the \gterm{hps}{HPS} subsystem is modified in \gterm{platformdesigner}{Platform Designer}; otherwise, \gterm{uboot}{U-Boot} initializes the hardware according to stale configuration data.
 
 \subsection{Configure and build U-Boot}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd repos/u-boot-socfpga
 export ARCH=arm
 export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make socfpga_cyclone5_defconfig
 make menuconfig
-\end{shellcode}
+\end{shellcodehost}
 
 Within |menuconfig|, select the board target as follows: \term{ARM} architecture $\rightarrow$ \gterm{altera}{Altera} \term{SOCFPGA} board select $\rightarrow$ \term{Terasic} \term{DE1-SoC} (\term{Cyclone V}).
 
 Upon exiting, confirm \term{Yes} when prompted to save the configuration; failure to do so leaves the incorrect board target selected, and the build silently targets the wrong hardware.
 
-\begin{shellcode}
+\begin{shellcodehost}
 make -j$(nproc)
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Result}
 
@@ -134,20 +134,20 @@ The build produces \repopath{repos/u-boot-socfpga/u-boot-with-spl.sfp}, an image
 
 Enter the \term{Linux} source directory, and set the required environment variables:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd repos/linux-socfpga
 export ARCH=arm
 export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make socfpga_defconfig
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Kernel configuration}
 
 Open the interactive configuration menu with:
 
-\begin{shellcode}
+\begin{shellcodehost}
 make menuconfig
-\end{shellcode}
+\end{shellcodehost}
 
 \subsubsection{Base configuration}
 
@@ -198,19 +198,19 @@ Upon exiting |menuconfig|, confirm \term{Yes} when prompted to save.
 
 Build the compressed kernel image and prepare the tree for external kernel modules:
 
-\begin{shellcode}
+\begin{shellcodehost}
 make -j$(nproc) zImage
 make modules_prepare
 make -j$(nproc) modules
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Device Tree Source}
 
 Prior to building the \gterm{devicetree}{Device Tree} blobs, a board-specific \gterm{devicetree}{DTS} file must exist at:
 
-\begin{shellcodepath}
+\begin{shellcodehost}
 repos/linux-socfpga/arch/arm/boot/dts/socfpga_cyclone5_fpgalix.dts
-\end{shellcodepath}
+\end{shellcodehost}
 
 This file describes the hardware topology of the \term{SoC} and is maintained manually as \repopath{socfpga_cyclone5_fpgalix.dts}, which includes \repopath{socfpga_cyclone5.dtsi} (the standard \term{SoCFPGA} base provided by the kernel) and adds the board-specific nodes on top of it.
 
@@ -222,9 +222,9 @@ This file describes the hardware topology of the \term{SoC} and is maintained ma
 
 Unlike the \gterm{devicetree}{DTS} source, the compiled \gterm{devicetree}{Device Tree Blob} (\repopath{.dtb}) is a build artifact: it is not tracked by the submodule, it does not exist after a fresh clone, and it must be compiled locally on every build, regardless of whether the \gterm{devicetree}{DTS} source itself was changed or not. This step is therefore always required, even when Paragraph~\ref{subsec:fpgalix-dts-update} is skipped entirely:
 
-\begin{shellcode}
+\begin{shellcodehost}
 make dtbs
-\end{shellcode}
+\end{shellcodehost}
 
 The compiled \gterm{devicetree}{DTB} is accessible via the symlink \repopath{sdcard/boot_partition/socfpga.dtb}, which points to \repopath{repos/linux-socfpga/arch/arm/boot/dts/socfpga_cyclone5_fpgalix.dtb}.
 
@@ -241,16 +241,16 @@ It remains useful, however, as a reference: its output reflects the current \gte
 
 The \repopath{sopc2dts} utility itself is not prebuilt: it must be compiled from source once, the first time it is used:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd repos/sopc2dts
 make all
-\end{shellcode}
+\end{shellcodehost}
 
 Generate the reference output with:
 
-\begin{shellcode}
+\begin{shellcodehost}
 java -jar sopc2dts.jar --input ../../hw/quartus/soc_system.sopcinfo --output /tmp/socfpga_ref.dts
-\end{shellcode}
+\end{shellcodehost}
 
 \subsubsection{Authoring the Device Tree Source from the reference}
 
@@ -261,20 +261,20 @@ In this project, \repopath{socfpga_cyclone5_fpgalix.dts} was authored from the \
 
 Enter the \gterm{buildroot}{Buildroot} directory and set the required environment variables:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd repos/buildroot
 export ARCH=arm
 export CROSS_COMPILE=arm-none-linux-gnueabihf-
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Buildroot configuration}
 \label{subsec:fpgalix-buildroot-config}
 
 Open the configuration menu with:
 
-\begin{shellcode}
+\begin{shellcodehost}
 make menuconfig
-\end{shellcode}
+\end{shellcodehost}
 
 \subsubsection{Base configuration}
 \label{subsec:fpgalix-buildroot-base}
@@ -373,9 +373,9 @@ Upon exiting |menuconfig|, confirm \term{Yes} when prompted to save.
 \subsection{Build}
 \label{subsec:fpgalix-buildroot-build}
 
-\begin{shellcode}
+\begin{shellcodehost}
 make
-\end{shellcode}
+\end{shellcodehost}
 
 Do not use the |-j$(nproc)| flag: \gterm{buildroot}{Buildroot} manages parallelism internally. The default settings already instruct \gterm{buildroot}{Buildroot} to employ all available \term{CPU} cores throughout the entire build (toolchain, packages, and root filesystem).
 
@@ -419,9 +419,9 @@ Set the six \term{SW10} switches, on the underside of the board, to the position
 
 \term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM Object File}), the complete \gterm{fpga}{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\gterm{jtag}{JTAG} tools. The \gterm{fpgamanager}{FPGA Manager} mechanism, used by \gterm{uboot}{U-Boot}, instead requires an \repopath{.rbf} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
 
-\begin{shellcode}
+\begin{shellcodehost}
 quartus_cpf -c hw/quartus/output_files/FPGAlix.sof sdcard/boot_partition/soc_system.rbf
-\end{shellcode}
+\end{shellcodehost}
 
 The resulting output is placed directly under \repopath{sdcard/boot_partition/}, alongside the remaining files destined for the \term{SD} card's boot partition.
 
@@ -432,10 +432,10 @@ The resulting output is placed directly under \repopath{sdcard/boot_partition/},
 
 Compile this script into the binary image that \gterm{uboot}{U-Boot} expects to find on the boot partition:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/
 mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Boot" -d boot.script ../sdcard/boot_partition/u-boot.scr
-\end{shellcode}
+\end{shellcodehost}
 
 This step must be repeated whenever \repopath{sw/boot.script} is modified.
 
@@ -458,26 +458,26 @@ The final image may be written to the \term{SD} card using:
 
 From the root of the repository, enter the \repopath{sdcard/} directory:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sdcard/
 mkdir -p images
-\end{shellcode}
+\end{shellcodehost}
 
 Create an empty image, sized to accommodate any ``8 GB'' \term{SD} card. \term{SD} card manufacturers employ decimal units (1 GB = 1{,}000{,}000{,}000 bytes), such that an ``8 GB'' card provides approximately 7629 \term{MiB} of actual space; 7400 \term{MiB} is used here to leave a safe margin:
 
-\begin{shellcode}
+\begin{shellcodehost}
 dd if=/dev/zero of=images/sdcard.img bs=1M count=7400
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Partition the image}
 
-\begin{shellcode}
+\begin{shellcodehost}
 fdisk images/sdcard.img
-\end{shellcode}
+\end{shellcodehost}
 
 Within \cmdpath{fdisk}, enter the following commands in order:
 
-\begin{shellcode}
+\begin{shellcodehost}
 o       # new MBR partition table
 n       # new partition 1, FAT32 boot (500 MiB)
 p       
@@ -487,7 +487,7 @@ p
 t       # change partition type
 c       # set type to W95 FAT32 LBA (partition 1, FAT32 boot, 500 MiB)
 p       # print disk info, note "Sectors" and "Sector size"
-\end{shellcode}
+\end{shellcodehost}
 
 Prior to creating partition 3, calculate its first sector:
 
@@ -507,7 +507,7 @@ Example, assuming 512-byte sectors and a 7400 \term{MiB} image (total sectors = 
 
 Create partition 3 at that position:
 
-\begin{shellcode}
+\begin{shellcodehost}
 n               # partition 3, raw A2, U-Boot SPL (10 MiB)
 p
 3
@@ -523,11 +523,11 @@ p
 (enter)         # fdisk auto-selects last sector before p3
 p               # verify the partition table before writing
 w               # write and exit
-\end{shellcode}
+\end{shellcodehost}
 
 For this example (512-byte sectors, 7400 \term{MiB} image), the expected output of \ccode{p} is as follows:
 
-\begin{shellcode}
+\begin{shellcodehost}
 Disk images/sdcard.img: 7,23 GiB, 7759462400 bytes, 15155200 sectors
 Units: sectors of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
@@ -538,80 +538,80 @@ Device             Boot  Start      End        Sectors   Size  Id  Type
 images/sdcard.img1       2048       1026047    1024000   500M  c   W95 FAT32 (LBA)
 images/sdcard.img2       1026048    15134719   14108672  6,7G  83  Linux
 images/sdcard.img3       15134720   15155199   20480     10M   a2  unknown
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Attach the image to a loop device}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo losetup -fP images/sdcard.img
-\end{shellcode}
+\end{shellcodehost}
 
 Identify the assigned loop device with:
 
-\begin{shellcode}
+\begin{shellcodehost}
 losetup -l
-\end{shellcode}
+\end{shellcodehost}
 
 Locate the entry corresponding to \repopath{sdcard.img} and note its device name (e.g. \extpath{/dev/loop2}). In each of the commands below, \ccode{N} is to be replaced with the actual number.
 
 \subsection{Format the partitions}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo mkfs.vfat -n BOOT /dev/loopNp1
 sudo mkfs.ext4 -L rootfs /dev/loopNp2
 # loopNp3 is left unformatted, it will receive the raw U-Boot image with dd in the next step
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Mount and copy the files}
 
 All commands below, like the rest of this section, are run from \repopath{sdcard/}; \repopath{boot_partition/}, \repopath{rootfs_overlay/}, \repopath{rootfs.tar} and \repopath{u-boot-with-spl.sfp} are paths relative to it.
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sdcard/
 sudo mkdir -p /tmp/sdcard/boot /tmp/sdcard/rootfs
 sudo mount /dev/loopNp1 /tmp/sdcard/boot
 sudo mount /dev/loopNp2 /tmp/sdcard/rootfs
-\end{shellcode}
+\end{shellcodehost}
 
 Copy the boot partition files (kernel, \gterm{devicetree}{DTB}, bitstream, boot script, from Sections~\ref{sec:fpgalix-kernel}, \ref{sec:fpgalix-bitstream} and \ref{sec:fpgalix-boot-script}):
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo cp -L boot_partition/* /tmp/sdcard/boot/
-\end{shellcode}
+\end{shellcodehost}
 
 Extract the root filesystem built in Paragraph~\ref{subsec:fpgalix-buildroot-build}:
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo tar xvf rootfs.tar -C /tmp/sdcard/rootfs/
-\end{shellcode}
+\end{shellcodehost}
 
 Copy the \gterm{ntp}{NTP}\footnote{\glsentrydesc{ntp}} configuration onto the rootfs:
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo cp -L rootfs_overlay/etc/chrony.conf /tmp/sdcard/rootfs/etc/
-\end{shellcode}
+\end{shellcodehost}
 
 Write \gterm{uboot}{U-Boot} (\gterm{spl}{SPL} and \gterm{uboot}{U-Boot} proper, from Section~\ref{sec:fpgalix-bootloader}) raw into the \term{A2} partition:
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo dd if=u-boot-with-spl.sfp of=/dev/loopNp3 bs=64k seek=0
 sync
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Unmount, detach and clean up}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo umount /tmp/sdcard/boot /tmp/sdcard/rootfs
 sudo losetup -d /dev/loopN
 sudo rm -rf /tmp/sdcard
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Write the image to the SD card}
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo dd if=images/sdcard.img of=/dev/sdX bs=4M status=progress
 sync
-\end{shellcode}
+\end{shellcodehost}
 
 Replace \extpath{/dev/sdX} with the actual \term{SD} card device. \textbf{Verify the target device with particular care} prior to execution, as this command overwrites it in its entirety.
 
@@ -641,24 +641,24 @@ Log into the board as \sysid{root} over the serial console, with the password se
 
 \gterm{ssh}{SSH} access as \sysid{root} does not work, even though the serial console login does: \gterm{openssh}{OpenSSH}'s default \sysid{PermitRootLogin} setting only allows \sysid{root} to log in with a key, not a password, and this project's \sysid{root} account only has a password. Create a new user, therefore, from the serial console:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 mkdir -p /home
 adduser <username>
-\end{shellcode}
+\end{shellcodeboard}
 
 The \cmdpath{mkdir -p /home} is necessary first: \gterm{buildroot}{Buildroot}'s base skeleton does not include a \extpath{/home} directory, and if it is not already present, \gterm{busybox}{BusyBox}'s \cmdpath{adduser} fails silently, leaving the new user without a home directory.
 
 Read the board's \term{IP} address, obtained automatically over \term{Ethernet} by \cmdpath{dhcpcd} (Paragraph~\ref{subsec:fpgalix-buildroot-base}), with either:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 ifconfig
 # or
 ip addr
-\end{shellcode}
+\end{shellcodeboard}
 
 From the \term{PC}, verify \gterm{ssh}{SSH} access as the new user:
 
-\begin{shellcode}
+\begin{shellcodehost}
 ssh <username>@<board-ip>
-\end{shellcode}
+\end{shellcodehost}
 

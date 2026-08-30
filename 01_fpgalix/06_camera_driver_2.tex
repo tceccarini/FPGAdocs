@@ -13,7 +13,7 @@ This chapter covers how the operating system is instructed to deliver the \gterm
 
 The driver uses \term{videobuf2} (\term{vb2}), the buffer-management layer most \gterm{v4l2}{V4L2} drivers rely on, which supports several memory models for exchanging frame buffers with \term{userspace}: \gterm{mmap}{MMAP} (buffers allocated by the driver, mapped into the application's address space), \term{USERPTR} (buffers allocated by the application, their address passed to the driver instead), and \term{DMABUF} (buffers imported from another device).
 
-Of these, it uses \gterm{mmap}{MMAP}, backed by \term{vb2}'s \gterm{dma}{DMA}-contiguous allocator (\ccode{vb2_dma_contig_memops}): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through \ccode{mmap()}, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference: the \gterm{msgdma}{mSGDMA} engine writes to a single physical start address and length per transfer, so the buffer it writes each individual frame into must itself be physically contiguous, a guarantee arbitrary \term{userspace}-allocated memory cannot provide; the several buffers making up the capture ring need not be contiguous with one another.
+Of these, it uses \gterm{mmap}{MMAP}, backed by \term{vb2}'s \gterm{dma}{DMA}-contiguous allocator (\ccode{vb2_dma_contig_memops}): frame buffers are allocated by the driver itself, each one internally contiguous in physical memory, and \term{userspace} only maps them for reading, through \ccode{mmap()}, rather than allocating or owning them. This follows directly from a hardware constraint rather than a design preference. The \gterm{msgdma}{mSGDMA} engine is given one physical start address and one length per transfer: whatever buffer it writes a frame into must therefore be a single contiguous block of physical memory. Memory allocated in \term{userspace} carries no such guarantee, which is what rules out the \term{USERPTR} method. Contiguity is required within each buffer, not across them: the capture ring's buffers are allocated independently and may lie anywhere in memory.
 
 \section{Detecting short frames}
 \label{sec:fpgalix-camera-short-frames}
@@ -38,11 +38,11 @@ The \gterm{ov7670}{OV7670} sensor itself is neither initialized nor reset by the
 \section{Building}
 \label{sec:fpgalix-camera-building}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/camera_driver_2
 export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make
-\end{shellcode}
+\end{shellcodehost}
 
 This produces \repopath{bin/fpgalix_camera.ko}: the compiled kernel module for this driver. Unlike an ordinary program, a kernel module has no stable, versioned interface to rely on: it links directly into the internal data structures and configuration of one specific kernel build, so it must be compiled against that exact kernel's source tree (Section~\ref{sec:fpgalix-kernel}) to be loadable by it.
 
@@ -68,62 +68,61 @@ Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the file
 
 Copy the compiled module and the debug scripts used in the following steps onto the board together, over \cmdpath{scp}, into a dedicated \repopath{camera_driver_2/} folder in the regular user's home directory:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/camera_driver_2
 ssh <username>@<board-ip> mkdir -p camera_driver_2
-scp -p bin/fpgalix_camera.ko utils/debug/resetCtrl.sh utils/debug/ov7670_ctrlif_set.sh
-utils/debug/ov7670_dataif_ctrl.sh <username>@<board-ip>:camera_driver_2/
-\end{shellcode}
+scp -p bin/fpgalix_camera.ko utils/debug/resetCtrl.sh utils/debug/ov7670_ctrlif_set.sh utils/debug/ov7670_dataif_ctrl.sh <username>@<board-ip>:camera_driver_2/
+\end{shellcodehost}
 
 On the board, \cmdpath{cd} into that folder, then run \cmdpath{su} to switch to \sysid{root} for the remaining steps, keeping the same working directory:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 cd camera_driver_2
 su
-\end{shellcode}
+\end{shellcodeboard}
 
 \subsection{Releasing the pclk domain reset}
 \label{subsec:fpgalix-camera-root}
 
-\begin{shellcode}
+\begin{shellcodeboard}
 ./resetCtrl.sh
-\end{shellcode}
+\end{shellcodeboard}
 
 Select option 2, ``Deassert reset''. This releases \hw{pclk_reset_controller}'s \hw{sw_release} bit, a prerequisite for the camera to respond over \gterm{i2c}{I\textsuperscript{2}C} at all.
 
 \subsection{Configuring the OV7670 over I2C}
 \label{subsec:fpgalix-camera-i2c-config}
 
-\begin{shellcode}
+\begin{shellcodeboard}
 ./ov7670_ctrlif_set.sh
-\end{shellcode}
+\end{shellcodeboard}
 
 Select the \term{Bayer} mode (1 for \term{Raw}, 2 for \term{Processed}). Registers are written and then read back automatically, confirming the camera answered correctly.
 
 \subsection{Enabling frame acquisition}
 \label{subsec:fpgalix-camera-frame-acq}
 
-\begin{shellcode}
+\begin{shellcodeboard}
 ./ov7670_dataif_ctrl.sh
-\end{shellcode}
+\end{shellcodeboard}
 
 Select option 1, ``Enable frame acquisition''.
 
 \subsection{Loading the driver}
 \label{subsec:fpgalix-camera-load}
 
-\begin{shellcode}
+\begin{shellcodeboard}
 insmod fpgalix_camera.ko
-\end{shellcode}
+\end{shellcodeboard}
 
 \subsection{Viewing the stream}
 \label{subsec:fpgalix-camera-viewing}
 
 \repopath{utils/debug/view.py} is a small \gterm{opencv}{OpenCV} viewer, run on a \term{PC}, that displays the raw frames read from the board's \extpath{/dev/video0} over \gterm{ssh}{SSH}:
 
-\begin{shellcode}
+\begin{shellcodehost}
 ssh <username>@<board-ip> "v4l2-ctl -d /dev/video0 --stream-mmap --stream-to=-" | python3 view.py -dwg
-\end{shellcode}
+\end{shellcodehost}
 
 \cmdpath{v4l2-ctl}, run on the board, streams raw frames to its own standard output instead of a file; piped over \gterm{ssh}{SSH}, \cmd{view.py} reads them from its standard input and displays them. Its processing modes (\cmdpath{-r/-d/-dw/-dwg/-F}) are documented in \cite[``view.py --- Live preview'']{DRV2-README}. Its dependencies, \cmdpath{python3}, |python3-numpy| and |python3-opencv|, are already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}.
 

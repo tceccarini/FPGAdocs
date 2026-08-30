@@ -101,12 +101,12 @@ printf("GoodBye\n");
 
 The project is built with a \repopath{Makefile}, from the command line. \gterm{visualstudiocode}{Visual Studio Code} is used only as a plain text editor, not as an \term{IDE}. \term{Eclipse}, in turn, is used only for debugging: it is never used to compile the project, nor for any other \term{IDE}-specific feature.
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/hello_word
 make clean   # removes build/ and bin/
 make
 # -> bin/hello_word.elf, bin/hello_word.bin
-\end{shellcode}
+\end{shellcodehost}
 
 \section{Connecting the board}
 \label{sec:fpgasteel-hello-connecting}
@@ -120,9 +120,9 @@ Before starting a debug session, connect the board to the host \term{PC} with tw
 
 On \term{Linux}, \cmdpath{picocom} is a lightweight terminal emulator for the latter: find the device with \lstinline[style=inlineCmdExt]!dmesg | grep tty! (typically \extpath{/dev/ttyUSB0}), then connect with:
 
-\begin{shellcode}
+\begin{shellcodehost}
 picocom -b 115200 /dev/ttyUSB0
-\end{shellcode}
+\end{shellcodehost}
 
 \section{Debugging with Eclipse}
 \label{sec:fpgasteel-hello-jtag-debug}
@@ -160,11 +160,11 @@ Leave the build setting on ``Select Automatically'': building this project is \c
 
 On the \term{Debugger} tab, enable ``Start OpenOCD locally'', pointing it at the \gterm{openocd}{OpenOCD} binary installed in Paragraph~\ref{subsec:fpgasteel-install-paths}, and set \term{Config options} to both config files plus a non-destructive |init_reset| (the board must already be sitting at ``Ready for JTAG'' via the \term{SD card}, Section~\ref{sec:fpgasteel-hello-prerequisites}; this must not reset it):
 
-\begin{shellcode}
+\begin{shellcodehost}
 -f /home/wheel/projects/FPGAsteel/sw/hello_word/openocd/altera-usb-blaster2.cfg
 -f /home/wheel/projects/FPGAsteel/sw/hello_word/openocd/altera_fpgasoc_de.cfg
 -c "init; reset init"
-\end{shellcode}
+\end{shellcodehost}
 
 Under \term{GDB Client Setup}, point ``Start GDB session'' at the \cmdpath{arm-none-eabi-gdb} from the same toolchain install and add two \term{Commands}: \cmdpath{set mem inaccessible-by-default off} (so \gterm{gdb}{GDB} doesn't refuse to read/write memory it hasn't seen mapped) and \cmdpath{set remotetimeout 5} (gives \gterm{gdb}{GDB} more time to wait on \gterm{openocd}{OpenOCD}'s replies).
 

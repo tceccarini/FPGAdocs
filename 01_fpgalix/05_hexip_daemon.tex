@@ -47,11 +47,11 @@ Driving the display is then a single store. \ccode{CTRL_ENABLED} sets bit 31 whi
 \section{Building}
 \label{sec:fpgalix-hexip-building}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/hexip_daemon
 export CROSS_COMPILE=arm-none-linux-gnueabihf-
 make
-\end{shellcode}
+\end{shellcodehost}
 
 This produces \repopath{bin/hexip_daemon}.
 
@@ -67,12 +67,12 @@ This produces \repopath{bin/hexip_daemon}.
 
 Since these are symlinks, building the daemon is enough for \repopath{rootfs_overlay/} to hold its current binary; no separate install step exists. Deploying it means copying both files onto the \term{SD} card's root filesystem partition (the second partition, \term{ext4}) and rebooting the board:
 
-\begin{shellcode}
+\begin{shellcodehost}
 sudo mount /dev/sdX2 /mnt
 sudo mkdir -p /mnt/opt/FPGAlix/bin
 sudo cp -L sdcard/rootfs_overlay/opt/FPGAlix/bin/hexip_daemon /mnt/opt/FPGAlix/bin/
 sudo cp -L sdcard/rootfs_overlay/etc/init.d/S60hexip_daemon /mnt/etc/init.d/
 sudo umount /mnt
-\end{shellcode}
+\end{shellcodehost}
 
 Replace \extpath{/dev/sdX2} with the \term{SD} card's actual root filesystem partition. On the next boot, the |S60| script starts the daemon automatically.

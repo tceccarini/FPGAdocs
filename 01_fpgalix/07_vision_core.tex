@@ -66,10 +66,10 @@ This project's successor, \prjname{FPGAsteel}, targets the same \gterm{ov7670}{O
 \section{Building}
 \label{sec:fpgalix-vision-building}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/vision_core
 make arm
-\end{shellcode}
+\end{shellcodehost}
 
 This produces \repopath{bin/vision_core}, cross-compiled with the toolchain \gterm{buildroot}{Buildroot} builds as part of its own run, which must therefore already exist. A separate, native \cmdpath{make intel} target also exists, for exercising the pipeline on the host itself without the board.
 
@@ -88,15 +88,15 @@ Beyond the \term{DE1-SoC} board itself, this requires an \gterm{ov7670}{OV7670} 
 
 \cmd{vision_core} reads frames from \extpath{/dev/video0}, which only exists once \cmd{camera_driver_2} is loaded and the \gterm{ov7670}{OV7670} has been brought up. This repeats, condensed, the procedure detailed in Section~\ref{sec:fpgalix-camera-usage}:
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/camera_driver_2
 ssh <username>@<board-ip> mkdir -p camera_driver_2
 scp -p bin/fpgalix_camera.ko utils/debug/resetCtrl.sh utils/debug/ov7670_ctrlif_set.sh utils/debug/ov7670_dataif_ctrl.sh <username>@<board-ip>:camera_driver_2/
-\end{shellcode}
+\end{shellcodehost}
 
 On the board:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 cd camera_driver_2
 su
 ./resetCtrl.sh
@@ -104,38 +104,38 @@ su
 ./ov7670_ctrlif_set.sh # select Bayer mode
 ./ov7670_dataif_ctrl.sh # option 1, enable frame acquisition
 insmod fpgalix_camera.ko
-\end{shellcode}
+\end{shellcodeboard}
 
 \subsection{Deploying vision\_core}
 \label{subsec:fpgalix-vision-deploy}
 
-\begin{shellcode}
+\begin{shellcodehost}
 cd sw/vision_core
 ssh <username>@<board-ip> mkdir -p vision_core
 scp -p bin/vision_core <username>@<board-ip>:vision_core/
-\end{shellcode}
+\end{shellcodehost}
 
 \subsection{Running it}
 \label{subsec:fpgalix-vision-run}
 
-\begin{shellcode}
+\begin{shellcodeboard}
 cd vision_core
 ./vision_core
-\end{shellcode}
+\end{shellcodeboard}
 
 \cmd{vision_core} takes no command-line arguments: it prompts interactively for the video device, capture source, encoding, and several buffer/format settings, each with a sensible default accepted by pressing Enter. The one prompt that needs an explicit answer here is the source, which defaults to webcam:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 Source [webcam/ov7670, default: webcam]: ov7670
-\end{shellcode}
+\end{shellcodeboard}
 
 Once running, \term{SimpleUI} accepts filter-pipeline commands at its own prompt, and the \gterm{rtsp}{RTSP} stream is live at \extpath{rtsp://<board-ip>:8554/stream}.
 
 \subsection{Viewing the stream on a PC}
 \label{subsec:fpgalix-vision-viewing}
 
-\begin{shellcode}
+\begin{shellcodehost}
 ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
-\end{shellcode}
+\end{shellcodehost}
 
 \cmdpath{ffplay}, from the \gterm{ffmpeg}{ffmpeg}\footnote{\glsentrydesc{ffmpeg}} package, is already covered in Paragraph~\ref{subsec:fpgalix-apt-packages}. The three flags all serve the same purpose, keeping the view close to real time rather than perfectly complete: |-fflags nobuffer| disables \gterm{ffmpeg}{ffmpeg}'s own input buffering, which would otherwise queue up frames before displaying any of them; |-flags low_delay| puts the decoder in low-latency mode, forgoing look-ahead across frames; and |-framedrop| discards frames the player falls behind on instead of queuing them for later.

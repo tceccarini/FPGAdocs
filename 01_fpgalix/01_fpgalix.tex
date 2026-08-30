@@ -49,9 +49,9 @@ Two ways to log in, default password |1q2w3e4r| for both accounts:
 \begin{itemize}
     \item over \gterm{ssh}{SSH}, once the IP is known, as \sysid{wheel}, then \cmdpath{su} for anything that needs root (loading \cmd{camera_driver_2}, accessing hardware registers directly):
 
-\begin{shellcode}
+\begin{shellcodehost}
 ssh wheel@<board-ip>
-\end{shellcode}
+\end{shellcodehost}
 
     \item over the serial console (115200 baud, 8N1, e.g. \cmdpath{picocom}), directly as \sysid{root}; no network needed for this path.
 \end{itemize}
@@ -62,36 +62,36 @@ ssh wheel@<board-ip>
 
 Log in as \sysid{wheel} (or \sysid{root} from the serial console, cd-ing to \extpath{/home/wheel} first), then bring the camera up and load the driver:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 cd camera_driver_2
 su                              # Not needed if already logged in as root.
 ./resetCtrl.sh                  # option 2, deassert reset
 ./ov7670_ctrlif_set.sh          # select Bayer mode (1)
 ./ov7670_dataif_ctrl.sh         # option 1, enable frame acquisition
 insmod fpgalix_camera.ko        # load camera driver module
-\end{shellcode}
+\end{shellcodeboard}
 
 Then run \cmd{vision_core}, still as \sysid{root}, from the sibling directory:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 cd ../vision_core
 ./vision_core
-\end{shellcode}
+\end{shellcodeboard}
 
 It prompts interactively; every prompt accepts its default by pressing Enter, except the source, which must be set explicitly to \hw{ov7670}:
 
-\begin{shellcode}
+\begin{shellcodeboard}
 Source [webcam/ov7670, default: webcam]: ov7670
 Encoding [mjpeg/h264/raw, default: mjpeg]:
-\end{shellcode}
+\end{shellcodeboard}
 
 \hw{ov7670} is mandatory on the board, the \ccode{webcam} source being only for the native \term{Intel} (\cmdpath{make intel}) build; \ccode{MJPEG}, left at its default by pressing Enter, is what this project recommends for full-color output here, since the \gterm{hps}{HPS} has no hardware video encoder.
 
 Once running, view the stream on a PC:
 
-\begin{shellcode}
+\begin{shellcodehost}
 ffplay -fflags nobuffer -flags low_delay -framedrop rtsp://<board-ip>:8554/stream
-\end{shellcode}
+\end{shellcodehost}
 
 \section{Repository layout}
 

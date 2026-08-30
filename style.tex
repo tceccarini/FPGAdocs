@@ -171,7 +171,6 @@
     captionpos=b,
     numbers=none,
 }
-\lstnewenvironment{shellcode}{\lstset{style=githubbash}}{}
 
 % For lines dominated by one long path/token with no useful spaces
 % (e.g. export PATH="..."), where breaking only at whitespace causes overflow:
@@ -194,7 +193,16 @@
     captionpos=b,
     numbers=none,
 }
-\lstnewenvironment{shellcodepath}{\lstset{style=githubbashpath}}{}
+% Same as shellcode, but labelled with the machine the commands are typed on.
+% The label says where you TYPE the command, not where it takes effect:
+% "scp file board:" and "ssh board '...'" are both typed on the host.
+% breakatwhitespace=false (unlike plain shellcode): these blocks also absorb
+% former shellcodepath content, so a long unbroken token must still be able
+% to break rather than overflow the page margin.
+\lstnewenvironment{shellcodehost}{\lstset{style=githubbash, breakatwhitespace=false,
+    captionpos=t, title={\makebox[\linewidth][r]{\scriptsize\bfseries On the host}}}}{}
+\lstnewenvironment{shellcodeboard}{\lstset{style=githubbash, breakatwhitespace=false,
+    captionpos=t, title={\makebox[\linewidth][r]{\scriptsize\bfseries On the board}}}}{}
 
 % Usage in chapters:
 %   \begin{shellcode}            <- normal commands / word lists (safe wrapping)
