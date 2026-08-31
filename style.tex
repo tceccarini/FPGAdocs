@@ -86,7 +86,7 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
-    citecolor=black,
+    citecolor=red,   % TEMP: makes \cite{} numbers easy to spot while reviewing the glossary citations; revert to black when done
     urlcolor=blue,
     bookmarksnumbered=true,
 }
@@ -95,6 +95,22 @@
 \let\ltx@url\url
 \renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
 \makeatother
+
+% Second, independent bibliography for the glossary's own citations, kept
+% separate from the thesis's own References (\cite{}/references.bib): use
+% \citegloss{key} in glossary-entries.tex, printed with \bibliographygloss
+% in 02_glossary.tex. Same underlying references.bib, own numbering/list.
+\usepackage{multibib}
+\newcites{gloss}{Additional References for the Glossary}
+
+% Makes the gloss bibliography continue the main one's numbering instead of
+% restarting at 1. Guarded by a boolean so it fires only around the gloss
+% list (see 02_glossary.tex) and never touches the main References.
+\usepackage{etoolbox}
+\newif\ifglosscontinuenum
+\AtBeginEnvironment{thebibliography}{\ifglosscontinuenum\setcounter{enumiv}{24}\fi}
+% ^ 24 = current entry count of the main References (references.bib); update
+% this number if that count changes, so the gloss list keeps starting at 25.
 
 % Usage in references.bib: labels a source inside a note/howpublished field,
 % for entries that distinguish the official source from where it's mirrored.

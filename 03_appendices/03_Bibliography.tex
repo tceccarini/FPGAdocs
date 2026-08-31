@@ -23,3 +23,16 @@
 
 \bibliographystyle{plain}
 \bibliography{references}
+
+\section{Additional References for the Glossary}
+% This list is only for sources that are NOT already in the main References
+% above (use plain \cite{} in glossary-entries.tex for those -- sharing a key
+% between the two lists makes LaTeX print the wrong citation number, since
+% \citegloss{} funnels into the same global, key-keyed "already cited"
+% tracking as \cite{}). \citegloss{} is for glossary-only sources with no
+% citation anywhere else in the thesis. \chapter/\@mkboth are already
+% patched above; this being the true last chapter, no re-patching needed.
+\bibliographystylegloss{plain}
+\glosscontinuenumtrue
+\bibliographygloss{references-glossary}
+\glosscontinuenumfalse
