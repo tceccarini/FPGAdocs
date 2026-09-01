@@ -1,0 +1,7 @@
+% biblatex custom data model for the FPGAdocs thesis.
+% Adds mirrorurl: the FPGAdocs GitHub mirror URL of a source, printed
+% alongside biblatex's native url field (see style.tex's url+urldate
+% bibmacro override). Data model macros are only valid inside a file
+% loaded via biblatex's datamodel= package option, hence this file.
+\DeclareDatamodelFields[type=field, datatype=uri]{mirrorurl}
+\DeclareDatamodelEntryfields{mirrorurl}

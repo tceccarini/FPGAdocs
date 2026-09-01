@@ -82,7 +82,6 @@
 % Usage: \begin{warningbox} ... \end{warningbox}
 
 \usepackage[hypertexnames=false, breaklinks=true]{hyperref}
-\usepackage{xurl} % allows breaking long URLs anywhere, not just at pre-set points
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
@@ -96,26 +95,52 @@
 \renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
 \makeatother
 
-% Second, independent bibliography for the glossary's own citations, kept
-% separate from the thesis's own References (\cite{}/references.bib): use
-% \citegloss{key} in glossary-entries.tex, printed with \bibliographygloss
-% in 02_glossary.tex. Same underlying references.bib, own numbering/list.
-\usepackage{multibib}
-\newcites{gloss}{Additional References for the Glossary}
+% Bibliography backend: biblatex/biber. Two printed lists (main References +
+% "Additional References for the Glossary") share one pool of .bib resources,
+% split by category at print time, with continuous numbering across both
+% (defernumbers) instead of the old multibib + manual enumiv-counter hack.
+\usepackage[backend=biber, style=numeric, sorting=nyt, defernumbers=true,
+            maxbibnames=99, urldate=long, datamodel=fpgadocs]{biblatex}
+% Must load after biblatex: biblatex resets the url-breaking character list,
+% which undoes xurl's more permissive one if xurl loads first (visible as
+% ugly letter-by-letter spacing in long bibliography URLs).
+\usepackage{xurl} % allows breaking long URLs anywhere, not just at pre-set points
+\addbibresource{references.bib}
+\addbibresource{references-glossary.bib}
+\DeclareBibliographyCategory{glossrefs}
+% Every key defined in references-glossary.bib; add new ones here when a new
+% glossary-only source is introduced (see references-glossary.bib's own header).
+\addtocategory{glossrefs}{ALTERA-COMPANY,ALTERA-USB-BLASTER-UG,APT-UBUNTU-MANPAGE,ARM-DDI-0409I,BALENAETCHER-SITE,BRYANT-OHALLARON-CSAPP,BUSYBOX-SITE,CLAUDECODE-SITE,CPPREFERENCE,DD-MANPAGE,DEVICETREE-ORG,DHCPCD-SITE,FFMPEG-SITE,GDB-SITE,GITHUB-SITE,GIT-SITE,GLIBC-TERMINATION-SIGNALS,GNU-MAKE-SITE,GONZALEZ-WOODS-DIP,GREGOIRE-PROFESSIONAL-CPP,GSTREAMER-SITE,HARRIS-DDCA,IEEE-1149-1,ITU-T-H264,KERNEL-V4L2-DOC,LOOP-MANPAGE,MICROCHIP-SOCFPGA,MMAP-MANPAGE,OPENCV-COLOR-CONVERSIONS,OPENCV-SITE,OPENSSH-SITE,PICOCOM-REPO,PUTTY-SITE,QUARTUS-DEBUG-TOOLS,RFC2131-DHCP,RFC2326-RTSP,RFC4251-SSH,RFC5905-NTP,SCP-MANPAGE,SU-MANPAGE,TI-I2C-GUIDE,UDEV-MANPAGE,US-PATENT-3971065,US-PATENT-5629734,VMWARE-VM,VSCODE-SITE}
+% \citegloss{} in glossary-entries.tex used to funnel into multibib's separate
+% gloss bibliography; now the same \cite{} handles both lists; which list a key
+% prints in is decided by the category above, not by which macro was called.
+\let\citegloss\cite
 
-% Makes the gloss bibliography continue the main one's numbering instead of
-% restarting at 1. Guarded by a boolean so it fires only around the gloss
-% list (see 02_glossary.tex) and never touches the main References.
-\usepackage{etoolbox}
-\newif\ifglosscontinuenum
-\AtBeginEnvironment{thebibliography}{\ifglosscontinuenum\setcounter{enumiv}{25}\fi}
-% ^ 25 = current entry count of the main References (references.bib); update
-% this number if that count changes, so the gloss list keeps starting at 26.
+% mirrorurl (the FPGAdocs GitHub mirror of a source, alongside biblatex's
+% native url) is declared in fpgadocs.dbx -- data model macros only work
+% inside a datamodel=<name> file, not here after biblatex is loaded.
+\DeclareFieldFormat{url}{Main URL\addcolon\space\url{#1}}
+\DeclareFieldFormat{mirrorurl}{Mirror URL\addcolon\space\url{#1}}
+% Strip biblatex's default "(Visited on ...)" wrapper: printed via our own
+% "Last Accessed:" label instead (see url+urldate below).
+\DeclareFieldFormat{urldate}{#1}
 
-% Usage in references.bib: labels a source inside a note/howpublished field,
-% for entries that distinguish the official source from where it's mirrored.
-\newcommand{\mainsource}[1]{\\Main source: \url{#1}}
-\newcommand{\mirroredsource}[1]{\\Mirrored source: \url{#1}}
+% Reorders what used to be "URL. (Visited on DATE)" into the three lines the
+% thesis wants for every online source: access date, then main URL, then
+% mirror URL (each its own line/block, in that order).
+\renewbibmacro*{url+urldate}{%
+  \newunit\newblock
+  \iffieldundef{urlyear}
+    {\iffieldundef{url}
+       {\iffieldundef{mirrorurl}
+          {}
+          {\printtext{\printfield{mirrorurl}}.}}%
+       {\printtext{\usebibmacro{url}}.%
+        \iffieldundef{mirrorurl}{}{\\\printfield{mirrorurl}.}}}%
+    {\printtext{Last Accessed\addcolon\space\printurldate}.%
+     \iffieldundef{url}{}{\\\usebibmacro{url}.}%
+     \iffieldundef{mirrorurl}{}{\\\printfield{mirrorurl}.}}%
+}
 
 \usepackage{glossaries}    % must load after hyperref
 \makeglossaries
