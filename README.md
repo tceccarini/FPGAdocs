@@ -17,7 +17,7 @@ The thesis documents two sibling projects built around the same custom FPGA vide
 - [FPGAlix](https://github.com/tceccarini/FPGAlix) — embedded-Linux camera pipeline for the Terasic DE1-SoC
 - [FPGAsteel](https://github.com/tceccarini/FPGAsteel) — bare-metal camera-to-VGA pipeline for the Terasic DE1-SoC
 
-## Downloads
+## Downloads / Mirror
 
 This shared folder mirrors everything needed to follow the tutorial without hunting down each piece separately:
 
