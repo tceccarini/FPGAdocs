@@ -86,7 +86,7 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
-    citecolor=red,   % TEMP: makes \cite{} numbers easy to spot while reviewing the glossary citations; revert to black when done
+    citecolor=black,
     urlcolor=blue,
     bookmarksnumbered=true,
 }
@@ -108,9 +108,9 @@
 % list (see 02_glossary.tex) and never touches the main References.
 \usepackage{etoolbox}
 \newif\ifglosscontinuenum
-\AtBeginEnvironment{thebibliography}{\ifglosscontinuenum\setcounter{enumiv}{24}\fi}
-% ^ 24 = current entry count of the main References (references.bib); update
-% this number if that count changes, so the gloss list keeps starting at 25.
+\AtBeginEnvironment{thebibliography}{\ifglosscontinuenum\setcounter{enumiv}{25}\fi}
+% ^ 25 = current entry count of the main References (references.bib); update
+% this number if that count changes, so the gloss list keeps starting at 26.
 
 % Usage in references.bib: labels a source inside a note/howpublished field,
 % for entries that distinguish the official source from where it's mirrored.

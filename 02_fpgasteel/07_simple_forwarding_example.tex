@@ -182,7 +182,7 @@ Represents a single image frame: it owns (or wraps) the pixel buffer, together w
 \subsection{FramePool class}
 \label{subsec:fpgasteel-framepool}
 
-\ccode{FramePool} manages a set of \ccode{Frame} objects built over memory the caller allocates. The caller decides \ccode{count}, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and \ccode{count} to \ccode{FramePool}'s constructor. The pool uses no heap allocation and no locks: it can be shared safely between the main loop and a single \gterm{isr}{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
+\ccode{FramePool} manages a set of \ccode{Frame} objects built over memory the caller allocates. The caller decides \ccode{count}, the number of frame buffers to use, allocates the storage that many frames require, and passes both the storage pointer and \ccode{count} to \ccode{FramePool}'s constructor. The pool uses no \gterm{heap}{heap} allocation and no locks: it can be shared safely between the main loop and a single \gterm{isr}{ISR} because both run on the same core, so there is never true concurrency between them, only interruption.
 
 Internally, \ccode{FramePool} also needs its own bookkeeping arrays: one slot per frame, tracking state and queue position. Since it doesn't use the heap to size these arrays at runtime, they are fixed at compile time to \ccode{MAX_SLOTS = 8}, and \ccode{count} is clamped to \ccode{MAX_SLOTS} if it ever exceeds it. \ccode{MAX_SLOTS} only bounds those bookkeeping arrays. It says nothing about how many frames are actually held in memory; that is what \ccode{count} controls.
 
@@ -325,37 +325,37 @@ Drives an \hw{altera_msgdma} core with its prefetcher enabled: the dispatcher \h
 \subsection{Camera class}
 \label{subsec:fpgasteel-camera-class}
 
-\ccode{Camera} is a singleton that owns three collaborators, all by composition, not inheritance: \ccode{AvalonSCCB}, for talking to the sensor's control registers over \gterm{i2c}{SCCB}/\gterm{i2c}{I\textsuperscript{2}C}; \ccode{PrefetchedMSGDMA}, driving the \hw{ov7670_video_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{ov7670_prefercher_descriptor_mem}). It does not touch the \gterm{ov7670}{OV7670}'s \hw{ov7670_pclk} reset line: releasing the sensor from reset is explicitly left to the caller (\ccode{PclkResetController}, used directly by \ccode{main()}, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). \ccode{desc0}/\ccode{desc1} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
+\ccode{Camera} is a \gterm{singleton}{singleton} that owns three collaborators, all by composition, not inheritance: \ccode{AvalonSCCB}, for talking to the sensor's control registers over \gterm{i2c}{SCCB}/\gterm{i2c}{I\textsuperscript{2}C}; \ccode{PrefetchedMSGDMA}, driving the \hw{ov7670_video_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{ov7670_prefercher_descriptor_mem}). It does not touch the \gterm{ov7670}{OV7670}'s \hw{ov7670_pclk} reset line: releasing the sensor from reset is explicitly left to the caller (\ccode{PclkResetController}, used directly by \ccode{main()}, Section~\ref{sec:fpgasteel-simple-forwarding-how-it-works}). \ccode{desc0}/\ccode{desc1} each hold only a destination address, since this is an \term{ST}$\rightarrow$\term{MM} transfer: the source is the incoming \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: \lstinline[style=inlineFsRepo]!src/Camera.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{getInstance()}: returns the singleton instance.
+    \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
     \item \ccode{init(pool)}: requires a \ccode{FramePool} with capacity $\geq$ 2 and a matching \ccode{FRAME_WIDTH*FRAME_HEIGHT}/\ccode{CAMERA_COLOR_SCHEME} (\repopath{Config.h}; a mismatch throws \ccode{ExceptionCamera}); soft-resets the sensor, checks its product \term{ID} over \gterm{i2c}{SCCB}, writes the color-scheme-specific and common register tables via \ccode{AvalonSCCB}, then reads every register back to confirm it took (readback mismatches also throw \ccode{ExceptionCamera}). Enables the \hw{ov7670_data_interface}, sets up two descriptors from the descriptor memory in ping-pong (\ccode{desc0} armed and started, \ccode{desc1} prepared but deliberately left uncommitted, so the prefetcher has nothing to run there until the \gterm{isr}{ISR} commits it), and starts \ccode{PrefetchedMSGDMA}.
     \item \ccode{deInit()}: stops the \gterm{dma}{DMA}, disables the data interface, and soft-resets the sensor.
     \item \ccode{verticalFlip(enable)}: toggles the \gterm{ov7670}{OV7670}'s \term{MVFP} register, bit 5, directly.
     \item \ccode{horizontalMirror(enable)}: toggles the \gterm{ov7670}{OV7670}'s \term{MVFP} register, bit 4, directly.
     \item \ccode{getDroppedFramesCounter}: returns the \hw{ov7670_data_interface}'s hardware counter, which is incremented whenever the \gterm{fpga}{FPGA}-side pipeline itself drops a frame; independent of the software fallback described under \ccode{onTransferComplete()} below.
     \item \ccode{clearDroppedFramesCounter()}: resets that counter to zero.
-    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an exception.
-    \item \ccode{getIsrFaultType()}: returns the type of the exception the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
+    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an \gterm{exception}{exception}.
+    \item \ccode{getIsrFaultType()}: returns the type of the \gterm{exception}{exception} the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
     \item \ccode{clearIsrFault()}: clears the fault flag.
-    \item \ccode{onTransferComplete()} (private, the \gterm{isr}{ISR}, \ccode{noexcept}): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal \ccode{m_dummyBuffer}), checks for \gterm{dma}{DMA} errors/early-termination/short transfer and either \ccode{push()}es the frame to the pool (good) or \ccode{giveBack()}s it (bad are discarded; Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture} covers the early-termination case). Then tries to \ccode{borrow()} a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at \ccode{m_dummyBuffer} instead, so the \gterm{dma}{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any exception (\ccode{ExceptionMsgdma} or otherwise) sets the fault flag above instead of propagating.
+    \item \ccode{onTransferComplete()} (private, the \gterm{isr}{ISR}, \ccode{noexcept}): runs on every finished capture. Looks at the descriptor that just completed, and if its destination was a real pool buffer (not the internal \ccode{m_dummyBuffer}), checks for \gterm{dma}{DMA} errors/early-termination/short transfer and either \ccode{push()}es the frame to the pool (good) or \ccode{giveBack()}s it (bad are discarded; Paragraph~\ref{subsec:fpgasteel-simple-forwarding-camera-capture} covers the early-termination case). Then tries to \ccode{borrow()} a fresh buffer for the now-completed descriptor's next use; if the pool is exhausted (consumer too slow), points the descriptor at \ccode{m_dummyBuffer} instead, so the \gterm{dma}{DMA} is never stalled waiting for a free slot. That capture is simply overwritten and lost. Any \gterm{exception}{exception} (\ccode{ExceptionMsgdma} or otherwise) sets the fault flag above instead of propagating.
 \end{itemize}
 
 \subsection{Vga class}
 \label{subsec:fpgasteel-vga-class}
 
-\ccode{Vga} is a singleton that owns two collaborators, by composition, not inheritance: \ccode{PrefetchedMSGDMA}, driving the \hw{vga_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{vga_prefercher_descriptor_mem}). Unlike \ccode{Camera}, it has nothing external to configure over a control bus: \hw{vga_controller} is fixed-function, with no equivalent of \ccode{AvalonSCCB}. Instead, \ccode{Vga} generates its own 8-bar color test pattern internally, so \gterm{vga}{VGA} output is already running the moment \ccode{init()} returns, before any real frame exists. \ccode{desc0}/\ccode{desc1} each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
+\ccode{Vga} is a \gterm{singleton}{singleton} that owns two collaborators, by composition, not inheritance: \ccode{PrefetchedMSGDMA}, driving the \hw{vga_msgdma} core; and \ccode{MsgdmaPrefetcherMemory}, for \term{CPU}-side access to that core's on-chip descriptor \term{RAM} (\hw{vga_prefercher_descriptor_mem}). Unlike \ccode{Camera}, it has nothing external to configure over a control bus: \hw{vga_controller} is fixed-function, with no equivalent of \ccode{AvalonSCCB}. Instead, \ccode{Vga} generates its own 8-bar color test pattern internally, so \gterm{vga}{VGA} output is already running the moment \ccode{init()} returns, before any real frame exists. \ccode{desc0}/\ccode{desc1} each hold only a source address, since this is an \term{MM}$\rightarrow$\term{ST} transfer: the destination is the outgoing \gterm{avalonst}{Avalon-ST} stream, not a \term{DDR} address.
 
 Source: \lstinline[style=inlineFsRepo]!src/Vga.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{getInstance()}: returns the singleton instance.
+    \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
     \item \ccode{init(pool)}: requires an \term{RGB24} \ccode{FramePool} sized to the \gterm{vga}{VGA} output resolution (\ccode{FRAME_WIDTH*FRAME_HEIGHT}) (throws \ccode{ExceptionMsgdma} otherwise); generates an internal test pattern at that same resolution (8 vertical color bars: white, red, green, blue, cyan, magenta, yellow, black) and starts two descriptors in ping-pong fashion, both initially reading from the test pattern, so \gterm{vga}{VGA} output is live from \ccode{init()} even before any camera frame is ready.
     \item \ccode{deInit()}: stops \gterm{vga}{VGA} output and de-initializes the \gterm{dma}{DMA}.
-    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an exception; \gterm{vga}{VGA} output freezes on the last frame while a fault is set.
-    \item \ccode{getIsrFaultType()}: returns the type of the exception the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
+    \item \ccode{hasIsrFault()}: returns whether the \gterm{isr}{ISR} (below) caught an \gterm{exception}{exception}; \gterm{vga}{VGA} output freezes on the last frame while a fault is set.
+    \item \ccode{getIsrFaultType()}: returns the type of the \gterm{exception}{exception} the \gterm{isr}{ISR} caught; only meaningful if \ccode{hasIsrFault()} is true.
     \item \ccode{clearIsrFault()}: clears the fault flag.
     \item \ccode{onTransferComplete()} (private, the \gterm{isr}{ISR}): runs every time a transfer completes, and checks whether \ccode{vgaPool} has a new frame ready (\ccode{pop()}): if there is one available, it writes the new frame's buffer address into the source field of the descriptor that's about to run next, and gives the old frame, the one that had just finished being shown, back to the pool (\ccode{giveBack()}); if none is available, it leaves that descriptor's source pointing at the same frame it just showed, so the display simply repeats it (that frame is never given back to the pool, since it's still the one in use). Either way, it then commits that descriptor (\ccode{commitMMtoST}), reactivating it. This is what lets the display keep showing the last converted frame indefinitely if the main loop temporarily falls behind, instead of underrunning.
 \end{itemize}
@@ -366,16 +366,16 @@ Source: \lstinline[style=inlineFsRepo]!src/Vga.{h,cpp}!.
 Stateless, static-only class for converting one \ccode{Frame} to \term{RGB24} in software. Source: \lstinline[style=inlineFsRepo]!src/SimpleFilters.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{convert(src, dst)}, the only public method: converts \ccode{src}, a \ccode{Frame} in any \ccode{Frame::ColorScheme} other than \term{RGB24}, into \ccode{dst}, which must already be \term{RGB24}. Each source format gets its own conversion: \ccode{Mosaic8} is a naive per-pixel demosaic (each pixel keeps only its own \term{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), \ccode{YUYV16} gets a full \gterm{yuv422}{YUV422}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (\ccode{RGB565}, \ccode{RGB555}, \ccode{RGB444}) are straight bit-unpacked to \term{RGB24}. Throws an exception if \ccode{dst} isn't \term{RGB24}, or if \ccode{src} is a format \ccode{convert} doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use \ccode{memcpy} instead).
+    \item \ccode{convert(src, dst)}, the only public method: converts \ccode{src}, a \ccode{Frame} in any \ccode{Frame::ColorScheme} other than \term{RGB24}, into \ccode{dst}, which must already be \term{RGB24}. Each source format gets its own conversion: \ccode{Mosaic8} is a naive per-pixel demosaic (each pixel keeps only its own \gterm{bayermosaic}{Bayer} channel, the other two zeroed; visibly gridded, but adequate to sanity-check capture without a real demosaicing filter), \ccode{YUYV16} gets a full \gterm{yuv422}{YUV422}$\rightarrow$\term{RGB} conversion, and the packed \term{RGB} formats (\ccode{RGB565}, \ccode{RGB555}, \ccode{RGB444}) are straight bit-unpacked to \term{RGB24}. Throws an \gterm{exception}{exception} if \ccode{dst} isn't \term{RGB24}, or if \ccode{src} is a format \ccode{convert} doesn't handle (currently just \term{RGB24} itself: \term{RGB24}$\rightarrow$\term{RGB24} is intentionally not handled here, use \ccode{memcpy} instead).
 \end{itemize}
 
 \subsection{HexDisplay class}
 \label{subsec:fpgasteel-hex-display}
 
-Singleton driving the custom \hw{hex_display_controller} \term{IP} over a single \gterm{avalonmm}{Avalon-MM} register (bit 31: enabled; bits[19:0]: value 0--999999). Source: \lstinline[style=inlineFsRepo]!src/HexDisplay.{h,cpp}!.
+\gterm{singleton}{Singleton} driving the custom \hw{hex_display_controller} \term{IP} over a single \gterm{avalonmm}{Avalon-MM} register (bit 31: enabled; bits[19:0]: value 0--999999). Source: \lstinline[style=inlineFsRepo]!src/HexDisplay.{h,cpp}!.
 
 \begin{itemize}
-    \item \ccode{getInstance()}: returns the singleton instance.
+    \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
     \item \ccode{on()}: turns the display on, keeping the current value.
     \item \ccode{off()}: turns the display off (all segments blank).
     \item \ccode{showNumber(value)}: writes \ccode{value} to the register and turns the display on if it was off. Throws \ccode{ExceptionHexDisplay} if \ccode{value > MAX_VALUE} (999999).
@@ -422,7 +422,7 @@ while (true) {
 
 \ccode{camPool} and \ccode{vgaPool} are each shared between the main loop and one \gterm{isr}{ISR}: \ccode{Camera}'s \gterm{isr}{ISR} produces into \ccode{camPool}, the main loop consumes; the main loop produces into \ccode{vgaPool}, \ccode{Vga}'s \gterm{isr}{ISR} consumes. \ccode{FramePool}'s lock-free design is what makes this safe without disabling interrupts around the main loop's \ccode{pop()}/\ccode{borrow()} calls.
 
-Every exception the code in this snippet can throw (\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer}, \ccode{ExceptionI2C}, \ccode{ExceptionCamera}, \ccode{ExceptionMsgdma}, \ccode{ExceptionHexDisplay}, \ccode{ExceptionFramePool}) is caught around this block and reported over \ccode{Serial}, exactly as in \nameref{chap:fpgasteel-hello-world} and \nameref{chap:fpgasteel-i2c-example}.
+Every \gterm{exception}{exception} the code in this snippet can throw (\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer}, \ccode{ExceptionI2C}, \ccode{ExceptionCamera}, \ccode{ExceptionMsgdma}, \ccode{ExceptionHexDisplay}, \ccode{ExceptionFramePool}) is caught around this block and reported over \ccode{Serial}, exactly as in \nameref{chap:fpgasteel-hello-world} and \nameref{chap:fpgasteel-i2c-example}.
 
 \section{Debug tooling}
 \label{sec:fpgasteel-simple-forwarding-debug-tooling}

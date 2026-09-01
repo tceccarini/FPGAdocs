@@ -132,7 +132,7 @@ while (true) {
 }
 \end{lstlisting}
 
-Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works} with \ccode{dip.process(*camFrame, *vgaFrame)} standing in for \ccode{converter.convert(*camFrame, *vgaFrame)}, plus the one line writing the result code to \hw{LED_PIO}. The exception list, pool handling, and cache-flush placement around \ccode{pop(true)}/\ccode{push(vgaFrame, true)} are all identical.
+Structurally this is Section~\ref{sec:fpgasteel-dualcore-forwarding-how-it-works} with \ccode{dip.process(*camFrame, *vgaFrame)} standing in for \ccode{converter.convert(*camFrame, *vgaFrame)}, plus the one line writing the result code to \hw{LED_PIO}. The \gterm{exception}{exception} list, pool handling, and cache-flush placement around \ccode{pop(true)}/\ccode{push(vgaFrame, true)} are all identical.
 
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-dip-debug-tooling}

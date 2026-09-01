@@ -158,7 +158,7 @@ Unchanged: see Section~\ref{subsec:fpgasteel-hex-display}.
 \subsection{System class}
 \label{subsec:fpgasteel-cache-system-class}
 
-\ccode{System} is the same singleton used in \nameref{chap:fpgasteel-simple-forwarding} (\ccode{init()}, \ccode{micros()}, \ccode{millis()}, \ccode{delay()}, \ccode{delayMicroseconds()}, \ccode{deInit()}, all identical), plus one new method this project actually relies on: \ccode{enableCache()}. Source: \lstinline[style=inlineFsRepo]!src/System.{h,cpp}!.
+\ccode{System} is the same \gterm{singleton}{singleton} used in \nameref{chap:fpgasteel-simple-forwarding} (\ccode{init()}, \ccode{micros()}, \ccode{millis()}, \ccode{delay()}, \ccode{delayMicroseconds()}, \ccode{deInit()}, all identical), plus one new method this project actually relies on: \ccode{enableCache()}. Source: \lstinline[style=inlineFsRepo]!src/System.{h,cpp}!.
 
 \begin{itemize}
     \item \ccode{enableCache()}: enables the \term{L1} data cache, the \term{L2} cache, and the flat 1:1 \gterm{mmu}{MMU} mapping discussed in Paragraph~\ref{subsec:fpgasteel-cache-mmu-architecture}. Must be called after \ccode{init()}. It performs the following actions in order:

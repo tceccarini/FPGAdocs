@@ -6,14 +6,14 @@ This part covers the realization of \prjname{FPGAlix}, the Linux-embedded varian
 \section{Quick Start}
 \label{sec:fpgalix-quick-start}
 
-Readers who want the finished system running immediately, without going through every step described in this part, can start here instead. A prebuilt SD card image is available: it already contains the bootloader, kernel, root filesystem and \gterm{fpga}{FPGA}\footnote{\glsentrydesc{fpga}} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
+Readers who want the finished system running immediately, without going through every step described in this part, can start here instead. A prebuilt SD card image is available: it already contains the \gterm{bootloader}{bootloader}, \gterm{kernel}{kernel}, \gterm{rootfilesystem}{root filesystem} and \gterm{fpga}{FPGA}\footnote{\glsentrydesc{fpga}} bitstream, letting the \term{DE1-SoC} boot straight into a running system, without building anything from source.
 
 \subsection{Hardware needed}
 
 \begin{itemize}
     \item A \term{Terasic DE1-SoC} developer board.
     \item An \gterm{ov7670}{OV7670}\footnote{\glsentrydesc{ov7670}} camera module.
-    \item The custom camera adapter (transmitter and receiver boards, connected by a ribbon cable), wiring the camera to the \term{DE1-SoC}'s \term{GPIO\_0} header.
+    \item The custom camera adapter (transmitter and receiver boards, connected by a ribbon cable), wiring the camera to the \term{DE1-SoC}'s \gterm{gpio0header}{\term{GPIO\_0} header}.
     \item A microSD card, at least 8 GB.
     \item An \term{Ethernet} cable, for network access.
     \item A \term{PC} on the same network, to reach the board over \gterm{ssh}{SSH}\footnote{\glsentrydesc{ssh}} and view the video stream.
@@ -25,7 +25,7 @@ Readers who want the finished system running immediately, without going through 
 
 \begin{enumerate}
     \item Download the SD card image\footnote{See Chapter~\ref{chap:fpgalix-downloads} for where to obtain it.} and extract it.
-    \item Write the extracted image to the microSD card (at least 8 GB) with any disk-imaging tool, e.g. \cmdpath{dd} on \term{Linux} or \gterm{balenaetcher}{balenaEtcher}\footnote{\glsentrydesc{balenaetcher}} on Windows/Mac.
+    \item Write the extracted image to the microSD card (at least 8 GB) with any disk-imaging tool, e.g. \gterm{dd}{\cmdpath{dd}} on \term{Linux} or \gterm{balenaetcher}{balenaEtcher}\footnote{\glsentrydesc{balenaetcher}} on Windows/Mac.
     \item Insert the card into the \term{DE1-SoC}.
 \end{enumerate}
 
@@ -47,7 +47,7 @@ The board's \term{IP} address is shown automatically, a few seconds later, on th
 Two ways to log in, default password |1q2w3e4r| for both accounts:
 
 \begin{itemize}
-    \item over \gterm{ssh}{SSH}, once the IP is known, as \sysid{wheel}, then \cmdpath{su} for anything that needs root (loading \cmd{camera_driver_2}, accessing hardware registers directly):
+    \item over \gterm{ssh}{SSH}, once the IP is known, as \sysid{wheel}, then \gterm{su}{\cmdpath{su}} for anything that needs root (loading \cmd{camera_driver_2}, accessing hardware registers directly):
 
 \begin{shellcodehost}
 ssh wheel@<board-ip>
@@ -58,7 +58,7 @@ ssh wheel@<board-ip>
 
 \subsection{Running the software}
 
-\cmd{hexip_daemon} is already running once the board boots; no action needed. The prebuilt SD card image also already contains \cmd{camera_driver_2} and \cmd{vision_core}, built and placed in \sysid{wheel}'s own home directory (\extpath{/home/wheel/camera_driver_2/}, \extpath{/home/wheel/vision_core/}); no building or transferring files over \cmdpath{scp} is needed here. Building from source and deploying over \cmdpath{scp}, covered in full in later chapters, only matters after changing their source.
+\cmd{hexip_daemon} is already running once the board boots; no action needed. The prebuilt SD card image also already contains \cmd{camera_driver_2} and \cmd{vision_core}, built and placed in \sysid{wheel}'s own home directory (\extpath{/home/wheel/camera_driver_2/}, \extpath{/home/wheel/vision_core/}); no building or transferring files over \gterm{scp}{\cmdpath{scp}} is needed here. Building from source and deploying over \gterm{scp}{\cmdpath{scp}}, covered in full in later chapters, only matters after changing their source.
 
 Log in as \sysid{wheel} (or \sysid{root} from the serial console, cd-ing to \extpath{/home/wheel} first), then bring the camera up and load the driver:
 
@@ -85,7 +85,7 @@ Source [webcam/ov7670, default: webcam]: ov7670
 Encoding [mjpeg/h264/raw, default: mjpeg]:
 \end{shellcodeboard}
 
-\hw{ov7670} is mandatory on the board, the \ccode{webcam} source being only for the native \term{Intel} (\cmdpath{make intel}) build; \ccode{MJPEG}, left at its default by pressing Enter, is what this project recommends for full-color output here, since the \gterm{hps}{HPS} has no hardware video encoder.
+\hw{ov7670} is mandatory on the board, the \ccode{webcam} source being only for the native \term{Intel} (\gterm{make}{\cmdpath{make intel}}) build; \ccode{MJPEG}, left at its default by pressing Enter, is what this project recommends for full-color output here, since the \gterm{hps}{HPS} has no hardware video encoder.
 
 Once running, view the stream on a PC:
 

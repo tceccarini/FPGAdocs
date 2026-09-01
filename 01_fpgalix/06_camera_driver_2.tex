@@ -31,7 +31,7 @@ Two further problems in the same driver were found and fixed: one caused the \gt
 \section{Current limitations}
 \label{sec:fpgalix-camera-limitations}
 
-The driver, as it stands, supports a single configuration: \term{Bayer} mosaic (\term{SRGGB8}), 640$\times$480, 30 \term{fps}, matching the \gterm{ov7670}{OV7670}'s native sensor output and this project's \gterm{avalonst}{Avalon-ST} pipeline. Other pixel formats and resolutions are left to a future version.
+The driver, as it stands, supports a single configuration: \gterm{bayermosaic}{Bayer mosaic} (\term{SRGGB8}), 640$\times$480, 30 \term{fps}, matching the \gterm{ov7670}{OV7670}'s native sensor output and this project's \gterm{avalonst}{Avalon-ST} pipeline. Other pixel formats and resolutions are left to a future version.
 
 The \gterm{ov7670}{OV7670} sensor itself is neither initialized nor reset by the driver: this is done separately, over \gterm{i2c}{I\textsuperscript{2}C}, before the driver is loaded or a stream started, using the external utilities described in Section~\ref{sec:fpgalix-camera-usage}.
 
@@ -56,17 +56,17 @@ Beyond the \term{DE1-SoC} board itself, this requires an \gterm{ov7670}{OV7670} 
 \end{warningbox}
 \footnotetext{See Part~\ref{part:appendices}, Section~\ref{sec:camera-adapter-reset-powerdown}.}
 
-Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over \cmdpath{scp}; any other transfer method works just as well. If transferring over \gterm{ssh}{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: \sysid{root} has no working \gterm{ssh}{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs \sysid{root}, since loading a kernel module and accessing hardware registers directly both require it; root access can be reached one of two ways:
+Paragraph~\ref{subsec:fpgalix-camera-transfer} shows one way of getting the files onto the board, over \gterm{scp}{\cmdpath{scp}}; any other transfer method works just as well. If transferring over \gterm{ssh}{SSH}, though, it has to be as the regular user created in Paragraph~\ref{subsec:fpgalix-login-network}: \sysid{root} has no working \gterm{ssh}{SSH} login. Every step from Paragraph~\ref{subsec:fpgalix-camera-root} onward needs \sysid{root}, since loading a kernel module and accessing hardware registers directly both require it; root access can be reached one of two ways:
 
 \begin{itemize}
-    \item from that same \gterm{ssh}{SSH} session, with \cmdpath{su} (the regular user's own password does not work here: it is the \sysid{root} password set in Subparagraph~\ref{subsec:fpgalix-buildroot-base});
+    \item from that same \gterm{ssh}{SSH} session, with \gterm{su}{\cmdpath{su}} (the regular user's own password does not work here: it is the \sysid{root} password set in Subparagraph~\ref{subsec:fpgalix-buildroot-base});
     \item from the serial console instead, already logged in as \sysid{root}; in this case \cmdpath{cd} into wherever the files were transferred to first, since the \sysid{root} login starts elsewhere.
 \end{itemize}
 
 \subsection{Deploying the module and utilities}
 \label{subsec:fpgalix-camera-transfer}
 
-Copy the compiled module and the debug scripts used in the following steps onto the board together, over \cmdpath{scp}, into a dedicated \repopath{camera_driver_2/} folder in the regular user's home directory:
+Copy the compiled module and the debug scripts used in the following steps onto the board together, over \gterm{scp}{\cmdpath{scp}}, into a dedicated \repopath{camera_driver_2/} folder in the regular user's home directory:
 
 \begin{shellcodehost}
 cd sw/camera_driver_2
@@ -74,7 +74,7 @@ ssh <username>@<board-ip> mkdir -p camera_driver_2
 scp -p bin/fpgalix_camera.ko utils/debug/resetCtrl.sh utils/debug/ov7670_ctrlif_set.sh utils/debug/ov7670_dataif_ctrl.sh <username>@<board-ip>:camera_driver_2/
 \end{shellcodehost}
 
-On the board, \cmdpath{cd} into that folder, then run \cmdpath{su} to switch to \sysid{root} for the remaining steps, keeping the same working directory:
+On the board, \cmdpath{cd} into that folder, then run \gterm{su}{\cmdpath{su}} to switch to \sysid{root} for the remaining steps, keeping the same working directory:
 
 \begin{shellcodeboard}
 cd camera_driver_2
@@ -97,7 +97,7 @@ Select option 2, ``Deassert reset''. This releases \hw{pclk_reset_controller}'s 
 ./ov7670_ctrlif_set.sh
 \end{shellcodeboard}
 
-Select the \term{Bayer} mode (1 for \term{Raw}, 2 for \term{Processed}). Registers are written and then read back automatically, confirming the camera answered correctly.
+Select the \gterm{bayermosaic}{Bayer} mode (1 for \term{Raw}, 2 for \term{Processed}). Registers are written and then read back automatically, confirming the camera answered correctly.
 
 \subsection{Enabling frame acquisition}
 \label{subsec:fpgalix-camera-frame-acq}

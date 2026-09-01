@@ -3,13 +3,13 @@
 
 \section{Introduction}
 
-This chapter covers how to set up the host used for \prjname{FPGAlix}'s hardware and software development. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \gterm{usbblaster}{USB-Blaster}\footnote{\glsentrydesc{usbblaster}} and serial console access.
+This chapter covers how to set up the host used for \prjname{FPGAlix}'s hardware and software development. It walks through installing the required software and where it lives on disk, then setting up the \gterm{environmentvariables}{environment variables} needed to reach it, and finally getting a working \gterm{usbblaster}{USB-Blaster}\footnote{\glsentrydesc{usbblaster}} and serial console access.
 
 Hardware debugging\footnote{Developing inside a \gterm{vm}{VM} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures.}, when needed, can only be done through the \gterm{usbblaster}{USB-Blaster}'s \gterm{jtag}{JTAG}\footnote{\glsentrydesc{jtag}} interface, integrated on the development board itself, using \gterm{signaltap}{SignalTap}'s in-system logic analyzer from \term{Quartus}. Software debugging, in contrast, can be done either through that same interface or over the network, with \cmdpath{gdbserver} running on the board and attached remotely from the host with \cmdpath{gdb}.
 
 \section{Host requirements}
 
-\prjname{FPGAlix} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with \gterm{quartusprime}{Quartus Prime} (including \gterm{platformdesigner}{Platform Designer}) and an \term{ARM GNU} toolchain installed and working.
+\prjname{FPGAlix} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with \gterm{quartusprime}{Quartus Prime} (including \gterm{platformdesigner}{Platform Designer}) and an \gterm{armgnutoolchain}{\term{ARM GNU} toolchain} installed and working.
 
 \section{Required software}
 
@@ -31,11 +31,11 @@ sudo apt install -y build-essential bison flex libssl-dev libncurses-dev u-boot-
     \item |curl|, |wget|: fetching installers and, on the board itself, general network testing.
     \item |openssh-server|, |iperf3|: verifying \gterm{ssh}{SSH} access and bandwidth to the board once it is on the network.
     \item |picocom|: terminal emulator for the board's serial console.
-    \item |pkg-config|, |libopencv-dev|, |libgstreamer1.0-dev|, |libgstreamer-plugins-base1.0-dev|, |libgstrtspserver-1.0-dev|: needed to build \repopath{sw/vision_core} natively on the host (\cmdpath{make intel}), which lets its capture/filter/streaming pipeline be exercised without the board, before cross-compiling it (\cmdpath{make arm}).
+    \item |pkg-config|, |libopencv-dev|, |libgstreamer1.0-dev|, |libgstreamer-plugins-base1.0-dev|, |libgstrtspserver-1.0-dev|: needed to build \repopath{sw/vision_core} natively on the host (\gterm{make}{\cmdpath{make intel}}), which lets its capture/filter/streaming pipeline be exercised without the board, before cross-compiling it (\gterm{make}{\cmdpath{make arm}}).
     \item |gstreamer1.0-plugins-base|, |gstreamer1.0-plugins-good|, |gstreamer1.0-plugins-bad|: the dev packages above only provide headers for linking the \cmd{vision_core} example; running its intel build additionally needs these plugins loaded at runtime.
     \item |python3|, |python3-numpy|, |python3-opencv|: required by \repopath{sw/camera_driver_2/utils/debug/view.py}, the raw-frame viewer used to debug the \gterm{v4l2}{V4L2} driver.
     \item |default-jdk|: |sopc2dts|, provided as the \repopath{repos/sopc2dts} submodule, is a plain \term{Java} tool that needs to be compiled before it can be run.
-    \item |ffmpeg|: provides \cmdpath{ffplay}, used on the host to view the \gterm{rtsp}{RTSP} video stream produced by \cmd{vision_core}. \term{VLC} was tried first and dropped due to compatibility problems.
+    \item |ffmpeg|: provides \gterm{ffplay}{\cmdpath{ffplay}}, used on the host to view the \gterm{rtsp}{RTSP} video stream produced by \cmd{vision_core}. \term{VLC} was tried first and dropped due to compatibility problems.
 \end{itemize}
 
 \subsection{Install the software, and where it lives}
@@ -69,15 +69,15 @@ export PATH="$HOME/Programs/Arm/toolchain/arm-gnu-toolchain-12.3.rel1-x86_64-arm
 export PATH="${QSYS_ROOTDIR}:$PATH"
 \end{shellcodehost}
 
-Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new shell) to apply the changes just made to the file.
+Reload with {\catcode`\~=12 \cmdpath{source ~/.bashrc}} (or open a new \gterm{shell}{shell}) to apply the changes just made to the file.
 
 Each line prepends to \term{PATH} rather than appending, so these installs are always found first, ahead of anything already on \term{PATH}, whether or not a same-named tool exists elsewhere on the system.
 
 Not on \term{PATH}, and not meant to be: two other \term{ARM} toolchains exist in this project and are always invoked by their full path from a Makefile, never exported globally.
 
 \begin{itemize}
-    \item \gterm{buildroot}{Buildroot} builds its own internal toolchain (\cmdpath{arm-buildroot-linux-gnueabihf-...}) as part of \repopath{repos/buildroot/output/host/bin/}. It is what \repopath{sw/vision_core}'s \cmdpath{make arm} target uses, and it must stay separate from the toolchain above: mixing the two (e.g. linking an object built with one against a library built with the other) produces \term{glibc} \term{ABI} mismatches.
-    \item The host's own native \cmdpath{gcc}/\cmdpath{g++} is used for \repopath{sw/vision_core}'s \cmdpath{make intel} target,\footnote{See Chapter~\ref{chap:fpgalix-vision-core}.} which is a completely separate, \term{x86\_64} build of the same program.
+    \item \gterm{buildroot}{Buildroot} builds its own internal toolchain (\cmdpath{arm-buildroot-linux-gnueabihf-...}) as part of \repopath{repos/buildroot/output/host/bin/}. It is what \repopath{sw/vision_core}'s \gterm{make}{\cmdpath{make arm}} target uses, and it must stay separate from the toolchain above: mixing the two (e.g. linking an object built with one against a library built with the other) produces \term{glibc} \term{ABI} mismatches.
+    \item The host's own native \cmdpath{gcc}/\cmdpath{g++} is used for \repopath{sw/vision_core}'s \gterm{make}{\cmdpath{make intel}} target,\footnote{See Chapter~\ref{chap:fpgalix-vision-core}.} which is a completely separate, \term{x86\_64} build of the same program.
 \end{itemize}
 
 \subsection{USB-Blaster and serial console access}
@@ -122,7 +122,7 @@ Both the \gterm{vhdl}{VHDL} sources under \repopath{hw/} and the \term{C/C++} an
     \item \gterm{vhdl}{VHDL} linting, snippets, project awareness --- \urlpath{teros-technology.teroshdl} (\term{TerosHDL}).
     \item \gterm{vhdl}{VHDL} syntax highlighting and language support --- \urlpath{rjyoung.vscode-modern-vhdl-support}.
     \item \term{C/C++} \term{IntelliSense} for \texttt{camera\_driver\_2}, \texttt{hexip\_daemon}, and \texttt{vision\_core} --- \urlpath{ms-vscode.cpptools} (+ \urlpath{ms-vscode.cpptools-extension-pack}).
-    \item Makefile awareness (every \repopath{sw/} project builds via \cmdpath{make}) --- \urlpath{ms-vscode.makefile-tools}.
+    \item Makefile awareness (every \repopath{sw/} project builds via \gterm{make}{\cmdpath{make}}) --- \urlpath{ms-vscode.makefile-tools}.
     \item editing/debugging \repopath{sw/camera_driver_2/utils/debug/view.py} --- \urlpath{ms-python.python} (+ \term{Pylance}, \term{debugpy}).
     \item viewing the datasheet/manual PDFs under \repopath{docs/} without leaving the editor --- \urlpath{tomoki1207.pdf}.
 \end{itemize}

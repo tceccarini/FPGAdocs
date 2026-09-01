@@ -13,7 +13,7 @@
     \item spins forever.
 \end{itemize}
 
-The purpose of this program is to check that the whole chain works end to end: \cmdpath{make} producing an \repopath{.elf} with the \term{ARM} toolchain, \gterm{openocd}{OpenOCD} loading it over \gterm{jtag}{JTAG}, and the \gterm{hps}{HPS} running it with interrupts enabled and talking over the serial console. Everything built afterwards assumes this chain works.
+The purpose of this program is to check that the whole chain works end to end: \gterm{make}{\cmdpath{make}} producing an \repopath{.elf} with the \term{ARM} toolchain, \gterm{openocd}{OpenOCD} loading it over \gterm{jtag}{JTAG}, and the \gterm{hps}{HPS} running it with interrupts enabled and talking over the serial console. Everything built afterwards assumes this chain works.
 
 \section{Prerequisites}
 \label{sec:fpgasteel-hello-prerequisites}
@@ -40,7 +40,7 @@ See Paragraph~\ref{subsec:fpgasteel-install-paths} for versions and install path
 \section{Code structure}
 \label{sec:fpgasteel-hello-code-structure}
 
-The project defines two main \gterm{cpp}{C++} classes, \ccode{System} and \ccode{Serial}, tasked respectively with managing the interrupt controller and \gterm{uart0}{UART0}. Since each one is tied to a single, specific piece of hardware (there is exactly one interrupt controller and one \gterm{uart0}{UART0}), both are implemented as singletons: the caller obtains the instance with \ccode{getInstance()}, then calls \ccode{init()}, which performs the actual hardware initialization. If \ccode{init()} fails, both throw a matching exception (\ccode{ExceptionSystem} for \ccode{System}, \ccode{ExceptionSerial} for \ccode{Serial}), carrying the name of the failing \gterm{hwlib}{hwlib}\footnote{\glsentrydesc{hwlib}} call and its \term{ALT\_STATUS\_CODE}.
+The project defines two main \gterm{cpp}{C++} classes, \ccode{System} and \ccode{Serial}, tasked respectively with managing the interrupt controller and \gterm{uart0}{UART0}. Since each one is tied to a single, specific piece of hardware (there is exactly one interrupt controller and one \gterm{uart0}{UART0}), both are implemented as \gterm{singleton}{singletons}: the caller obtains the instance with \ccode{getInstance()}, then calls \ccode{init()}, which performs the actual hardware initialization. If \ccode{init()} fails, both throw a matching \gterm{exception}{exception} (\ccode{ExceptionSystem} for \ccode{System}, \ccode{ExceptionSerial} for \ccode{Serial}), carrying the name of the failing \gterm{hwlib}{hwlib}\footnote{\glsentrydesc{hwlib}} call and its \term{ALT\_STATUS\_CODE}.
 
 \subsection{System}
 \label{subsec:fpgasteel-hello-system}
@@ -48,7 +48,7 @@ The project defines two main \gterm{cpp}{C++} classes, \ccode{System} and \ccode
 \ccode{System} (\lstinline[style=inlineFsRepo]!src/System.{h,cpp}!) manages the interrupt controller (\gterm{gic}{GIC}):
 
 \begin{itemize}
-    \item \ccode{getInstance()}: returns the singleton instance.
+    \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
     \item \ccode{init()}: initializes and enables the interrupt controller; in order, it calls the \gterm{altera}{Altera} \gterm{hwlib}{hwlib} functions \ccode{alt_int_global_init()}, \ccode{alt_int_cpu_init()}, \ccode{alt_int_cpu_enable()}, \ccode{alt_int_global_enable()}.
     \item \ccode{deInit()}: disables and uninitializes it, in the reverse order.
 \end{itemize}
@@ -61,7 +61,7 @@ Both \ccode{init()} and \ccode{deInit()} throw \ccode{ExceptionSystem} if any of
 \ccode{Serial} (\lstinline[style=inlineFsRepo]!src/Serial.{h,cpp}!) manages \gterm{uart0}{UART0} in interrupt mode, 8-N-1 at 115200 baud (constants in \repopath{Config.h}):
 
 \begin{itemize}
-    \item \ccode{getInstance()}: returns the singleton instance.
+    \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
     \item \ccode{init()}: configures \gterm{uart0}{UART0} (data bits, parity, stop bits, baud rate), enables its \term{FIFO}s, registers the \gterm{uart0}{UART0} interrupt handler and enables the \term{RX} and line interrupts.
     \item \ccode{deInit()}: disables \gterm{uart0}{UART0}, unregisters the interrupt handler and discards any buffered data.
     \item \ccode{write(data, size)}: queues bytes for transmission and enables the \term{TX} interrupt.
@@ -138,7 +138,7 @@ With the board wired up and sitting at ``Ready for JTAG'', the rest happens insi
     \item Click on |Finish|.
 \end{enumerate}
 
-The imported project is not built from \term{Eclipse}; building stays \cmdpath{make}'s job.
+The imported project is not built from \term{Eclipse}; building stays \gterm{make}{\cmdpath{make}}'s job.
 
 \subsection{Create the Debug Configuration}
 \label{subsec:fpgasteel-hello-debug-config}
@@ -149,7 +149,7 @@ The imported project is not built from \term{Eclipse}; building stays \cmdpath{m
 
 On the \term{Main} tab, set \term{Project} to |hello_world| and \term{C/C++ Application} to \repopath{bin/hello_word.elf}.
 
-Leave the build setting on ``Select Automatically'': building this project is \cmdpath{make}'s job, so this never actually triggers a build from \term{Eclipse}.
+Leave the build setting on ``Select Automatically'': building this project is \gterm{make}{\cmdpath{make}}'s job, so this never actually triggers a build from \term{Eclipse}.
 
 \begin{figure}[htbp]
     \centering

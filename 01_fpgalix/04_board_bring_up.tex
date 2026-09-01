@@ -47,7 +47,7 @@ See Chapter~\ref{chap:fpgalix-devenv} for the installation and configuration of 
 
 On reset, the fixed-function \gterm{bootrom}{Boot ROM} samples the \term{BSEL[2:0]} pins to select the boot source (\term{SD/MMC}, \term{QSPI}, \term{NAND}, or \gterm{fpga}{FPGA} fallback). On the \term{DE1-SoC}, these pins are hardwired on the \gterm{pcb}{PCB} to boot from \term{SD/MMC} \cite{DE1-SCH}, so the \gterm{bootrom}{Boot ROM} reads the combined \gterm{spl}{SPL} (Secondary Program Loader) + \gterm{uboot}{U-Boot} image from a dedicated raw partition (type \term{A2}) on the \term{SD} card, loads it into on-chip \term{RAM}, verifies it, and hands control to \gterm{spl}{SPL}, which brings up clocks, pin muxing and \term{DDR} \cite{CV-TRM}. \gterm{spl}{SPL} then loads full \gterm{uboot}{U-Boot} into \term{DDR}.
 
-From this point, \gterm{uboot}{U-Boot}'s boot script (\repopath{sw/boot.script}, Section~\ref{sec:fpgalix-boot-script}) loads the \gterm{fpga}{FPGA} bitstream from the \term{SD} card and programs the \gterm{fpga}{FPGA} fabric through the \gterm{hps}{HPS} \gterm{fpgamanager}{FPGA Manager}\footnote{\glsentrydesc{fpgamanager}}, enables the \gterm{hps}{HPS}-to-\gterm{fpga}{FPGA} and \gterm{fpga}{FPGA}-to-\gterm{hps}{HPS} bridges, and then loads the \term{Linux} kernel (\texttt{zImage}) together with its \gterm{devicetree}{Device Tree Blob}\footnote{\glsentrydesc{devicetree}}, booting it with \texttt{bootz}. The kernel then mounts the second \term{SD} card partition (\term{ext4}) as its root filesystem and starts \texttt{init}, which brings up the userspace built by \gterm{buildroot}{Buildroot}.\footnote{See Section~\ref{sec:fpgalix-buildroot}}
+From this point, \gterm{uboot}{U-Boot}'s \gterm{bootscript}{boot script} (\repopath{sw/boot.script}, Section~\ref{sec:fpgalix-boot-script}) loads the \gterm{fpgabitstream}{FPGA bitstream} from the \term{SD} card and programs the \gterm{fpga}{FPGA} fabric through the \gterm{hps}{HPS} \gterm{fpgamanager}{FPGA Manager}\footnote{\glsentrydesc{fpgamanager}}, enables the \gterm{hps}{HPS}-to-\gterm{fpga}{FPGA} and \gterm{fpga}{FPGA}-to-\gterm{hps}{HPS} bridges, and then loads the \term{Linux} \gterm{kernel}{kernel} (\texttt{zImage}) together with its \gterm{devicetree}{Device Tree Blob}\footnote{\glsentrydesc{devicetree}}, booting it with \gterm{bootz}{\texttt{bootz}}. The \gterm{kernel}{kernel} then mounts the second \term{SD} card partition (\term{ext4}) as its \gterm{rootfilesystem}{root filesystem} and starts \texttt{init}, which brings up the userspace built by \gterm{buildroot}{Buildroot}.\footnote{See Section~\ref{sec:fpgalix-buildroot}}
 
 \begin{figure}[htbp]
     \centering
@@ -65,7 +65,7 @@ From this point, \gterm{uboot}{U-Boot}'s boot script (\repopath{sw/boot.script},
     \item The hardware project is compiled in \gterm{quartusprime}{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \gterm{hps}{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
     \item \cmd{cv_bsp_generator.py} \cite{MACNICA-BOOT} (part of the \gterm{uboot}{U-Boot} source tree) is run on the handoff folder, generating the board-specific header files (\repopath{pinmux_config.h}, \repopath{pll_config.h}, \repopath{sdram_config.h}, \repopath{iocsr_config.h}).
     \item These headers are copied into \gterm{uboot}{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
-    \item \cmdpath{make} is invoked to build the bootloader image.
+    \item \gterm{make}{\cmdpath{make}} is invoked to build the bootloader image.
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -381,7 +381,7 @@ Do not use the |-j$(nproc)| flag: \gterm{buildroot}{Buildroot} manages paralleli
 
 The root filesystem image is generated at \repopath{repos/buildroot/output/images/rootfs.tar}, accessible via the symlink \repopath{sdcard/rootfs.tar}, alongside the remaining \term{SD} card artifacts.
 
-This same build also produces the toolchain used by the \cmdpath{make arm} target of \repopath{sw/vision_core}; this \gterm{buildroot}{Buildroot} build must therefore complete before the \cmd{vision_core} program can be cross-compiled.
+This same build also produces the toolchain used by the \gterm{make}{\cmdpath{make arm}} target of \repopath{sw/vision_core}; this \gterm{buildroot}{Buildroot} build must therefore complete before the \cmd{vision_core} program can be cross-compiled.
 
 \section{Generating the FPGA bitstream (RBF)}
 \label{sec:fpgalix-bitstream}
@@ -417,7 +417,7 @@ Set the six \term{SW10} switches, on the underside of the board, to the position
 
 \subsection{Converting the SOF to RBF}
 
-\term{Quartus} compiles the hardware project into a \repopath{.sof} (\term{SRAM Object File}), the complete \gterm{fpga}{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\gterm{jtag}{JTAG} tools. The \gterm{fpgamanager}{FPGA Manager} mechanism, used by \gterm{uboot}{U-Boot}, instead requires an \repopath{.rbf} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
+\term{Quartus} compiles the hardware project into a \gterm{sof}{\repopath{.sof}} (\term{SRAM Object File}), the complete \gterm{fpga}{FPGA} configuration, expressed in a format understood only by \term{Quartus}/\gterm{jtag}{JTAG} tools. The \gterm{fpgamanager}{FPGA Manager} mechanism, used by \gterm{uboot}{U-Boot}, instead requires an \gterm{rbf}{\repopath{.rbf}} (\term{Raw Binary File}), a stripped-down version of the same configuration, obtained by conversion from the root of the repository:
 
 \begin{shellcodehost}
 quartus_cpf -c hw/quartus/output_files/FPGAlix.sof sdcard/boot_partition/soc_system.rbf
@@ -445,12 +445,12 @@ This step must be repeated whenever \repopath{sw/boot.script} is modified.
     This section involves low-level disk operations. An incorrect device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on the machine in use. Every device path (\extpath{/dev/sdX}, \extpath{/dev/loopN}) should be double-checked before pressing Enter; when in doubt, the operation should be stopped and verified.
 \end{warningbox}
 
-The \term{SD} card requires three partitions: a \term{FAT32} boot partition (kernel, \gterm{devicetree}{DTB}, bitstream, boot script), an \term{ext4} root filesystem, and the raw \term{A2} partition for \gterm{uboot}{U-Boot}. All files destined for the card are collected under \repopath{sdcard/}. A disk image file is constructed first and subsequently written to the physical \term{SD} card; the same procedure may be applied directly to the \term{SD} card by substituting the \term{SD} card device (e.g. \extpath{/dev/sdX}) for \repopath{sdcard/images/sdcard.img}, thereby omitting the image creation step and the final \cmdpath{dd}/\term{Etcher} write.
+The \term{SD} card requires three partitions: a \term{FAT32} boot partition (kernel, \gterm{devicetree}{DTB}, bitstream, boot script), an \term{ext4} root filesystem, and the raw \term{A2} partition for \gterm{uboot}{U-Boot}. All files destined for the card are collected under \repopath{sdcard/}. A \gterm{diskimagefile}{disk image file} is constructed first and subsequently written to the physical \term{SD} card; the same procedure may be applied directly to the \term{SD} card by substituting the \term{SD} card device (e.g. \extpath{/dev/sdX}) for \repopath{sdcard/images/sdcard.img}, thereby omitting the image creation step and the final \gterm{dd}{\cmdpath{dd}}/\term{Etcher} write.
 
 The final image may be written to the \term{SD} card using:
 
 \begin{itemize}
-    \item \term{Linux}: \cmdpath{dd} (see the last step below)
+    \item \term{Linux}: \gterm{dd}{\cmdpath{dd}} (see the last step below)
     \item \term{Windows}/\term{Mac}: \gterm{balenaetcher}{balenaEtcher}\footnote{\gterm{balenaetcher}{balenaEtcher} --- \url{https://etcher.balena.io/}}, free and open-source software; the image and target drive are selected accordingly.
 \end{itemize}
 
@@ -632,7 +632,7 @@ The board exposes a serial console at 115200 baud, 8N1, no flow control:
     \item \term{Windows}: \term{TeraTerm}.\footnote{\term{TeraTerm} is available at \url{https://github.com/TeraTermProject/teraterm}.} Select the \term{COM} port that appears in \term{Device Manager} under \term{Ports (COM \& LPT)} upon connecting the cable.
 \end{itemize}
 
-Upon powering on the board, the boot log should appear in the terminal immediately, concluding with a login prompt.
+Upon powering on the board, the boot log should appear in the terminal immediately, concluding with a login \gterm{prompt}{prompt}.
 
 \subsection{Logging in and network access}
 \label{subsec:fpgalix-login-network}

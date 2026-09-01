@@ -41,10 +41,10 @@ Software communicates with the camera over \gterm{i2c}{SCCB} through two modules
 \subsection{AvalonI2C}
 \label{subsec:fpgasteel-i2c-avaloni2c}
 
-The \ccode{AvalonI2C} class (\lstinline[style=inlineFsRepo]!src/AvalonI2C.{h,cpp}!) is a polling-mode driver for the \term{Avalon I\textsuperscript{2}C} \term{IP}, master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike \ccode{System}/\ccode{Serial} it is not a singleton: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
+The \ccode{AvalonI2C} class (\lstinline[style=inlineFsRepo]!src/AvalonI2C.{h,cpp}!) is a \gterm{pollingmode}{polling-mode} driver for the \term{Avalon I\textsuperscript{2}C} \term{IP}, master mode, 7-bit addressing only, following the core's register map and programming model \cite[Chapter 15, Section 15.5, Section 15.7.6, Figure 54]{EP-IPUG}. Unlike \ccode{System}/\ccode{Serial} it is not a \gterm{singleton}{singleton}: a board can have several \term{Avalon I\textsuperscript{2}C} cores, so each instance just wraps a register base address passed to its constructor. Its public methods are:
 
 \begin{itemize}
-    \item \textbf{\ccode{init(speed)}:} \ccode{speed} selects the bus speed mode, \ccode{Speed::Standard} (100 \term{kHz}) or \ccode{Speed::Fast} (400 \term{kHz}). Disables the IP core, masks interrupts, clears interrupt's pending status bits, programs the \ccode{SCL_HIGH}/\ccode{SCL_LOW}/\ccode{SDA_HOLD} bus-timing registers for the requested speed, then reconfigures the core \ccode{CTRL} register with the bus speed and \term{FIFO} thresholds and enables it.
+    \item \textbf{\ccode{init(speed)}:} \ccode{speed} selects the bus speed mode, \ccode{Speed::Standard} (100 \term{kHz}) or \ccode{Speed::Fast} (400 \term{kHz}). Disables the \gterm{ipcore}{IP core}, masks interrupts, clears interrupt's pending status bits, programs the \ccode{SCL_HIGH}/\ccode{SCL_LOW}/\ccode{SDA_HOLD} bus-timing registers for the requested speed, then reconfigures the core \ccode{CTRL} register with the bus speed and \term{FIFO} thresholds and enables it.
     \item \textbf{\ccode{deInit()}:} waits for the core to go idle, then disables it.
     \item \textbf{\ccode{write(devAddress, regAddress, regVal)}:} \ccode{devAddress} is the 7-bit \gterm{i2c}{I\textsuperscript{2}C} slave device address, \ccode{regAddress} the register to write within that slave, \ccode{regVal} the value to write. Runs the common \gterm{i2c}{I\textsuperscript{2}C} ``device address, register address, value'' sequence (\term{START}, dev address+W, register address, value, \term{STOP}).
     \item \textbf{\ccode{read(devAddress, regAddress)}:} \ccode{devAddress} is the 7-bit \gterm{i2c}{I\textsuperscript{2}C} slave device address, \ccode{regAddress} the register to read; returns the value read. Writes the register address on the \gterm{i2c}{I\textsuperscript{2}C} bus, then a repeated \term{START} into a read (\term{START}, dev address+W, register address, \term{RESTART}, dev address+R, value, \term{STOP}): standard \gterm{i2c}{I\textsuperscript{2}C} register read.
@@ -61,7 +61,7 @@ The \ccode{AvalonSCCB} class (\lstinline[style=inlineFsRepo]!src/AvalonSCCB.{h,c
 \subsection{PclkResetController}
 \label{subsec:fpgasteel-i2c-pclkresetcontroller}
 
-The \ccode{PclkResetController} class (\lstinline[style=inlineFsRepo]!src/PclkResetController.{h,cpp}!) is a singleton (there's only one on the board) wrapping the \hw{pclk_reset_controller} core's single control register:
+The \ccode{PclkResetController} class (\lstinline[style=inlineFsRepo]!src/PclkResetController.{h,cpp}!) is a \gterm{singleton}{singleton} (there's only one on the board) wrapping the \hw{pclk_reset_controller} core's single control register:
 
 \begin{itemize}
     \item \textbf{\ccode{assertReset()}:} holds the \hw{ov7670_pclk} domain and the camera in reset (\hw{sw_release} = 0).

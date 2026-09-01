@@ -43,7 +43,7 @@ Unchanged: see Section~\ref{sec:fpgasteel-cache-forwarding-hardware}. The hardwa
 \subsection{Bringing CPU1 up}
 \label{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}
 
-Bringing \term{CPU1} up uses the exact same mechanism as \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}), just packaged differently: everything specific to \term{CPU1} now lives in one singleton class called \ccode{Core1}, whose methods both start the core and manage the work later handed to it. At hardware reset \term{CPU1} stays held in reset, which is why \ccode{Core1}'s status defaults to \ccode{Offline}. Calling \ccode{Core1::start()} moves it to \ccode{Starting} status and runs the already-shown release sequence, finishing with \term{CPU1} landing in \ccode{Core1::run()}, which is the main loop that will later accept dispatched work. Once \ccode{run()} finishes its own setup, \ccode{Core1} moves to \ccode{Ready}.
+Bringing \term{CPU1} up uses the exact same mechanism as \nameref{chap:fpgasteel-dualcore-bringup} (Section~\ref{sec:fpgasteel-dualcore-operating-principles}), just packaged differently: everything specific to \term{CPU1} now lives in one \gterm{singleton}{singleton} class called \ccode{Core1}, whose methods both start the core and manage the work later handed to it. At hardware reset \term{CPU1} stays held in reset, which is why \ccode{Core1}'s status defaults to \ccode{Offline}. Calling \ccode{Core1::start()} moves it to \ccode{Starting} status and runs the already-shown release sequence, finishing with \term{CPU1} landing in \ccode{Core1::run()}, which is the main loop that will later accept dispatched work. Once \ccode{run()} finishes its own setup, \ccode{Core1} moves to \ccode{Ready}.
 
 \subsection{The Worker/DualCoreJob dispatch mechanism}
 \label{subsec:fpgasteel-dualcore-forwarding-dispatch}
@@ -127,7 +127,7 @@ Unchanged: see Paragraph~\ref{subsec:fpgasteel-cache-vga-class}. Its ISR is also
 \subsection{SimpleFormatConverter class}
 \label{subsec:fpgasteel-dualcore-forwarding-simple-format-converter}
 
-Renamed from Cache Forwarding Example's \ccode{SimpleFilters}, with the same per-format conversion logic (verified byte-identical body, aside from the renamed class and exception type) but a different shape, so that \ccode{DualCoreFormatConverter} can extend it: \ccode{convert()} is now virtual instead of static, the class has a virtual destructor, and the individual per-format helpers (\ccode{mosaic8ToRgb24}/\ccode{yuyv16ToRgb24}/\ccode{rgb565ToRgb24}/\ccode{rgb555ToRgb24}/\ccode{rgb444ToRgb24}) moved from private to protected so a derived class's own worker objects can call them directly.
+Renamed from Cache Forwarding Example's \ccode{SimpleFilters}, with the same per-format conversion logic (verified byte-identical body, aside from the renamed class and \gterm{exception}{exception} type) but a different shape, so that \ccode{DualCoreFormatConverter} can extend it: \ccode{convert()} is now virtual instead of static, the class has a virtual destructor, and the individual per-format helpers (\ccode{mosaic8ToRgb24}/\ccode{yuyv16ToRgb24}/\ccode{rgb565ToRgb24}/\ccode{rgb555ToRgb24}/\ccode{rgb444ToRgb24}) moved from private to protected so a derived class's own worker objects can call them directly.
 
 \begin{itemize}
  \item \ccode{convert(src, dst)} (virtual): unchanged behavior from Cache Forwarding Example's \ccode{SimpleFilters::convert()}: converts \ccode{src} in any supported \ccode{ColorScheme} into \ccode{dst} buffer, which must already be \term{RGB24} type. Throws \ccode{ExceptionFilter} if \ccode{dst} isn't \term{RGB24} or \ccode{src}'s format isn't handled.
@@ -180,10 +180,10 @@ Abstract coordinator interface for a piece of work split into exactly two \ccode
 \subsection{Core1 class}
 \label{subsec:fpgasteel-dualcore-forwarding-core1}
 
-Singleton owning everything about \term{CPU1}: bringing it up and dispatching work to it. Source: \lstinline[style=inlineFsRepo]!Core1.{h,cpp}!.
+\gterm{singleton}{Singleton} owning everything about \term{CPU1}: bringing it up and dispatching work to it. Source: \lstinline[style=inlineFsRepo]!Core1.{h,cpp}!.
 
 \begin{itemize}
- \item \ccode{getInstance()}: returns the singleton instance.
+ \item \ccode{getInstance()}: returns the \gterm{singleton}{singleton} instance.
  \item \ccode{start()}: runs the bring-up sequence from Paragraph~\ref{subsec:fpgasteel-dualcore-forwarding-bringing-cpu1}. Must be called once, from \term{CPU0}, after \ccode{System::prepareCacheSubsystem()}.
  \item \ccode{getStatus()}: returns \ccode{Offline}/\ccode{Starting}/\ccode{Ready}/\ccode{Error}; \term{CPU0} polls this after \ccode{start()} to know when \term{CPU1} has finished its own \ccode{initCore()} and is ready to accept work.
  \item \ccode{whatError()}: error description, valid when \ccode{getStatus()} is \ccode{Error}.
@@ -198,7 +198,7 @@ Singleton owning everything about \term{CPU1}: bringing it up and dispatching wo
 Implements \ccode{DualCoreJob} and extends \ccode{SimpleFormatConverter} (protected inheritance, reusing its per-format conversion helpers without exposing \ccode{convert()}'s single-core meaning directly), splitting one conversion into a top half and a bottom half, one per core. Source: \lstinline[style=inlineFsRepo]!DualCoreFormatConverter.{h,cpp}!.
 
 \begin{itemize}
- \item \ccode{setFrames(src, dst)}: computes the split point (\ccode{height / 2}, rounded down to an even row, so a \ccode{Mosaic8} source's 2$\times$2 \term{Bayer} pattern is never cut through the middle of a block) and configures both internal \ccode{HalfFrameWorker}s' source/destination pointers and dimensions accordingly.
+ \item \ccode{setFrames(src, dst)}: computes the split point (\ccode{height / 2}, rounded down to an even row, so a \ccode{Mosaic8} source's 2$\times$2 \gterm{bayermosaic}{Bayer} pattern is never cut through the middle of a block) and configures both internal \ccode{HalfFrameWorker}s' source/destination pointers and dimensions accordingly.
  \item \ccode{convert(src, dst)} (override): \ccode{setFrames()} + \ccode{start()} + \ccode{awaitDone()} in sequence; throws \ccode{ExceptionFilter} with whichever worker's error if either failed. This is the method \repopath{main0.cpp}'s main loop actually calls; Paragraphs~\ref{subsec:fpgasteel-dualcore-forwarding-dispatch}--\ref{subsec:fpgasteel-dualcore-forwarding-cache-coherency} above are what happen underneath it.
  \item \ccode{start()} (override): dispatches the bottom-half worker to \term{CPU1}, then runs the top-half worker synchronously, in place, on \term{CPU0}.
  \item \ccode{awaitDone()} (override): busy-polls the bottom-half worker's status on \term{CPU1} until \ccode{Completed} or \ccode{Error}.
@@ -259,7 +259,7 @@ while (true) {
 
 The only functional difference from Section~\ref{sec:fpgasteel-cache-forwarding-how-it-works} is \ccode{sys->prepareCacheSubsystem()} plus the \term{CPU1} bring-up-and-wait block before the pools are even constructed, and \ccode{DualCoreFormatConverter} standing in for Cache Forwarding Example's single-core conversion call; everything around it, descriptor ping-pong, ISR behavior, cache flush/invalidate placement, is identical.
 
-\ccode{ExceptionFilter} joins the exception list this project's catch block handles, alongside every exception Cache Forwarding Example already lists (\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer}, \ccode{ExceptionI2C}, \ccode{ExceptionCamera}, \ccode{ExceptionMsgdma}, \ccode{ExceptionHexDisplay}, \ccode{ExceptionFramePool}, \ccode{ExceptionFrame}).
+\ccode{ExceptionFilter} joins the \gterm{exception}{exception} list this project's catch block handles, alongside every \gterm{exception}{exception} Cache Forwarding Example already lists (\ccode{ExceptionSystem}, \ccode{ExceptionSerial}, \ccode{ExceptionRingBuffer}, \ccode{ExceptionI2C}, \ccode{ExceptionCamera}, \ccode{ExceptionMsgdma}, \ccode{ExceptionHexDisplay}, \ccode{ExceptionFramePool}, \ccode{ExceptionFrame}).
 
 \section{Debug tooling}
 \label{sec:fpgasteel-dualcore-forwarding-debug-tooling}

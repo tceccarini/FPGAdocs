@@ -33,7 +33,7 @@ The following must be installed and available on the \term{PATH}:
 \midrule
 Ubuntu Desktop \term{x86\_64} & Host operating system the build steps in this chapter run on. \\
 \gterm{quartusprime}{Quartus Prime} & Compiles the \gterm{fpga}{FPGA} hardware project and converts it into the bitstream loaded by \gterm{uboot}{U-Boot} (Section~\ref{sec:fpgasteel-generating-bitstream}). \\
-\term{ARM} toolchain (xPack Arm Embedded GCC) & Cross-compiles \gterm{uboot}{U-Boot} and the bare-metal example applications for the \term{DE1-SoC}'s \term{ARM} \term{Cortex-A9} cores. \\
+\term{ARM} toolchain (xPack Arm Embedded GCC) & Cross-compiles \gterm{uboot}{U-Boot} and the bare-metal example applications for the \term{DE1-SoC}'s \term{ARM} \term{Cortex-A9} \gterm{cpucore}{cores}. \\
 \bottomrule
 \end{tabularx}
 \caption{Required host software for this chapter, and why each is needed.}
@@ -67,7 +67,7 @@ On reset, the fixed-function \gterm{bootrom}{Boot ROM} samples the appropriate \
     \item Compile the hardware project in \gterm{quartusprime}{Quartus Prime}: this produces a handoff folder, a set of \term{XML} files describing how the \gterm{hps}{HPS} is configured (pin muxing, clocks, \term{SDRAM} timings, etc.).
     \item Run \cmd{cv_bsp_generator.py} \cite{MACNICA-BOOT} (part of the \gterm{uboot}{U-Boot} source tree) on the handoff folder: it generates the board-specific header files (\repopath{pinmux_config.h}, \repopath{pll_config.h}, \repopath{sdram_config.h}, \repopath{iocsr_config.h}).
     \item Copy these headers into \gterm{uboot}{U-Boot}'s generic source code, together with any custom user options (device tree, defconfig, etc.).
-    \item Run \cmdpath{make} to build the bootloader image.
+    \item Run \gterm{make}{\cmdpath{make}} to build the bootloader image.
 \end{enumerate}
 
 \textbf{Note:} in other projects this flow normally starts by cloning the \gterm{uboot}{U-Boot} source from \gterm{github}{GitHub}. In \prjname{FPGAsteel} this step is not needed: \repopath{repos/u-boot-socfpga} \cite{SUB-UBOOT} is already tracked as a \gterm{git}{git}\footnote{\glsentrydesc{git}} submodule (see \repopath{.gitmodules}), so the source is already in place after cloning the repository.
@@ -217,12 +217,12 @@ Replace \repopath{multiboot.script} with \repopath{boot.script.jtag_debug} to sw
     This section involves low-level disk operations. A wrong device name or a mistyped command can silently overwrite a system disk, a data partition, or any other block device on your machine. Always double-check every device path (\extpath{/dev/sdX}, \extpath{/dev/loopN}) before pressing Enter. When in doubt, stop and verify.
 \end{warningbox}
 
-Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under \repopath{sdcard/}. Build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing \repopath{sdcard/images/sdcard.img} with the \term{SD} card device (e.g.\ \extpath{/dev/sdX}), skipping the image creation step and the final \cmdpath{dd}/\term{Etcher} write.
+Unlike a \term{Linux} boot, a bare-metal \term{SD} card does not need a root filesystem partition: only the bootloader and the boot partition contents matter. All the files that go on the card are collected under \repopath{sdcard/}. Build a disk image file first, then write it to the physical \term{SD} card; the same procedure can be applied directly on the \term{SD} card by replacing \repopath{sdcard/images/sdcard.img} with the \term{SD} card device (e.g.\ \extpath{/dev/sdX}), skipping the image creation step and the final \gterm{dd}{\cmdpath{dd}}/\term{Etcher} write.
 
 To write the final image to the \term{SD} card, use:
 
 \begin{itemize}
-    \item \term{Linux}: \cmdpath{dd} (see last step below)
+    \item \term{Linux}: \gterm{dd}{\cmdpath{dd}} (see last step below)
     \item \term{Windows}/\term{Mac}: \gterm{balenaetcher}{balenaEtcher}\footnote{\gterm{balenaetcher}{balenaEtcher} --- \url{https://etcher.balena.io/}}, free and open-source, just select the image and the target drive
 \end{itemize}
 
@@ -303,7 +303,7 @@ w               # write and exit
 sudo losetup -fP images/sdcard.img
 \end{shellcodehost}
 
-Find out which loop device was assigned:
+Find out which \gterm{loopdevice}{loop device} was assigned:
 
 \begin{shellcodehost}
 losetup -l
