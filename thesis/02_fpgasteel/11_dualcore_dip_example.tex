@@ -4,9 +4,11 @@
 \section{About this project}
 \label{sec:fpgasteel-dualcore-dip-about}
 
-Three sibling projects share this section, since they only differ in how the same algorithm is compiled, never in what it does: \repopath{dualcore_dip_example}, \repopath{dualcore_dip_example_no_neon}, and \repopath{dualcore_dip_example_no_neon_no_icache} (all under \repopath{sw/}). Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} covers exactly what distinguishes the three.
+\textit{``Dual-Core DIP Example''} takes \nameref{chap:fpgasteel-dualcore-forwarding}'s camera-to-\gterm{vga}{VGA} pipeline and replaces its plain format conversion with a small computer-vision pipeline, \ccode{DualCoreDIP}: on every captured frame it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \gterm{vga}{VGA} output. It is the last example of this part, and the only one in which the two cores share an actual image-analysis workload rather than a mere format conversion.
 
-All three take the same camera-to-\gterm{vga}{VGA} pipeline from \nameref{chap:fpgasteel-dualcore-forwarding} and replace the plain format conversion with a small computer-vision pipeline, \ccode{DualCoreDIP}: on every captured frame, it looks for one white ball against a black background and, if it finds one that is not touching the image border, draws its outline and a centroid cross on the \gterm{vga}{VGA} output. At a macroscopic level, the pipeline:
+It is also where this part measures what its last two optimizations are worth: the same algorithm is compiled three times, differing only in whether the \term{L1} instruction cache and \gterm{neon}{NEON} instructions are used. The three are \repopath{dualcore_dip_example}, \repopath{dualcore_dip_example_no_neon} and \repopath{dualcore_dip_example_no_neon_no_icache} (all under \repopath{sw/}); Paragraph~\ref{subsec:fpgasteel-dualcore-dip-build-variants} compares them, and everything else in this chapter holds for all three.
+
+At a macroscopic level, the pipeline:
 
 \begin{enumerate}
  \item converts the captured \gterm{rgb565}{RGB565} frame coming from the camera into two outputs, produced together in the same pass: an \term{RGB24} frame for \gterm{vga}{VGA} display, and a grayscale frame for analysis;

@@ -3,7 +3,11 @@
 
 \section{Introduction}
 
-This chapter brings up the \term{DE1-SoC} board. It builds the bootloader and the \gterm{fpga}{FPGA} bitstream, and prepares the bootable \term{SD} card that the example programs of the following chapters are loaded from. The discussion begins with an overview of the board's boot chain, from reset to a running bare-metal application (Section~\ref{sec:fpgasteel-board-introduction}), then turns to the more practical side: preparing and building the bootloader itself. Unlike \prjname{FPGAlix}, no \term{Linux} kernel or root filesystem is involved: \gterm{uboot}{U-Boot} loads the compiled application directly, either as a \repopath{.bin} from the \term{SD} card at standalone boot or as an \repopath{.elf} pushed over \gterm{jtag}{JTAG} for debugging. The chapter also covers generating the \gterm{fpga}{FPGA} bitstream and the two boot scripts that select between these paths, before closing by assembling the bootloader, the bitstream and a boot script onto a bootable \term{SD} card, producing a working baseline ready for the examples developed in the remaining chapters.
+Board bring-up turns the \term{DE1-SoC} from a board that merely powers on into the platform on which the bare-metal examples of the following chapters run.
+
+This requires three components: the \gterm{uboot}{U-Boot} bootloader, the \gterm{fpga}{FPGA} bitstream, and a boot script. Unlike \prjname{FPGAlix}, no \term{Linux} kernel and no root filesystem are involved: \gterm{uboot}{U-Boot} initializes the hardware, configures the \gterm{fpga}{FPGA} fabric, and then loads the compiled application directly, either as a \repopath{.bin} read from the \term{SD} card at standalone boot or as an \repopath{.elf} pushed over \gterm{jtag}{JTAG} while debugging. The bitstream configures the programmable logic with the custom hardware. The boot script selects which of the two paths \gterm{uboot}{U-Boot} takes, and \prjname{FPGAsteel} ships one for each.
+
+This chapter prepares these components and assembles them onto a bootable \term{SD} card, providing the baseline for the examples that follow.
 
 \begin{table}[htbp]
 \centering

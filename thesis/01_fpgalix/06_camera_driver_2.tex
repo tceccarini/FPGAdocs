@@ -4,9 +4,9 @@
 \section{Introduction}
 \label{sec:fpgalix-camera-intro}
 
-This chapter covers how the operating system is instructed to deliver the \gterm{ov7670}{OV7670} camera's video stream to the applications that need it. The standard solution on \term{Linux} is a kernel driver that uses the \gterm{v4l2}{V4L2} (\term{Video4Linux2}) framework to expose the camera as a standard device any compatible application can open and read frames from.
+\repopath{sw/camera_driver_2} is the kernel driver that turns the \gterm{ov7670}{OV7670} capture path of Chapter~\ref{chap:fpgalix-hw-overview} into an ordinary \term{Linux} camera device, \extpath{/dev/videoN}, that any program can open and read frames from. The hardware already deposits every frame in \term{DDR3} by itself, through the \gterm{altera}{Altera} \gterm{msgdma}{mSGDMA} engine, but reaching those frames from a program means driving the \gterm{dma}{DMA} engine and mapping physical memory by hand. The driver removes that, through the \gterm{v4l2}{V4L2} (\term{Video4Linux2}) framework: \cmd{vision_core}, in the next chapter, reads the camera exactly as it would any \gterm{v4l2}{V4L2} webcam.
 
-\repopath{sw/camera_driver_2} is that driver: it captures frames through the \gterm{altera}{Altera} \gterm{msgdma}{mSGDMA} engine\footnote{See Chapter~\ref{chap:fpgalix-hw-overview}.} into a standard \extpath{/dev/videoN} device. Its development was assisted by \gterm{claudecode}{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
+Its development was assisted by \gterm{claudecode}{Claude Code}, an \term{AI} coding assistant, including the kernel-side analysis described in Section~\ref{sec:fpgalix-camera-short-frames}.
 
 \section{V4L2 buffer allocation}
 \label{sec:fpgalix-camera-buffer-allocation}

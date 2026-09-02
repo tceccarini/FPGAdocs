@@ -3,9 +3,9 @@
 
 \section{Introduction}
 
-This chapter covers how to set up the host used for \prjname{FPGAlix}'s hardware and software development. It walks through installing the required software and where it lives on disk, then setting up the \gterm{environmentvariables}{environment variables} needed to reach it, and finally getting a working \gterm{usbblaster}{USB-Blaster}\footnote{\glsentrydesc{usbblaster}} and serial console access.
+The development host is the \term{PC} on which \prjname{FPGAlix}'s \gterm{fpga}{FPGA} project is compiled and the software that runs on the \gterm{hps}{HPS} is cross-compiled; it is also the machine the \term{DE1-SoC} board stays connected to once it is running. This chapter gives it the setup every later chapter assumes: it installs the tools this part is built with, makes them reachable from the command line, and grants access to the two \term{USB} devices the board is reached through, the \gterm{usbblaster}{USB-Blaster}\footnote{\glsentrydesc{usbblaster}} and the serial console.
 
-Hardware debugging\footnote{Developing inside a \gterm{vm}{VM} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures.}, when needed, can only be done through the \gterm{usbblaster}{USB-Blaster}'s \gterm{jtag}{JTAG}\footnote{\glsentrydesc{jtag}} interface, integrated on the development board itself, using \gterm{signaltap}{SignalTap}'s in-system logic analyzer from \term{Quartus}. Software debugging, in contrast, can be done either through that same interface or over the network, with \cmdpath{gdbserver} running on the board and attached remotely from the host with \cmdpath{gdb}.
+The serial console is the board's terminal, from the boot log to the login prompt; the \gterm{usbblaster}{USB-Blaster} is there only for debugging, and not for all of it. Hardware debugging\footnote{Developing inside a \gterm{vm}{Virtual Machine} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures.}, when needed, can only be done through its \gterm{jtag}{JTAG}\footnote{\glsentrydesc{jtag}} interface, integrated on the development board itself, using \term{Quartus}'s own in-system logic analyzer, \gterm{signaltap}{SignalTap}\footnote{\glsentrydesc{signaltap}}. Software debugging, in contrast, can be done either through that same interface or over the network, with \cmdpath{gdbserver} running on the board and attached remotely from the host with \cmdpath{gdb}.
 
 \section{Host requirements}
 
@@ -59,7 +59,7 @@ The user's home folder is sufficient for both; a system-wide installation is not
 
 \subsection{Environment variables}
 
-Add to {\catcode`\~=12 \extpath{~/.bashrc}}, matching the install paths from Section~\ref{subsec:fpgalix-install-paths}:
+Add the following \gterm{environmentvariables}{environment variables}\footnote{\glsentrydesc{environmentvariables}} to {\catcode`\~=12 \extpath{~/.bashrc}}, matching the install paths from Section~\ref{subsec:fpgalix-install-paths}:
 
 \begin{shellcodehost}
 export QUARTUS_ROOTDIR="$HOME/Programs/Altera/22.1/quartus/"

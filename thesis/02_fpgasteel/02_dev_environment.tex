@@ -3,15 +3,13 @@
 
 \section{Introduction}
 
-This chapter covers how to set up the host used throughout this part of the work. It walks through installing the required software and where it lives on disk, then setting up the environment variables needed to reach it, and finally getting a working \gterm{usbblaster}{USB-Blaster II}\footnote{\glsentrydesc{usbblaster}} and serial console access.
+The development host is the \term{PC} on which \prjname{FPGAsteel}'s \gterm{fpga}{FPGA} project is compiled and the bare-metal applications that run on the \gterm{hps}{HPS} are cross-compiled; it is also the machine the \term{DE1-SoC} board stays connected to while it runs. This chapter gives it the setup every later chapter assumes: it installs the tools this part is built and debugged with, makes them reachable from the command line, and grants access to the two \term{USB} devices the board is reached through, the \gterm{usbblaster}{USB-Blaster II}\footnote{\glsentrydesc{usbblaster}} and the serial console.
 
-Unlike \prjname{FPGAlix}, which can debug most of its software remotely over the network, \prjname{FPGAsteel} runs no operating system: all debugging, hardware and software alike, goes through the same physical debug interface\footnote{Developing inside a \gterm{vm}{VM} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster II} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures.}.
+Unlike \prjname{FPGAlix}, it is not possible here to debug the software over the network, since by design this project has no operating system. The only way to observe it from the host is therefore the serial console's output, together with the \gterm{usbblaster}{USB-Blaster II}'s \gterm{jtag}{JTAG}\footnote{\glsentrydesc{jtag}} interface, used to inspect and debug both the hardware and the software.\footnote{Developing inside a \gterm{vm}{Virtual Machine} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster II} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures. Developing directly on physical \term{Ubuntu 22.04} hardware is what is documented and known to work.}
 
 \section{Host requirements}
 
 \prjname{FPGAsteel} requires an \term{x86\_64} machine running \term{Ubuntu 22.04 LTS}, with the four pieces of software covered in the following sections installed and working: \gterm{quartusprime}{Quartus Prime}, the \gterm{armbaremetaltoolchain}{\term{ARM} bare-metal toolchain}, \gterm{openocd}{OpenOCD}\footnote{\glsentrydesc{openocd}}, and \gterm{eclipseembeddedcdt}{Eclipse Embedded CDT}\footnote{\glsentrydesc{eclipseembeddedcdt}}.
-
-Developing inside a \gterm{vm}{Virtual Machine} is discouraged for this: forwarding the \gterm{usbblaster}{USB-Blaster II} through a hypervisor's \term{USB} redirection is a long-standing, widely reported source of \gterm{jtag}{JTAG} failures. Developing directly on physical \term{Ubuntu 22.04} hardware is what is documented and known to work.
 
 \section{Required software}
 
@@ -79,7 +77,7 @@ Each line prepends to \term{PATH} rather than appending, and in this specific or
 
 \term{QUARTUS\_ROOTDIR} (or, as a fallback, \term{QSYS\_ROOTDIR}) is not just a convenience variable: \gterm{openocd}{OpenOCD}'s own \gterm{jtag}{JTAG} config script (\repopath{altera-usb-blaster2.cfg}, used from \term{Eclipse}'s \term{Debug Configuration}, Paragraph~\ref{subsec:fpgasteel-hello-debug-config}) reads it to locate \extpath{blaster_6810.hex}, the \gterm{usbblaster}{USB-Blaster II} firmware file it needs to talk to the \gterm{jtag}{JTAG} adapter.
 
-Reload the updated environment variables with the following command, or open a new shell:
+Reload the updated \gterm{environmentvariables}{environment variables}\footnote{\glsentrydesc{environmentvariables}} with the following command, or open a new shell:
 
 \begin{shellcodehost}
 source ~/.bashrc

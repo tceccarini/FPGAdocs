@@ -4,7 +4,9 @@
 \section{About this project}
 \label{sec:fpgasteel-simple-forwarding-about}
 
-\textit{``Simple Forwarding Example''} (under \repopath{sw/simple_forwarding_example}) captures continuous video from the \gterm{ov7670}{OV7670} and forwards it to \gterm{vga}{VGA} output. At startup it:
+\textit{``Simple Forwarding Example''} (under \repopath{sw/simple_forwarding_example}) is the first program in this part that moves video: it captures frames from the \gterm{ov7670}{OV7670} camera into \term{DDR} and reads them back out to the \gterm{vga}{VGA} output, driving both of the datapaths built in Chapter~\ref{chap:fpgasteel-hw-overview} at once. It does so in the simplest configuration available: a single core, the \term{CPU} caches off, and a plain format conversion between capture and display. That is what makes it the baseline for the rest of this part. The classes introduced here, and the descriptor mechanism documented with them, are reused unchanged by the examples that follow, which lift those three simplifications one at a time.
+
+At startup, \ccode{main()} brings the program up one class at a time:
 
 \begin{itemize}
     \item brings up the interrupt controller and a microsecond timebase (\ccode{System});
