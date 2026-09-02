@@ -12,6 +12,12 @@ LaTeX sources of the master's thesis **"Acquisizione ed elaborazione video su So
 
 The thesis documents two sibling projects built around the same custom FPGA video-acquisition hardware on a Terasic DE1-SoC. This repository contains only the thesis document itself, not the project sources.
 
+## Repository layout
+
+- [`thesis/`](thesis/) — LaTeX sources and build output for the full thesis (see Building below).
+- [`summary_en/`](summary_en/) — English summary.
+- [`summary_it/`](summary_it/) — Italian summary.
+
 ## Related repositories
 
 - [FPGAlix](https://github.com/tceccarini/FPGAlix) — embedded-Linux camera pipeline for the Terasic DE1-SoC
@@ -31,13 +37,14 @@ This shared folder mirrors everything needed to follow the tutorial without hunt
 
 ## Building
 
-Requires a TeX Live installation with `latexmk` and `-shell-escape` support (used by the `svg` package to convert figures via Inkscape).
+Requires a TeX Live installation with `latexmk`, `biber`, and `-shell-escape` support (used by the `svg` package to convert figures via Inkscape).
 
 ```
+cd thesis
 latexmk -pdf -interaction=nonstopmode thesis.tex
 ```
 
-The compiled PDF is produced at `build/thesis.pdf`.
+The compiled PDF is produced at `thesis/build/thesis.pdf`.
 
 ## License
 
