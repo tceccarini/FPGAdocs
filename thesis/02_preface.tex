@@ -33,13 +33,13 @@ The generic part of the hardware, essentially everything outside the video path,
 
 \subsection{The software}
 
-The software side\footnote{And the related hardware, since each repository carries the \term{Quartus} project alongside the software.} took the form of two projects, kept in separate repositories, \gterm{fpgalix}{\prjname{FPGAlix}}\cite{FPGALIX-REPO}, which runs under embedded \term{Linux} on the \gterm{hps}{HPS}, and \prjname{FPGAsteel}\cite{FPGASTEEL-REPO}, which runs \gterm{baremetal}{bare metal} on the same processor. The two environments differ in what they make affordable. For bringing the board up, \term{Linux} offers a safe road, since the \gterm{bootchain}{boot chain}, the drivers and the capture framework are code that has been made to work before, so when the system does not come up the fault lies in how it has been configured rather than in the software itself. For the application it supplies device drivers, memory management, \gterm{cache}{cache} management, a standard video capture framework and tested libraries, which shorten the work, and it allows the program to be debugged remotely over \term{Ethernet} with \cmdpath{gdb}, while bare metal has to be followed through \term{USB JTAG}. What it costs is distance from the hardware and timing that is not entirely predictable. Bare metal removes the abstraction and the overhead and gives complete control of the entire system, but everything must be written from nothing, and the problems the operating system hides come back into view. This extends to the processing code itself: routines that under \term{Linux} could draw on existing library functions must here be implemented from first principles.
+The software side\footnote{And the related hardware, since each repository carries the \term{Quartus} project alongside the software.} took the form of two projects, kept in separate repositories, \gterm{fpgalix}{\prjname{FPGAlix}}\cite{FPGALIX-REPO}, which runs under embedded \term{Linux} on the \gterm{hps}{HPS}, and \prjname{FPGAsteel}\cite{FPGASTEEL-REPO}, which runs \gterm{baremetal}{bare metal} on the same processor. The two environments differ in what they make affordable. For bringing the board up, \term{Linux} offers a safe road, since the \gterm{bootchain}{boot chain}, the drivers and the capture framework are code that has been made to work before, so when the system does not come up the fault lies in how it has been configured rather than in the software itself. For the application it supplies device drivers, memory management, \gterm{cache}{cache} management, a standard video capture framework and tested libraries, which shorten the work, and it allows the program to be debugged remotely over \term{Ethernet} with \cmdpath{gdb}, while bare metal has to be followed through \term{USB} \gterm{jtag}{JTAG}. What it costs is distance from the hardware and timing that is not entirely predictable. Bare metal removes the abstraction and the overhead and gives complete control of the entire system, but everything must be written from nothing, and the problems the operating system hides come back into view. This extends to the processing code itself: routines that under \term{Linux} could draw on existing library functions must here be implemented from first principles.
 
 From the hardware point of view the two projects differ slightly. In both a single frame can be read out through the debugger and examined on the development host, while the display of a continuous video stream requires a dedicated output path, and the two projects adopt different ones. \prjname{FPGAlix} transmits the frames over \term{Ethernet}, relying on the interface and the network stack provided by the operating system, at the cost of a significant processor load, due to encoding and to the splitting of the stream into network packets. \prjname{FPGAsteel} drives the \gterm{vga}{VGA} port available on the board,\footnote{This path too is built around an \gterm{msgdma}{mSGDMA}, which reads the frame back from memory and streams it to the video output.} since implementing a network driver and a \term{TCP/IP} stack in bare metal would have required an effort disproportionate to the aim of the project.
 
 \section{Organization of the document}
 
-The two projects just introduced, \prjname{FPGAlix} and \prjname{FPGAsteel}, are described in the two parts that follow in the tutorial form the aim of the work requires, with every step given in the order in which it must be carried out. A working familiarity with \gterm{quartusprime}{Quartus Prime} and its \gterm{platformdesigner}{Platform Designer}, with \gterm{cpp}{C++} and with the \term{Linux} command line is assumed. A reader who lacks the first two will find in \cite{UPM-DE1} a guided introduction which, although written for an older release of the tools, still describes the \term{Quartus} side closely enough to be followed. What the present document explains is the principle of operation rather than the code. The sources themselves can be cloned from the repositories \cite{FPGALIX-REPO,FPGASTEEL-REPO}: the hardware is described in \gterm{vhdl}{VHDL}, the software is written in \gterm{cpp}{C++} and built with \gterm{make}{\cmdpath{make}}.
+The two projects just introduced, \prjname{FPGAlix} and \prjname{FPGAsteel}, are described in the two parts that follow in the tutorial form the aim of the work requires, with every step given in the order in which it must be carried out. A working familiarity with \gterm{quartusprime}{Quartus Prime} and its \gterm{platformdesigner}{Platform Designer}, with \gterm{cpp}{C++} and with the \term{Linux} command line is assumed. A reader who lacks the first two will find in \cite{UPM-DE1} a guided introduction which, although written for an older release of the tools, still describes the \term{Quartus} side closely enough to be followed.
 
 \textbf{Part~\ref{part:fpgalix}} covers \prjname{FPGAlix}. It defines the first version of the hardware, brings up the operating system on the \gterm{hps}{HPS} and closes with one example of video processing. A single example is enough here, because under the operating system the software is divided into modules with well-defined boundaries, each of them behaving in a familiar and predictable way, so further examples would add length without adding understanding.
 
@@ -58,37 +58,38 @@ Part~\ref{part:appendices} gathers the appendices: the schematics and the bill o
 
 The first two parts, however, can also be read separately, by a reader interested only in the \term{Linux} side or only in the bare-metal one.
 
-\section{A note on inline code styling}
+\section{Source repositories and inline-code conventions}
 
-Short code-styled text set in the running prose --- a file path, a command, a register name --- is colored by category throughout this document, so that the kind of thing being named is recognizable at a glance without having to read the surrounding sentence. Table~\ref{tab:preface-inline-styles} lists the eight color categories used, each numbered for quick reference when annotating a proof, plus two further style markers, lettered rather than numbered, that distinguish plain technical terms from ones linked to the Glossary (Appendix~\ref{app:glossary}).
+Two public repositories accompany this thesis, \prjname{FPGAlix}\cite{FPGALIX-REPO} and \prjname{FPGAsteel}\cite{FPGASTEEL-REPO}. They hold the implementations described in the chapters that follow: the \term{Quartus} projects, the \gterm{vhdl}{VHDL} sources, the \gterm{cpp}{C++} software and the \gterm{make}{\cmdpath{make}} build scripts. What the document adds is the reasoning behind them, the role each component plays and the order in which the whole is assembled. Unless otherwise stated, a repository-relative path belongs to the project discussed in the current part.
+
+Because the document and the sources are meant to be read together, inline technical identifiers are styled according to what they denote, rather than merely as code. This distinguishes, for example, a repository path from one outside the repositories, a program built here from a generic command, and a hardware register from a source-code identifier. Table~\ref{tab:preface-inline-styles} lists the eight styles used for code-styled text, and the three markers used for an ordinary technical term, for one defined in the Glossary (Appendix~\ref{app:glossary}), and for the name of a project.
 
 \begin{table}[H]
 \centering
-\begin{tabularx}{\textwidth}{@{} c l l X @{}}
+\begin{tabularx}{\textwidth}{@{} l X @{}}
 \toprule
-\textbf{N} & \textbf{Category} & \textbf{Example} & \textbf{Used for} \\
+\textbf{Example} & \textbf{What it marks} \\
 \midrule
-1 & Filesystem --- external & \extpath{/dev/ttyUSB0} & a filesystem path outside the \prjname{FPGAlix}/\prjname{FPGAsteel} repositories \\
+\extpath{/dev/ttyUSB0} & a filesystem path outside the two repositories \\
+\repopath{sw/} & a filesystem path inside one of them \\
 \lightmidrule
-2 & Filesystem --- repository & \repopath{sw/} & a filesystem path inside one of the two repositories \\
+\cmdpath{make} & an executable of the system or of the toolchain \\
+\cmd{vision_core} & an executable, script or example built from one of them \\
 \lightmidrule
-3 & Code & \ccode{Core1::dispatch()} & \term{C/C++} source: functions, classes, members, project-level macros --- including register names when they appear as part of a code snippet \\
+\ccode{Core1::dispatch()} & \term{C/C++} source: functions, classes, members and project-level macros, including register names where they appear inside a code snippet \\
 \lightmidrule
-4 & Executable --- in repository & \cmd{vision_core} & a program, script or example that is part of the \prjname{FPGAlix}/\prjname{FPGAsteel} repositories \\
+\hw{RSTMGR_MPUMODRST} & peripherals, registers and \gterm{platformdesigner}{Platform Designer} signals, where they are named on their own rather than inside a code snippet \\
 \lightmidrule
-5 & Executable --- generic & \cmdpath{make} & a standard system or toolchain executable, not specific to either repository \\
+\sysid{PATH} & environment variables, users and groups \\
 \lightmidrule
-6 & Hardware/\gterm{fpga}{FPGA} & \hw{RSTMGR_MPUMODRST} & peripherals, \term{Qsys} signals, registers, kernel \term{Kconfig} symbols, when named on their own rather than as part of a code snippet \\
-\lightmidrule
-7 & System & \sysid{PATH} & environment variables, users, groups \\
-\lightmidrule
-8 & Generic & {\ttfamily\small python3-numpy} & everything else set in code style without a more specific category, e.g.\ \gterm{apt}{apt}/library package names \\
+{\bfseries\ttfamily\small python3-numpy} & anything else set in code style without a more specific category, such as \gterm{apt}{apt} or library package names \\
 \midrule
-A & Term & \term{IDE} & a generic technical term, explained inline or assumed known, not linked to the Glossary \\
+\term{DDR3} & a technical term whose definition is not in the Glossary \\
+\gterm{jtag}{JTAG} & a term defined in the Glossary (Appendix~\ref{app:glossary}); underlined, and footnoted with that definition at its first occurrence in each part \\
 \lightmidrule
-B & Glossary term & \gterm{jtag}{JTAG} & a term whose definition is in the Glossary (Appendix~\ref{app:glossary}); underlined, and footnoted with that definition at its first occurrence in each part \\
+\prjname{FPGAlix} & one of the two projects documented here, and of the repositories that hold them \\
 \bottomrule
 \end{tabularx}
-\caption{Color categories used for inline code-styled text.}
+\caption{Inline styles used for code-styled text and technical terms.}
 \label{tab:preface-inline-styles}
 \end{table}
