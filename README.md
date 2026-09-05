@@ -1,9 +1,8 @@
 # FPGAdocs
 
-LaTeX sources of the master's thesis **"Acquisizione ed elaborazione video su SoC FPGA"** ("Video acquisition and processing on a SoC FPGA").
+LaTeX sources of the master's thesis **"Video Acquisition and Processing on Intel Cyclone V SoC"**.
 
-*Realizzazione hardware su Intel Cyclone V SoC e software in due versioni, Linux embedded e bare-metal*
-*(Hardware implementation on an Intel Cyclone V SoC, with software in two versions: embedded Linux and bare-metal)*
+*Hardware Implementation with Embedded Linux and Bare-Metal Software Architectures*
 
 - **Author:** Tiziano Ceccarini
 - **Advisor:** Prof. Stefano Marsi
