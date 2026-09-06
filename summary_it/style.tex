@@ -92,7 +92,9 @@
 
 \makeatletter
 \let\ltx@url\url
-\renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
+\renewcommand{\url}[1]{\ltx@url{#1}}
+% \uline (ulem) invece di \underline: quest'ultimo mette l'argomento in un \hbox,
+% quindi l'URL non puo' andare a capo e sborda dal margine nelle note.
 \makeatother
 
 % ------------------------------------------------------------
