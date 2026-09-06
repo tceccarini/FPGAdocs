@@ -1,0 +1,333 @@
+% ============================================================
+% Preamble: packages, layout and shared styles for the thesis
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[italian,english]{babel}   % English is the main document language;
+                                       % Italian is only used for the cover page
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{pdflscape}   % landscape pages for full-page figures (e.g. the Qsys block diagram)
+
+\usepackage{indentfirst}   % also indent the first paragraph after a heading
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.6em}
+\raggedbottom
+
+% Lets TeX loosen a line as a last resort, instead of producing an overfull
+% \hbox, when an unbreakable inline |code| token (see \lstMakeShortInline
+% below) doesn't quite fit at the end of it. Purely a safety valve: it only
+% engages when the normal stretch budget is exhausted, so ordinary paragraphs
+% are unaffected.
+\emergencystretch=1in
+
+\usepackage{graphicx}
+\graphicspath{{../thesis/img/}}          % \includegraphics{filename} looks inside img/
+\usepackage{adjustbox}         % lets text auto-scale to fit a given width (e.g. thesis title)
+
+% SVG figures: \includesvg{name} converts img/name.svg to PDF (and PDF_TEX) at
+% compile time via inkscape, so editing an SVG only needs a recompile. The
+% generated files land in the build directory (see .latexmkrc).
+\usepackage{svg}
+\svgsetup{
+    inkscapeexe=inkscape,
+    inkscapearea=drawing,
+    inkscapeversion=1,
+    inkscapelatex=false,   % render SVG text with inkscape's own fonts, so
+                           % underscores etc. in the SVG need no LaTeX escaping
+    inkscapepath=build/svg-inkscape/,   % generated PDFs land in the build directory
+}
+\svgpath{img/}
+
+\usepackage{booktabs}          % \toprule/\midrule/\bottomrule for clean tables
+\usepackage{colortbl}          % \arrayrulecolor, for \lightmidrule below
+\newcommand{\lightmidrule}{\arrayrulecolor{black!40}\midrule\arrayrulecolor{black}}
+% Usage: \lightmidrule -- a lighter separator between the rows of a table,
+% for tables whose cells wrap onto multiple lines, where a full-weight
+% \midrule on every row looks too much like a spreadsheet grid. Leaves
+% \toprule/\bottomrule (the table's own outer frame) solid black.
+\usepackage{tabularx}          % X columns auto-wrap long content (e.g. file paths)
+\usepackage{seqsplit}          % breaks long unbroken strings (paths, tokens) that don't wrap on their own
+\usepackage{float}             % [H] placement: keep floats exactly where they are defined
+
+\usepackage{xcolor}
+\newcommand{\todo}[1]{\textbf{\textcolor{red}{[TODO: #1]}}}   % visible marker for unresolved text
+\newcommand{\term}[1]{\textit{#1}}   % hardware/product/protocol names and acronyms (FPGA, DE1-SoC, RGB565, ...)
+\newcommand{\prjname}[1]{\textsf{\itshape #1}}   % this thesis's own named systems (FPGAlix, FPGAsteel)
+
+\usepackage[normalem]{ulem}
+\newcommand{\reread}[1]{\sout{#1}}   % marks text to go back and review
+\newcommand{\unresolved}[1]{\textcolor{red}{#1}}   % marks citations NOT in the global bibliography; decide what to do with them on reread
+
+\newcommand{\longsection}[2]{%
+    \section[#1]{#1}%
+    \vspace{-2.6ex}%
+    {\large\itshape #2\par}%
+    \vspace{1ex}%
+}
+% Usage: \longsection{Short title}{Detail shown as a subtitle line below it}
+% For section titles too long for the running header (e.g. "Title (code_name)"
+% or "Title: detail") -- the short title alone goes in the header/TOC, the
+% detail is typeset as a subtitle right under the heading in the body.
+
+\usepackage[most]{tcolorbox}
+\newtcolorbox{warningbox}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    boxrule=0.6pt,
+    arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+}
+% Usage: \begin{warningbox} ... \end{warningbox}
+
+\usepackage[hypertexnames=false, breaklinks=true]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue,
+    bookmarksnumbered=true,
+}
+
+\makeatletter
+\let\ltx@url\url
+\renewcommand{\url}[1]{\underline{\ltx@url{#1}}}   % real URLs (\url): blue (urlcolor above) and underlined
+\makeatother
+
+% ------------------------------------------------------------
+% BLOCCO RIDOTTO RISPETTO A ../thesis/style.tex
+% La tesi carica qui biblatex/biber (references.bib, references-glossary.bib,
+% fpgadocs.dbx) e glossaries con le voci di 03_appendices/glossary-entries.tex.
+% Il sunto non contiene citazioni ne' richiami di glossario, e quei file non
+% esistono in questa cartella: caricarli darebbe errore di compilazione.
+% Resta quindi solo xurl, che serve a spezzare gli URL nelle note a pie' di pagina.
+% Conseguenza: in questo documento \cite, \gls e \gterm NON sono utilizzabili.
+% Se in futuro si risincronizza style.tex con quello della tesi, va ritolto
+% questo blocco.
+% ------------------------------------------------------------
+\usepackage{xurl} % allows breaking long URLs anywhere, not just at pre-set points
+
+% Usage: \gls{key} / \Gls{key} print the entry's canonical name, linked to its
+% glossary definition; \gterm{key}{text} links custom display text to the
+% same definition (used wherever the body's wording differs from the
+% canonical name, e.g. a plural or a synonym already covered by one entry).
+\newsavebox{\gtermbox}
+\newcommand{\gterm}[2]{%
+    \sbox{\gtermbox}{\glslink{#1}{#2}}%
+    \usebox{\gtermbox}\kern-\wd\gtermbox
+    {\color[gray]{0.6}\rule[-0.15em]{\wd\gtermbox}{0.5pt}}%
+}   % body-text color, with a light gray underline (less visually heavy than black) marking it as a glossary link
+
+\let\urlpath\path   % \path (from the url package, via hyperref) under a clearer name:
+                     % typesets an identifier/token verbatim in tt style, e.g. a VS Code
+                     % extension ID -- \urlpath{ms-vscode.cpptools}
+
+% ------------------------------------------------------------
+% C++ code blocks: code in black, only comments in color (clean for a thesis)
+% ------------------------------------------------------------
+\usepackage{listings}
+
+\definecolor{friendcomment}{HTML}{61A1B0}   % comment (blue-gray, italic)
+\definecolor{friendrule}{HTML}{D0D7DE}      % frame border
+
+\lstdefinestyle{githubcpp}{
+    language=C++,
+    basicstyle=\ttfamily\small\color{black},
+    commentstyle=\color{friendcomment}\itshape,
+    numberstyle=\tiny\color{gray},
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{friendrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=left,
+    numbersep=8pt,
+}
+\lstset{style=githubcpp}
+
+% Usage in chapters:
+%   \begin{lstlisting}[caption={Description}, label={lst:example}]
+%   int main() { return 0; }
+%   \end{lstlisting}
+
+% ------------------------------------------------------------
+% Shell/terminal command blocks, same black-code + colored-comments scheme
+% ------------------------------------------------------------
+\lstdefinestyle{githubbash}{
+    language=bash,
+    basicstyle=\ttfamily\scriptsize\color{black},
+    commentstyle=\color{friendcomment}\itshape,
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{friendrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=none,
+}
+
+% For lines dominated by one long path/token with no useful spaces
+% (e.g. export PATH="..."), where breaking only at whitespace causes overflow:
+\lstdefinestyle{githubbashpath}{
+    language=bash,
+    basicstyle=\ttfamily\scriptsize\color{black},
+    commentstyle=\color{friendcomment}\itshape,
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{friendrule},
+    framesep=5pt,
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    captionpos=b,
+    numbers=none,
+}
+% Same as shellcode, but labelled with the machine the commands are typed on.
+% The label says where you TYPE the command, not where it takes effect:
+% "scp file board:" and "ssh board '...'" are both typed on the host.
+% breakatwhitespace=false (unlike plain shellcode): these blocks also absorb
+% former shellcodepath content, so a long unbroken token must still be able
+% to break rather than overflow the page margin.
+\lstnewenvironment{shellcodehost}{\lstset{style=githubbash, breakatwhitespace=false,
+    captionpos=t, title={\makebox[\linewidth][r]{\scriptsize\bfseries On the host}}}}{}
+\lstnewenvironment{shellcodeboard}{\lstset{style=githubbash, breakatwhitespace=false,
+    captionpos=t, title={\makebox[\linewidth][r]{\scriptsize\bfseries On the board}}}}{}
+
+% Usage in chapters:
+%   \begin{shellcode}            <- normal commands / word lists (safe wrapping)
+%   ssh wheel@<board-ip>
+%   \end{shellcode}
+%   \begin{shellcodepath}        <- lines with one long unbroken path/token
+%   export PATH="$HOME/very/long/path/bin:$PATH"
+%   \end{shellcodepath}
+
+% ------------------------------------------------------------
+% Inline code in running text: write |code| between two pipes
+% ------------------------------------------------------------
+\lstdefinestyle{githubcppinline}{
+    language=C++,
+    basicstyle=\bfseries\ttfamily\small\color{black},
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+\lstMakeShortInline[style=githubcppinline]|
+
+% Usage in running text:
+%   The function |int compute(int x)| returns...
+
+% ------------------------------------------------------------
+% Category-colored inline code: same idea as |code| above, but tinted by
+% semantic category to make scanning easier. Each style below inherits
+% from githubcppinline (language, wrapping, ...) and overrides every
+% text-bearing key -- basicstyle, identifierstyle, keywordstyle,
+% commentstyle, stringstyle -- to the category color; leaving any one of
+% them unset falls back to githubcpp's black identifierstyle, silently
+% recoloring plain words back to black.
+%
+% Unlike |code|, these can't be lstMakeShortInline delimiters (one desired
+% pair, catFilesystem's two shades, would need two different delimiter
+% characters that still had to be remembered) -- they're plain macros
+% wrapping \lstinline[style=...]{...} instead. \lstinline's brace form
+% re-tokenizes its argument in verbatim mode same as its short-inline form,
+% so it survives being passed through a \newcommand argument.
+%
+%   \extpath{...}   filesystem path outside the repository
+%   \repopath{...}  filesystem path inside the repository
+%   \ccode{...}     C/C++ code (functions, classes, members, macros)
+%   \cmd{...}       a command/executable found on PATH
+%   \cmdpath{...}   a command/executable NOT on PATH (run via explicit path)
+%   \hw{...}        hardware/FPGA (peripherals, Qsys signals, registers, Kconfig)
+%   \sysid{...}     system-level identifier (env vars, users, groups)
+
+\definecolor{catFilesystem}{HTML}{A9720B}
+\definecolor{catCode}{HTML}{7B4FA6}
+\definecolor{catCommand}{HTML}{2E8B57}
+\definecolor{catHardware}{HTML}{8E3B75}
+\definecolor{catSystem}{HTML}{5B6B73}
+
+\lstdefinestyle{inlineFsExt}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catFilesystem!55!white},
+    identifierstyle=\color{catFilesystem!55!white},
+    keywordstyle=\color{catFilesystem!55!white},
+    commentstyle=\color{catFilesystem!55!white},
+    stringstyle=\color{catFilesystem!55!white},
+}
+\lstdefinestyle{inlineFsRepo}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catFilesystem!85!black},
+    identifierstyle=\color{catFilesystem!85!black},
+    keywordstyle=\color{catFilesystem!85!black},
+    commentstyle=\color{catFilesystem!85!black},
+    stringstyle=\color{catFilesystem!85!black},
+}
+\lstdefinestyle{inlineCode}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catCode},
+    identifierstyle=\color{catCode},
+    keywordstyle=\color{catCode},
+    commentstyle=\color{catCode},
+    stringstyle=\color{catCode},
+}
+\lstdefinestyle{inlineCmd}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catCommand!55!white},
+    identifierstyle=\color{catCommand!55!white},
+    keywordstyle=\color{catCommand!55!white},
+    commentstyle=\color{catCommand!55!white},
+    stringstyle=\color{catCommand!55!white},
+}
+\lstdefinestyle{inlineCmdExt}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catCommand!85!black},
+    identifierstyle=\color{catCommand!85!black},
+    keywordstyle=\color{catCommand!85!black},
+    commentstyle=\color{catCommand!85!black},
+    stringstyle=\color{catCommand!85!black},
+}
+\lstdefinestyle{inlineHw}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catHardware},
+    identifierstyle=\color{catHardware},
+    keywordstyle=\color{catHardware},
+    commentstyle=\color{catHardware},
+    stringstyle=\color{catHardware},
+}
+\lstdefinestyle{inlineSys}{
+    style=githubcppinline,
+    basicstyle=\bfseries\ttfamily\small\color{catSystem},
+    identifierstyle=\color{catSystem},
+    keywordstyle=\color{catSystem},
+    commentstyle=\color{catSystem},
+    stringstyle=\color{catSystem},
+}
+
+\newcommand{\extpath}[1]{\lstinline[style=inlineFsExt]{#1}}
+\newcommand{\repopath}[1]{\lstinline[style=inlineFsRepo]{#1}}
+\newcommand{\ccode}[1]{\lstinline[style=inlineCode]{#1}}
+\newcommand{\cmd}[1]{\lstinline[style=inlineCmd]{#1}}
+\newcommand{\cmdpath}[1]{\lstinline[style=inlineCmdExt]{#1}}
+\newcommand{\hw}[1]{\lstinline[style=inlineHw]{#1}}
+\newcommand{\sysid}[1]{\lstinline[style=inlineSys]{#1}}

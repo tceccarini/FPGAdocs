@@ -1,0 +1,23 @@
+% Sunto in italiano della tesi di laurea magistrale -- file principale.
+% Documento autonomo: riusa lo stile e la copertina della tesi, copiati da ../thesis/.
+% Il contenuto vero e proprio sta in 01_summary_it.tex.
+% Compilazione: latexmk -pdf summary_it.tex  ->  build/summary_it.pdf
+\documentclass[a4paper,12pt]{article}
+
+\input{style}
+
+% style.tex dichiara babel con l'inglese come lingua principale, perche' e' la
+% lingua della tesi. Qui il testo e' italiano, quindi si cambia lingua principale
+% per avere sillabazione e convenzioni tipografiche corrette.
+\selectlanguage{italian}
+
+\begin{document}
+
+\input{00_titlepage}
+
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\input{01_summary_it}
+
+\end{document}

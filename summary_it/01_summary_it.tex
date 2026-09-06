@@ -1,63 +1,7 @@
-% Sunto della tesi di laurea magistrale.
-\documentclass[a4paper,12pt]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[italian,english]{babel}
-\usepackage[a4paper,margin=2.5cm]{geometry}
-\usepackage{graphicx}
-\graphicspath{{../thesis/img/}}
-\usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{array}
-\usepackage{indentfirst}
-\usepackage[hidelinks]{hyperref}
-
-\setlength{\parindent}{1em}
-\setlength{\parskip}{0.45em}
-\raggedbottom
-\emergencystretch=1.5em
-
-\begin{document}
-
-\begin{titlepage}
-\centering
-\vspace*{1.2cm}
-\includegraphics[width=.28\textwidth]{UnitsLogo}\par
-\vspace{0.8cm}
-{\large Università degli Studi di Trieste\par}
-\vspace{0.25cm}
-{\large Dipartimento di Ingegneria e Architettura\par}
-\vspace{0.8cm}
-{\large Corso di laurea magistrale in Ingegneria Elettronica e Informatica\\
-{[curriculum Informatica]}\par}
-
-\vfill
-{\Large\bfseries Sunto della tesi di laurea magistrale\par}
-\vspace{1.2cm}
-{\LARGE\bfseries Video Acquisition and Processing\\
-on Intel Cyclone V SoC\par}
-\vspace{0.35cm}
-{\large\itshape Hardware Implementation with Embedded Linux\\
-and Bare-Metal Software Architectures\par}
-
-\vfill
-\begin{tabular}{@{}p{.44\textwidth}@{\hspace{.08\textwidth}}p{.44\textwidth}@{}}
-\raggedright \textbf{Laureando}\\
-Tiziano Ceccarini
-&
-\raggedleft \textbf{Relatore}\\
-Prof. Stefano Marsi
-\end{tabular}
-
-\vfill
-{\large Anno accademico 2025--2026\par}
-\thispagestyle{empty}
-\end{titlepage}
-
-\pagenumbering{roman}
-\setcounter{page}{1}
+% Corpo del sunto in italiano: solo contenuto, senza preambolo ne' copertina.
+% Incluso da summary_it.tex, che fornisce classe, stile e frontespizio.
+% Tenuto separato cosi' da poter essere incluso anche da ../thesis/thesis.tex,
+% se il sunto dovesse confluire nella tesi.
 
 \section{Introduzione}
 
@@ -136,4 +80,3 @@ Un ulteriore sviluppo consiste nel trasferire alla FPGA operazioni regolari eseg
 La documentazione prodotta e i sorgenti hardware e software resi disponibili nei repository dedicati descrivono puntualmente i passaggi necessari a riprodurre entrambi i sistemi. Questa impostazione permette a chi proseguirà il lavoro di comprenderne le scelte progettuali, riprodurne il funzionamento e utilizzare la piattaforma come base per applicazioni personalizzate ed estensioni future, senza dover ricostruire da principio l'intera catena di acquisizione ed elaborazione.
 
 
-\end{document}
