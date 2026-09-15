@@ -13,9 +13,19 @@ The thesis documents two sibling projects built around the same custom FPGA vide
 
 ## Repository layout
 
-- [`thesis/`](thesis/) — LaTeX sources and build output for the full thesis (see Building below).
-- [`summary_en/`](summary_en/) — English summary.
-- [`summary_it/`](summary_it/) — Italian summary.
+- [`thesis_full/`](thesis_full/) — print-ready volume combining both summaries and the complete thesis without duplicating their sources.
+- [`thesis/`](thesis/) — standalone thesis.
+- [`summary_it/`](summary_it/) — standalone Italian summary.
+- [`summary_en/`](summary_en/) — standalone English summary.
+
+The combined volume contains the outer thesis cover, the Italian and English
+summaries with continuous Roman page numbering, a repeated thesis cover, and
+the complete thesis starting with the table of contents on Arabic page 1.
+The summaries and their sections are included in the table of contents.
+
+The document is laid out for duplex printing: covers, summaries, the table of
+contents, parts, and chapters open on right-hand pages. Blank verso pages are
+inserted when necessary and carry no page number or running header.
 
 ## Related repositories
 
@@ -36,14 +46,46 @@ This shared folder mirrors everything needed to follow the tutorial without hunt
 
 ## Building
 
-Requires a TeX Live installation with `latexmk`, `biber`, and `-shell-escape` support (used by the `svg` package to convert figures via Inkscape).
+Requires TeX Live, `latexmk`, `biber`, `makeglossaries`, and Inkscape. The
+provided `latexmk` configurations enable shell escape so the `svg` package can
+convert figures with Inkscape.
 
+### Complete print-ready volume
+
+```sh
+cd thesis_full
+latexmk -pdf -interaction=nonstopmode -halt-on-error thesis_full.tex
 ```
+
+The resulting PDF is `thesis_full/build/thesis_full.pdf`. All generated files,
+including converted SVGs and Inkscape's local profile and cache, remain under
+`thesis_full/build/`.
+
+For bound duplex output, print from the first PDF page, use two-sided printing
+with long-edge binding, and do not let the print service insert a cover or a
+blank page before the document.
+
+### Standalone thesis
+
+```sh
 cd thesis
-latexmk -pdf -interaction=nonstopmode thesis.tex
+latexmk -pdf -interaction=nonstopmode -halt-on-error thesis.tex
 ```
 
 The compiled PDF is produced at `thesis/build/thesis.pdf`.
+
+### Standalone summaries
+
+```sh
+cd summary_it
+latexmk -pdf -interaction=nonstopmode -halt-on-error summary_it.tex
+
+cd ../summary_en
+latexmk -pdf -interaction=nonstopmode -halt-on-error summary_en.tex
+```
+
+These commands produce `summary_it/build/summary_it.pdf` and
+`summary_en/build/summary_en.pdf`, respectively.
 
 ## License
 

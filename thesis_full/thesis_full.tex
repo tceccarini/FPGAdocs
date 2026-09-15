@@ -1,0 +1,79 @@
+% Volume completo: copertina, sunti come capitoli non numerati, copertina,
+% indice e corpo della tesi. I contenuti sono letti dai sorgenti originali.
+% Compilazione da questa cartella: latexmk -pdf thesis_full.tex
+\documentclass[a4paper,12pt,twoside,openright]{book}
+
+\input{../thesis/style}
+\usepackage{emptypage} % i versi bianchi non mostrano intestazioni o numeri
+\usepackage{bookmark}
+
+% Leggere le figure originali e generare le conversioni solo in questa build.
+% Il prefisso ./ evita di trovare le conversioni in thesis/build via TEXINPUTS.
+\graphicspath{{../thesis/img/}{../thesis/}}
+\svgpath{{../thesis/img/}}
+\svgsetup{inkscapepath=./build/svg-inkscape/}
+
+\newcommand{\suntidivider}{%
+    \addtocontents{toc}{\protect\vspace{6pt}\protect\hrule\protect\vspace{6pt}}%
+}
+
+\begin{document}
+
+% Copertina esterna, senza numero. Il suo retro va completato PRIMA di
+% iniziare i numeri romani: frontmatter inserisce il verso bianco necessario
+% e solo dopo azzera il contatore. Il Sunto e' cosi' i, sul recto fisico 3.
+\pagenumbering{gobble}
+\input{../thesis/00_titlepage}
+\frontmatter
+
+% Conservare la struttura attuale: sunti come capitoli non numerati,
+% sezioni senza numero, entrambe le lingue nello stesso conteggio romano.
+\begingroup
+% Stesso workaround di 03_Bibliography.tex e degli stili summary_*:
+% senza la scatola di underline, xurl puo' spezzare gli indirizzi nelle note.
+\makeatletter
+\renewcommand{\url}[1]{\ltx@url{#1}}
+\makeatother
+\setcounter{secnumdepth}{0}
+
+\chapter*{Sunto}
+\addcontentsline{toc}{chapter}{Sunto}
+\input{../summary_it/01_summary_it}
+
+\chapter*{Summary}
+\addcontentsline{toc}{chapter}{Summary}
+\input{../summary_en/01_summary_en}
+
+\suntidivider
+% Completare anche le note prima di ripristinare lo stile URL della tesi.
+\clearpage
+\endgroup
+\setcounter{secnumdepth}{2}
+
+% Completare il blocco romano su un foglio intero PRIMA di cambiare
+% numerazione. La copertina interna e il suo verso sono fuori conteggio.
+% titlepage puo' quindi ripartire da 1 senza perdere la parita' fisica.
+\cleardoublepage
+\pagenumbering{gobble}
+\input{../thesis/00_titlepage}
+
+% Completare anche il foglio della copertina interna. L'indice comincia
+% a pagina araba 1 su un recto, senza toccare il contatore dei capitoli.
+\mainmatter
+\bookmarksetup{startatroot}
+\pdfbookmark[0]{\contentsname}{thesisfull.contents}
+\tableofcontents
+
+\input{../thesis/02_preface}
+
+\part{FPGAlix}\label{part:fpgalix}
+\input{../thesis/01_fpgalix/00_fpgalix}
+
+\part{FPGAsteel}\label{part:fpgasteel}
+\input{../thesis/02_fpgasteel/00_fpgasteel}
+
+\appendix
+\part{Appendices}\label{part:appendices}
+\input{../thesis/03_appendices/00_appendices}
+
+\end{document}
